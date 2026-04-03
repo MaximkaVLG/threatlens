@@ -98,13 +98,13 @@ THREAT_EXPLANATIONS = {
             "Этот файл пытается закрепиться в вашей системе —\n"
             "добавить себя в автозагрузку, реестр или планировщик задач.\n"
             "Это значит он будет запускаться каждый раз при включении компьютера.\n\n"
-            "Проверьте автозагрузку (Win+R → msconfig → Автозагрузка)."
+            "Проверьте автозагрузку (Win+R -> msconfig -> Автозагрузка)."
         ),
         "explain_en": (
             "This file tries to persist in your system —\n"
             "adding itself to startup, registry, or task scheduler.\n"
             "This means it will run every time you turn on your computer.\n\n"
-            "Check startup items (Win+R → msconfig → Startup)."
+            "Check startup items (Win+R -> msconfig -> Startup)."
         ),
     },
     "obfuscation": {

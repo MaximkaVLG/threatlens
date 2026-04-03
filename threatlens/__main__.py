@@ -34,6 +34,13 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
     print_header()
     console.print(f"\n  Scanning: [bold]{file_path}[/]\n")
 
+    # Check if archive first
+    from threatlens.analyzers import archive_analyzer
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext in archive_analyzer.ARCHIVE_EXTENSIONS or file_path.lower().endswith((".zip", ".rar", ".7z")):
+        _scan_archive(file_path, use_ai, ai_provider, format, console)
+        return
+
     # Generic analysis (all files)
     generic = generic_analyzer.analyze(file_path)
     all_findings = list(generic.findings)
@@ -46,7 +53,6 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
 
     # Script analysis
     script = None
-    ext = os.path.splitext(file_path)[1].lower()
     if ext in script_analyzer.SCRIPT_EXTENSIONS or generic.detected_type == "Shell script":
         script = script_analyzer.analyze(file_path)
         all_findings.extend(script.findings)
@@ -118,6 +124,107 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
         ))
 
     print_recommendations(score.recommendations)
+    console.print()
+
+
+def _scan_archive(file_path: str, use_ai: bool, ai_provider: str, format: str, console):
+    """Scan archive and show per-file results."""
+    from threatlens.analyzers.archive_analyzer import analyze as analyze_archive
+    from threatlens.output.colors import (
+        print_header, print_ai_explanation, Panel, Table, box,
+        RISK_COLORS,
+    )
+
+    print_header()
+    console.print(f"\n  Scanning archive: [bold]{file_path}[/]\n")
+
+    result = analyze_archive(file_path)
+
+    if not result.is_archive:
+        console.print("[red]  Not a valid archive file.[/]")
+        return
+
+    # Archive info
+    console.print(f"  Type: {result.archive_type}")
+    console.print(f"  Files: {result.total_files}")
+    console.print(f"  Uncompressed: {result.total_size_uncompressed // 1024} KB")
+    if result.is_password_protected:
+        console.print("[yellow]  Password protected — cannot analyze contents[/]")
+        return
+
+    console.print()
+
+    # Summary
+    n_dangerous = len(result.dangerous_files)
+    n_suspicious = len(result.suspicious_files)
+    n_safe = result.total_files - n_dangerous - n_suspicious
+
+    if n_dangerous > 0:
+        console.print(Panel(
+            f"  [bold red]FOUND {n_dangerous} DANGEROUS FILE(S)[/]\n"
+            f"  [yellow]{n_suspicious} suspicious[/] | [green]{n_safe} safe[/]",
+            title="Archive Scan Result",
+            border_style="red",
+        ))
+    elif n_suspicious > 0:
+        console.print(Panel(
+            f"  [yellow]{n_suspicious} suspicious file(s)[/] | [green]{n_safe} safe[/]",
+            title="Archive Scan Result",
+            border_style="yellow",
+        ))
+    else:
+        console.print(Panel(
+            f"  [green]All {n_safe} files appear safe[/]",
+            title="Archive Scan Result",
+            border_style="green",
+        ))
+
+    # Per-file results table
+    if result.file_scan_results:
+        table = Table(title="File Analysis", box=box.ROUNDED)
+        table.add_column("File", style="bold", max_width=40)
+        table.add_column("Type", max_width=15)
+        table.add_column("Risk", justify="center")
+        table.add_column("Score", justify="center")
+        table.add_column("Key Findings", max_width=50)
+
+        for scan in sorted(result.file_scan_results, key=lambda x: x["risk_score"], reverse=True):
+            level = scan["risk_level"]
+            color = RISK_COLORS.get(level, "white")
+            findings_str = "; ".join(scan["findings"][:2]) if scan["findings"] else "No issues"
+            if len(findings_str) > 50:
+                findings_str = findings_str[:47] + "..."
+
+            table.add_row(
+                scan["file"],
+                scan["type"][:15] if scan["type"] else "?",
+                f"[{color}]{level}[/]",
+                f"[{color}]{scan['risk_score']}[/]",
+                findings_str,
+            )
+
+        console.print(table)
+
+    # Detailed findings for dangerous files
+    for finfo in result.dangerous_files:
+        scan = finfo.scan_result
+        if not scan:
+            continue
+
+        console.print(f"\n[bold red]--- {scan['file']} ---[/]")
+        console.print(f"  Risk: [{RISK_COLORS.get(scan['risk_level'], 'white')}]{scan['risk_level']} ({scan['risk_score']}/100)[/]")
+
+        for f in scan["findings"]:
+            console.print(f"  [red]![/] {f}")
+
+        if scan.get("explanation"):
+            print_ai_explanation(scan["explanation"])
+
+        if scan.get("recommendations"):
+            console.print("[bold]  Recommendations:[/]")
+            for r in scan["recommendations"]:
+                console.print(f"    > {r}")
+
     console.print()
 
 
