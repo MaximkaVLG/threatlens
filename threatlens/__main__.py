@@ -268,6 +268,94 @@ def scan_directory(dir_path: str, **kwargs):
             console.print(f"  [red]Error scanning {f}: {e}[/]")
 
 
+def _scan_repo(url: str):
+    """Scan a GitHub repository."""
+    from threatlens.analyzers.repo_analyzer import analyze as analyze_repo
+    from threatlens.output.colors import (
+        console, print_header, print_ai_explanation, Panel, Table, box,
+        RISK_COLORS,
+    )
+
+    print_header()
+    console.print(f"\n  Scanning repository: [bold cyan]{url}[/]\n")
+    console.print("  [dim]Cloning repository...[/]")
+
+    result = analyze_repo(url)
+
+    if not result.scanned_files:
+        console.print("[red]  Failed to clone or scan repository.[/]")
+        for f in result.findings:
+            console.print(f"  [red]{f}[/]")
+        return
+
+    # Summary
+    console.print(f"\n  Repository: [bold]{result.repo_name}[/]")
+    console.print(f"  Total files: {result.total_files}")
+    console.print(f"  Scanned: {result.scanned_files}")
+    console.print(f"  Skipped: {result.skipped_files} (images, binaries, etc.)")
+    console.print()
+
+    n_dangerous = len(result.dangerous_files)
+    n_suspicious = len(result.suspicious_files)
+
+    if n_dangerous > 0:
+        console.print(Panel(
+            f"  [bold red]FOUND {n_dangerous} DANGEROUS FILE(S)[/]\n"
+            f"  [yellow]{n_suspicious} suspicious[/] | [green]{result.safe_files} safe[/]",
+            title="Repository Scan Result",
+            border_style="red",
+        ))
+    elif n_suspicious > 0:
+        console.print(Panel(
+            f"  [yellow]{n_suspicious} suspicious file(s)[/] | [green]{result.safe_files} safe[/]",
+            title="Repository Scan Result",
+            border_style="yellow",
+        ))
+    else:
+        console.print(Panel(
+            f"  [green]All {result.safe_files} files appear safe[/]",
+            title="Repository Scan Result",
+            border_style="green",
+        ))
+
+    # Results table (show dangerous + suspicious)
+    show_files = result.dangerous_files + result.suspicious_files
+    if show_files:
+        table = Table(title="Flagged Files", box=box.ROUNDED)
+        table.add_column("File", style="bold", max_width=50)
+        table.add_column("Risk", justify="center")
+        table.add_column("Score", justify="center")
+        table.add_column("Key Findings", max_width=45)
+
+        for fr in sorted(show_files, key=lambda x: x.risk_score, reverse=True):
+            color = RISK_COLORS.get(fr.risk_level, "white")
+            findings_str = "; ".join(fr.findings[:2]) if fr.findings else ""
+            if len(findings_str) > 45:
+                findings_str = findings_str[:42] + "..."
+            table.add_row(
+                fr.path,
+                f"[{color}]{fr.risk_level}[/]",
+                f"[{color}]{fr.risk_score}[/]",
+                findings_str,
+            )
+
+        console.print(table)
+
+    # Detailed findings for dangerous files
+    for fr in result.dangerous_files[:10]:
+        console.print(f"\n[bold red]--- {fr.path} ---[/]")
+        color = RISK_COLORS.get(fr.risk_level, "white")
+        console.print(f"  Risk: [{color}]{fr.risk_level} ({fr.risk_score}/100)[/]")
+
+        for f in fr.findings[:10]:
+            console.print(f"  [red]![/] {f}")
+
+        if fr.explanation:
+            print_ai_explanation(fr.explanation)
+
+    console.print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="threatlens",
@@ -282,6 +370,9 @@ def main():
     scan_p.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     scan_p.add_argument("--recursive", action="store_true", help="Scan directory recursively")
 
+    repo_p = subparsers.add_parser("repo", help="Scan a GitHub repository")
+    repo_p.add_argument("url", help="GitHub repository URL")
+
     args = parser.parse_args()
 
     if args.command == "scan":
@@ -289,6 +380,8 @@ def main():
             scan_directory(args.target, use_ai=args.ai, ai_provider=args.provider, format=args.format)
         else:
             scan_file(args.target, use_ai=args.ai, ai_provider=args.provider, format=args.format)
+    elif args.command == "repo":
+        _scan_repo(args.url)
     else:
         parser.print_help()
 
