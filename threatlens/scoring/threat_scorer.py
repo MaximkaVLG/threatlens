@@ -39,10 +39,12 @@ def calculate_score(findings: list[str], generic_analysis=None, pe_analysis=None
     result = ThreatScore()
     category_hits = {}
 
-    # Score from findings (category tags in brackets)
+    # Score from findings (only match explicit [category] tags, not substrings)
     for finding in findings:
+        finding_lower = finding.lower()
         for category, weight in RISK_WEIGHTS.items():
-            if f"[{category}]" in finding.lower() or category in finding.lower():
+            # Only match explicit tags like [injection], [network], [HEURISTIC]
+            if f"[{category}]" in finding_lower:
                 category_hits[category] = category_hits.get(category, 0) + weight
 
     # Bonus points from specific indicators

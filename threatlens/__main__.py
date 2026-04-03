@@ -19,8 +19,6 @@ logger = logging.getLogger("threatlens")
 
 def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, format: str = "text"):
     """Analyze a single file."""
-    from threatlens.analyzers import generic_analyzer, pe_analyzer, script_analyzer
-    from threatlens.scoring.threat_scorer import calculate_score
     from threatlens.output.colors import (
         console, print_header, print_file_info, print_risk,
         print_findings, print_ai_explanation, print_recommendations,
@@ -41,75 +39,44 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
         _scan_archive(file_path, use_ai, ai_provider, format, console)
         return
 
-    # Generic analysis (all files)
-    generic = generic_analyzer.analyze(file_path)
-    all_findings = list(generic.findings)
-
-    # PE analysis
-    pe = None
-    if generic.detected_type.startswith("PE") or file_path.lower().endswith((".exe", ".dll", ".sys")):
-        pe = pe_analyzer.analyze(file_path)
-        all_findings.extend(pe.findings)
-
-    # Script analysis
-    script = None
-    if ext in script_analyzer.SCRIPT_EXTENSIONS or generic.detected_type == "Shell script":
-        script = script_analyzer.analyze(file_path)
-        all_findings.extend(script.findings)
-
-    # Office analysis
-    from threatlens.analyzers import office_analyzer
-    if ext in office_analyzer.OFFICE_EXTENSIONS or generic.detected_type.startswith("Microsoft Office"):
-        office = office_analyzer.analyze(file_path)
-        all_findings.extend(office.findings)
-        if office.has_macros:
-            console.print(f"  [yellow]Macros detected: {len(office.vba_modules)} VBA modules[/]")
-
-    # YARA scan
-    from threatlens.rules.signatures import scan as yara_scan
-    yara_result = yara_scan(file_path)
-    all_findings.extend(yara_result.findings)
-
-    # Heuristic analysis
-    from threatlens.scoring.heuristic_engine import analyze as heuristic_analyze
-    heuristic_verdicts = heuristic_analyze(generic, pe, script, all_findings)
-    for verdict in heuristic_verdicts:
-        all_findings.append(
-            f"[HEURISTIC] {verdict.threat_type.upper()} detected "
-            f"({verdict.confidence:.0%} confidence, "
-            f"behaviors: {', '.join(verdict.matching_behaviors[:5])})"
-        )
-
-    # Calculate threat score
-    score = calculate_score(all_findings, generic, pe, script)
+    # Single entry point — no duplication
+    from threatlens.core import analyze_file
+    result = analyze_file(file_path)
 
     # Output
     if format == "json":
         output = {
-            "file": generic.file_name,
-            "size": generic.file_size,
-            "type": generic.file_type,
-            "md5": generic.md5,
-            "sha256": generic.sha256,
-            "entropy": generic.entropy,
-            "risk_score": score.score,
-            "risk_level": score.level,
-            "findings": all_findings,
-            "urls": generic.urls,
-            "ip_addresses": generic.ip_addresses,
-            "recommendations": score.recommendations,
+            "file": result.file,
+            "size": result.size,
+            "type": result.file_type,
+            "md5": result.md5,
+            "sha256": result.sha256,
+            "entropy": result.entropy,
+            "risk_score": result.risk_score,
+            "risk_level": result.risk_level,
+            "findings": result.findings,
+            "recommendations": result.recommendations,
         }
         print(json.dumps(output, indent=2, ensure_ascii=False))
         return
 
     # Text output
-    print_file_info(generic)
+    print_file_info(result.generic_analysis)
 
-    if pe and pe.is_pe:
-        print_pe_info(pe)
+    if result.pe_analysis and result.pe_analysis.is_pe:
+        print_pe_info(result.pe_analysis)
+
+    # Create score-like object for print_risk
+    class _Score:
+        pass
+    score = _Score()
+    score.score = result.risk_score
+    score.level = result.risk_level
+    score.summary = result.summary
+    score.categories = {}
 
     print_risk(score)
-    print_findings(all_findings)
+    print_findings(result.findings)
 
     # Built-in explanation (always works, no AI needed)
     from threatlens.ai.explanations import generate_explanation

@@ -189,16 +189,29 @@ def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
         zf.close()
         return result
 
-    # Extract and scan each file
+    # Extract and scan each file (with Zip Slip protection)
     tmp_dir = tempfile.mkdtemp(prefix="threatlens_")
     result.file_scan_results = []
 
     try:
-        zf.extractall(tmp_dir)
+        # Safe extraction — prevent path traversal (Zip Slip)
+        for info in zf.infolist():
+            target_path = os.path.join(tmp_dir, info.filename)
+            target_real = os.path.realpath(target_path)
+            tmp_real = os.path.realpath(tmp_dir)
+            if not target_real.startswith(tmp_real + os.sep) and target_real != tmp_real:
+                result.findings.append(
+                    f"[evasion] BLOCKED path traversal attempt: {info.filename}"
+                )
+                continue
+            zf.extract(info, tmp_dir)
         zf.close()
 
         for finfo in result.files:
             extracted_path = os.path.join(tmp_dir, finfo.name)
+            # Double-check path traversal
+            if not os.path.realpath(extracted_path).startswith(os.path.realpath(tmp_dir)):
+                continue
             if not os.path.exists(extracted_path) or os.path.isdir(extracted_path):
                 continue
 

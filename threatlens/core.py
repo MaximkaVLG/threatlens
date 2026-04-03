@@ -1,0 +1,114 @@
+"""Core analysis function — single entry point for all analyzers.
+
+Used by CLI, Web UI, and repo scanner. No duplication.
+"""
+
+import os
+import logging
+from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AnalysisResult:
+    """Unified analysis result."""
+    file: str = ""
+    size: int = 0
+    file_type: str = ""
+    md5: str = ""
+    sha256: str = ""
+    entropy: float = 0.0
+    entropy_verdict: str = ""
+
+    risk_score: int = 0
+    risk_level: str = "LOW"
+    summary: str = ""
+
+    findings: list = field(default_factory=list)
+    recommendations: list = field(default_factory=list)
+    explanation: str = ""
+
+    heuristic_verdicts: list = field(default_factory=list)
+    yara_matches: list = field(default_factory=list)
+
+    # Raw analysis objects (for CLI display)
+    generic_analysis: object = None
+    pe_analysis: object = None
+    script_analysis: object = None
+    office_analysis: object = None
+
+
+def analyze_file(file_path: str) -> AnalysisResult:
+    """Run full ThreatLens analysis on a single file.
+
+    This is THE single function that both CLI and Web use.
+    """
+    from threatlens.analyzers import generic_analyzer, pe_analyzer, script_analyzer, office_analyzer
+    from threatlens.scoring.threat_scorer import calculate_score
+    from threatlens.scoring.heuristic_engine import analyze as heuristic_analyze
+    from threatlens.rules.signatures import scan as yara_scan
+    from threatlens.ai.explanations import generate_explanation
+
+    result = AnalysisResult(file=os.path.basename(file_path))
+
+    # Generic (all files)
+    generic = generic_analyzer.analyze(file_path)
+    all_findings = list(generic.findings)
+    result.generic_analysis = generic
+    result.size = generic.file_size
+    result.file_type = generic.file_type
+    result.md5 = generic.md5
+    result.sha256 = generic.sha256
+    result.entropy = generic.entropy
+    result.entropy_verdict = generic.entropy_verdict
+
+    ext = os.path.splitext(file_path)[1].lower()
+
+    # PE
+    pe = None
+    if generic.detected_type.startswith("PE") or ext in (".exe", ".dll", ".sys"):
+        pe = pe_analyzer.analyze(file_path)
+        all_findings.extend(pe.findings)
+        result.pe_analysis = pe
+
+    # Script
+    script = None
+    if ext in script_analyzer.SCRIPT_EXTENSIONS or generic.detected_type == "Shell script":
+        script = script_analyzer.analyze(file_path)
+        all_findings.extend(script.findings)
+        result.script_analysis = script
+
+    # Office
+    if ext in office_analyzer.OFFICE_EXTENSIONS or generic.detected_type.startswith("Microsoft Office"):
+        office = office_analyzer.analyze(file_path)
+        all_findings.extend(office.findings)
+        result.office_analysis = office
+
+    # YARA
+    yara_result = yara_scan(file_path)
+    all_findings.extend(yara_result.findings)
+    result.yara_matches = yara_result.matches
+
+    # Heuristic
+    heuristic_verdicts = heuristic_analyze(generic, pe, script, all_findings)
+    for v in heuristic_verdicts:
+        all_findings.append(
+            f"[HEURISTIC] {v.threat_type.upper()} detected "
+            f"({v.confidence:.0%} confidence, "
+            f"behaviors: {', '.join(v.matching_behaviors[:5])})"
+        )
+    result.heuristic_verdicts = heuristic_verdicts
+
+    # Score
+    score = calculate_score(all_findings, generic, pe, script)
+    result.risk_score = score.score
+    result.risk_level = score.level
+    result.summary = score.summary
+    result.recommendations = score.recommendations
+    result.findings = all_findings
+
+    # Explanation
+    result.explanation = generate_explanation(score.categories, lang="ru")
+
+    return result
