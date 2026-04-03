@@ -1,0 +1,122 @@
+[
+  {
+    "file": "stealer_chrome_tg.py",
+    "expected_type": "stealer",
+    "expected_min_conf": 0.8,
+    "actual_type": "stealer",
+    "actual_conf": 0.8,
+    "risk_score": 100,
+    "risk_level": "CRITICAL",
+    "correct": true
+  },
+  {
+    "file": "stealer_full.py",
+    "expected_type": "stealer",
+    "expected_min_conf": 0.9,
+    "actual_type": "stealer",
+    "actual_conf": 0.9,
+    "risk_score": 100,
+    "risk_level": "CRITICAL",
+    "correct": true
+  },
+  {
+    "file": "keylogger_basic.py",
+    "expected_type": "keylogger",
+    "expected_min_conf": 0.8,
+    "actual_type": "keylogger",
+    "actual_conf": 0.99,
+    "risk_score": 68,
+    "risk_level": "HIGH",
+    "correct": true
+  },
+  {
+    "file": "rat_stub.py",
+    "expected_type": "rat",
+    "expected_min_conf": 0.7,
+    "actual_type": "rat",
+    "actual_conf": 0.85,
+    "risk_score": 73,
+    "risk_level": "CRITICAL",
+    "correct": true
+  },
+  {
+    "file": "dropper_simple.py",
+    "expected_type": "dropper",
+    "expected_min_conf": 0.6,
+    "actual_type": "dropper",
+    "actual_conf": 0.8,
+    "risk_score": 40,
+    "risk_level": "HIGH",
+    "correct": true
+  },
+  {
+    "file": "miner_config.py",
+    "expected_type": "miner",
+    "expected_min_conf": 0.7,
+    "actual_type": "miner",
+    "actual_conf": 0.75,
+    "risk_score": 50,
+    "risk_level": "HIGH",
+    "correct": true
+  },
+  {
+    "file": "persist_batch.bat",
+    "expected_type": "dropper",
+    "expected_min_conf": 0.5,
+    "actual_type": "dropper",
+    "actual_conf": 0.75,
+    "risk_score": 60,
+    "risk_level": "HIGH",
+    "correct": true
+  },
+  {
+    "file": "download_exec.ps1",
+    "expected_type": "dropper",
+    "expected_min_conf": 0.6,
+    "actual_type": "dropper",
+    "actual_conf": 0.7,
+    "risk_score": 43,
+    "risk_level": "HIGH",
+    "correct": true
+  },
+  {
+    "file": "clean_calculator.py",
+    "expected_type": "clean",
+    "expected_min_conf": 0.0,
+    "actual_type": "clean",
+    "actual_conf": 0.0,
+    "risk_score": 0,
+    "risk_level": "LOW",
+    "correct": true
+  },
+  {
+    "file": "clean_flask.py",
+    "expected_type": "clean",
+    "expected_min_conf": 0.0,
+    "actual_type": "clean",
+    "actual_conf": 0.0,
+    "risk_score": 0,
+    "risk_level": "LOW",
+    "correct": true
+  },
+  {
+    "file": "clean_config.py",
+    "expected_type": "clean",
+    "expected_min_conf": 0.0,
+    "actual_type": "clean",
+    "actual_conf": 0.0,
+    "risk_score": 0,
+    "risk_level": "LOW",
+    "correct": true
+  },
+  {
+    "file": "obfuscated_unknown.py",
+    "expected_type": "dropper",
+    "expected_min_conf": 0.4,
+    "actual_type": "dropper",
+    "actual_conf": 0.7,
+    "risk_score": 30,
+    "risk_level": "MEDIUM",
+    "correct": true
+  }
+]

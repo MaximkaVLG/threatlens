@@ -33,43 +33,45 @@ class HeuristicVerdict:
 HEURISTIC_PROFILES = {
     "stealer": {
         "description": "Password/data stealer",
-        "required_any": [  # At least one required
+        "required_any": [  # At least one MUST match
             "accesses_browser_data",
             "accesses_crypto_wallets",
-            "accesses_credentials",
+        ],
+        "required_also": [  # At least one of these too (stealer = access + exfil)
+            "has_exfiltration_channel",
+            "has_network_capability",
         ],
         "optional": [
-            ("has_network_capability", 0.15),
-            ("has_exfiltration_channel", 0.20),
-            ("is_packed", 0.10),
-            ("no_signature", 0.05),
-            ("has_obfuscation", 0.10),
-            ("accesses_browser_data", 0.15),
+            ("has_exfiltration_channel", 0.15),
+            ("is_packed", 0.05),
+            ("has_obfuscation", 0.05),
+            ("accesses_browser_data", 0.10),
             ("accesses_crypto_wallets", 0.10),
             ("accesses_discord", 0.10),
             ("accesses_telegram_data", 0.10),
             ("accesses_ssh_keys", 0.10),
             ("accesses_game_platforms", 0.05),
         ],
-        "base_confidence": 0.40,
+        "base_confidence": 0.50,
         "explanation_key": "password_theft",
     },
     "rat": {
         "description": "Remote Access Trojan",
         "required_any": [
             "has_injection_capability",
+            "has_reverse_shell",
         ],
         "optional": [
-            ("has_network_capability", 0.20),
+            ("has_network_capability", 0.15),
             ("has_persistence", 0.15),
-            ("has_keylogger", 0.15),
+            ("has_keylogger", 0.10),
             ("has_process_manipulation", 0.10),
             ("has_anti_debug", 0.10),
-            ("is_packed", 0.10),
-            ("no_signature", 0.05),
+            ("is_packed", 0.05),
             ("has_privilege_escalation", 0.10),
+            ("has_reverse_shell", 0.15),
         ],
-        "base_confidence": 0.35,
+        "base_confidence": 0.40,
         "explanation_key": "injection",
     },
     "ransomware": {
@@ -95,28 +97,31 @@ HEURISTIC_PROFILES = {
             "mentions_mining",
         ],
         "optional": [
-            ("has_network_capability", 0.15),
-            ("has_persistence", 0.15),
-            ("is_packed", 0.10),
+            ("has_network_capability", 0.10),
+            ("has_persistence", 0.10),
+            ("is_packed", 0.05),
             ("high_entropy", 0.05),
-            ("has_anti_debug", 0.10),
+            ("has_anti_debug", 0.05),
+            ("has_download_and_execute", 0.05),
         ],
-        "base_confidence": 0.50,
+        "base_confidence": 0.70,
         "explanation_key": "crypto",
     },
     "dropper": {
         "description": "Payload dropper/downloader",
         "required_any": [
             "has_download_and_execute",
+            "has_obfuscation_exec",
         ],
         "optional": [
             ("has_persistence", 0.15),
-            ("is_packed", 0.10),
-            ("has_obfuscation", 0.15),
-            ("no_signature", 0.05),
-            ("has_anti_debug", 0.10),
+            ("is_packed", 0.05),
+            ("has_obfuscation", 0.10),
+            ("has_obfuscation_exec", 0.10),
+            ("has_network_capability", 0.10),
+            ("has_download_and_execute", 0.10),
         ],
-        "base_confidence": 0.45,
+        "base_confidence": 0.50,
         "explanation_key": "network",
     },
     "keylogger": {
@@ -207,11 +212,15 @@ def _extract_behaviors(generic_analysis, pe_analysis, script_analysis, findings:
             behaviors.add("has_obfuscation")
         if script_analysis.obfuscation:
             behaviors.add("has_obfuscation")
+            # Check for exec/eval with encoding — strong dropper indicator
+            for o in script_analysis.obfuscation:
+                pat = o.get("pattern", "").lower()
+                if "eval" in pat or "exec" in pat or "invoke-expression" in pat:
+                    behaviors.add("has_obfuscation_exec")
         if script_analysis.network_activity:
             behaviors.add("has_network_capability")
         if script_analysis.file_access:
             behaviors.add("accesses_browser_data")
-            behaviors.add("accesses_credentials")
         if script_analysis.keylogger_patterns:
             behaviors.add("has_keylogger")
             behaviors.add("has_screenshot_capability")
@@ -221,6 +230,15 @@ def _extract_behaviors(generic_analysis, pe_analysis, script_analysis, findings:
             behaviors.add("has_exfiltration_channel")
         if script_analysis.system_commands:
             behaviors.add("has_download_and_execute")
+
+        # Reverse shell detection: socket + subprocess/cmd + connect
+        if script_analysis.network_activity and script_analysis.system_commands:
+            # Check for socket.connect pattern
+            for n in script_analysis.network_activity:
+                if "socket" in n.get("pattern", "").lower():
+                    behaviors.add("has_reverse_shell")
+                    behaviors.add("has_injection_capability")
+                    break
 
     # From findings text
     if "telegram" in findings_lower or "discord" in findings_lower:
@@ -268,6 +286,12 @@ def analyze(generic_analysis=None, pe_analysis=None, script_analysis=None, findi
         has_required = any(req in behaviors for req in profile["required_any"])
         if not has_required:
             continue
+
+        # Check secondary requirements if present
+        if "required_also" in profile:
+            has_also = any(req in behaviors for req in profile["required_also"])
+            if not has_also:
+                continue
 
         # Calculate confidence
         confidence = profile["base_confidence"]
