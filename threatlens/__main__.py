@@ -57,6 +57,14 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
         script = script_analyzer.analyze(file_path)
         all_findings.extend(script.findings)
 
+    # Office analysis
+    from threatlens.analyzers import office_analyzer
+    if ext in office_analyzer.OFFICE_EXTENSIONS or generic.detected_type.startswith("Microsoft Office"):
+        office = office_analyzer.analyze(file_path)
+        all_findings.extend(office.findings)
+        if office.has_macros:
+            console.print(f"  [yellow]Macros detected: {len(office.vba_modules)} VBA modules[/]")
+
     # YARA scan
     from threatlens.rules.signatures import scan as yara_scan
     yara_result = yara_scan(file_path)
