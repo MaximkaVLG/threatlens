@@ -47,3 +47,11 @@ Issues = "https://github.com/MaximkaVLG/threatlens/issues"
 
 [tool.setuptools.packages.find]
 include = ["threatlens*"]
+
+[tool.setuptools.package-data]
+threatlens = [
+    "web/templates/*.html",
+    "web/static/*.css",
+    "web/static/*.js",
+    "rules/yara_rules/*.yar",
+]
