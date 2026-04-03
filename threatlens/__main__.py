@@ -51,6 +51,11 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
         script = script_analyzer.analyze(file_path)
         all_findings.extend(script.findings)
 
+    # YARA scan
+    from threatlens.rules.signatures import scan as yara_scan
+    yara_result = yara_scan(file_path)
+    all_findings.extend(yara_result.findings)
+
     # Calculate threat score
     score = calculate_score(all_findings, generic, pe, script)
 
