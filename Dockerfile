@@ -29,8 +29,8 @@ RUN useradd -m -s /bin/bash scanner
 RUN chown -R scanner:scanner /app
 USER scanner
 
-# Web UI port
+# Web UI port (Railway sets $PORT dynamically)
 EXPOSE 8888
 
-# Default: run web UI
-CMD ["uvicorn", "threatlens.web.app:app", "--host", "0.0.0.0", "--port", "8888"]
+# Default: run web UI (startCommand in railway.json overrides this)
+CMD ["sh", "-c", "uvicorn threatlens.web.app:app --host 0.0.0.0 --port ${PORT:-8888}"]
