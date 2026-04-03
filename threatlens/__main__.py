@@ -87,13 +87,19 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
     print_risk(score)
     print_findings(all_findings)
 
-    # AI explanation
+    # Built-in explanation (always works, no AI needed)
+    from threatlens.ai.explanations import generate_explanation
+    builtin_explanation = generate_explanation(score.categories, lang="ru")
+    if builtin_explanation:
+        print_ai_explanation(builtin_explanation)
+
+    # Optional: LLM explanation for deeper analysis
     if use_ai:
-        console.print("\n  [dim]Generating AI explanation...[/]")
+        console.print("\n  [dim]Generating advanced AI explanation (YandexGPT)...[/]")
         from threatlens.ai.providers import get_provider
         from threatlens.ai.prompts import THREAT_EXPLANATION_PROMPT
 
-        provider = get_provider(ai_provider)
+        provider = get_provider(ai_provider or "yandexgpt")
         prompt = THREAT_EXPLANATION_PROMPT.format(
             findings="\n".join(f"- {f}" for f in all_findings) or "No findings",
             filename=generic.file_name,
@@ -104,7 +110,12 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
             categories=", ".join(score.categories.keys()) or "none",
         )
         explanation = provider.explain(prompt)
-        print_ai_explanation(explanation)
+        from threatlens.output.colors import Panel
+        console.print(Panel(
+            explanation,
+            title="[bold magenta]Advanced AI Analysis (YandexGPT)[/]",
+            border_style="magenta", padding=(1, 2),
+        ))
 
     print_recommendations(score.recommendations)
     console.print()
