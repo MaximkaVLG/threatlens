@@ -1,0 +1,14 @@
+.git
+.env
+__pycache__
+*.pyc
+.venv
+venv
+tests/calibration/samples
+tests/samples/*.exe
+tests/samples/*.dll
+threatlens/rules/yara_community
+*.egg-info
+.idea
+.vscode
+scans/
