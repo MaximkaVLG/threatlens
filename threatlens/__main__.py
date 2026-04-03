@@ -62,6 +62,16 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
     yara_result = yara_scan(file_path)
     all_findings.extend(yara_result.findings)
 
+    # Heuristic analysis
+    from threatlens.scoring.heuristic_engine import analyze as heuristic_analyze
+    heuristic_verdicts = heuristic_analyze(generic, pe, script, all_findings)
+    for verdict in heuristic_verdicts:
+        all_findings.append(
+            f"[HEURISTIC] {verdict.threat_type.upper()} detected "
+            f"({verdict.confidence:.0%} confidence, "
+            f"behaviors: {', '.join(verdict.matching_behaviors[:5])})"
+        )
+
     # Calculate threat score
     score = calculate_score(all_findings, generic, pe, script)
 
