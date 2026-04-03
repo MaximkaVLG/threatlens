@@ -39,17 +39,45 @@ class AnalysisResult:
     office_analysis: object = None
 
 
-def analyze_file(file_path: str) -> AnalysisResult:
+def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
     """Run full ThreatLens analysis on a single file.
 
     This is THE single function that both CLI and Web use.
+    Checks cache first — returns instant result if file was scanned before.
     """
+    import time as _time
+    import hashlib as _hashlib
     from threatlens.analyzers import generic_analyzer, pe_analyzer, script_analyzer, office_analyzer
     from threatlens.scoring.threat_scorer import calculate_score
     from threatlens.scoring.heuristic_engine import analyze as heuristic_analyze
     from threatlens.rules.signatures import scan as yara_scan
     from threatlens.ai.explanations import generate_explanation
 
+    # Check cache by SHA256
+    if use_cache:
+        try:
+            with open(file_path, "rb") as f:
+                sha256 = _hashlib.sha256(f.read()).hexdigest()
+            from threatlens.cache import get_cache
+            cached = get_cache().get(sha256)
+            if cached:
+                logger.info("Cache hit for %s", sha256[:16])
+                result = AnalysisResult(
+                    file=os.path.basename(file_path),
+                    sha256=sha256,
+                    size=cached["size"],
+                    file_type=cached["type"],
+                    risk_score=cached["risk_score"],
+                    risk_level=cached["risk_level"],
+                    findings=cached["findings"],
+                    explanation=cached["explanation"],
+                    recommendations=cached["recommendations"],
+                )
+                return result
+        except Exception as e:
+            logger.debug("Cache check failed: %s", e)
+
+    scan_start = _time.time()
     result = AnalysisResult(file=os.path.basename(file_path))
 
     # Generic (all files)
@@ -110,5 +138,14 @@ def analyze_file(file_path: str) -> AnalysisResult:
 
     # Explanation
     result.explanation = generate_explanation(score.categories, lang="ru")
+
+    # Save to cache
+    if use_cache:
+        try:
+            scan_time = _time.time() - scan_start
+            from threatlens.cache import get_cache
+            get_cache().put(result, scan_time=scan_time)
+        except Exception as e:
+            logger.debug("Cache save failed: %s", e)
 
     return result

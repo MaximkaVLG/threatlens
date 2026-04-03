@@ -323,6 +323,63 @@ def _scan_repo(url: str):
     console.print()
 
 
+def _lookup_hash(hash_str: str):
+    """Look up a previously scanned file by SHA256."""
+    from threatlens.cache import get_cache
+    from threatlens.output.colors import console, print_header, RISK_COLORS
+
+    print_header()
+    cache = get_cache()
+
+    # Try exact match first
+    result = cache.get(hash_str)
+    if result:
+        color = RISK_COLORS.get(result["risk_level"], "white")
+        console.print(f"\n  [green]Found in cache![/] (scanned {result['scan_count']} times)\n")
+        console.print(f"  File:    {result['file']}")
+        console.print(f"  SHA256:  {result['sha256']}")
+        console.print(f"  Size:    {result['size']:,} bytes")
+        console.print(f"  Type:    {result['type']}")
+        console.print(f"  Risk:    [{color}]{result['risk_level']} ({result['risk_score']}/100)[/]")
+        if result.get("heuristic_type"):
+            console.print(f"  Threat:  {result['heuristic_type']} ({result['heuristic_confidence']:.0%})")
+        console.print(f"\n  Findings ({len(result['findings'])}):")
+        for f in result["findings"][:10]:
+            console.print(f"    ! {f}")
+        if result.get("explanation"):
+            console.print(f"\n  {result['explanation'][:200]}")
+        return
+
+    # Try prefix search
+    results = cache.search(hash_str)
+    if results:
+        console.print(f"\n  Found {len(results)} matches for prefix '{hash_str}':\n")
+        for r in results:
+            console.print(f"  {r['sha256'][:16]}...  {r['file_name']:30s}  {r['risk_level']:8s}  score={r['risk_score']}")
+    else:
+        console.print(f"\n  [yellow]Not found in cache: {hash_str}[/]")
+        console.print("  Scan a file first: threatlens scan <file>")
+    console.print()
+
+
+def _show_stats():
+    """Show cache statistics."""
+    from threatlens.cache import get_cache
+    from threatlens.output.colors import console, print_header
+
+    print_header()
+    stats = get_cache().get_stats()
+
+    console.print(f"\n  Cache Statistics:")
+    console.print(f"  Total unique files: {stats['total_files']}")
+    console.print(f"  Total scans:        {stats['total_scans']}")
+    console.print(f"  Cache hits:         {stats['cache_hits']}")
+    console.print(f"\n  By risk level:")
+    for level, count in stats.get("by_risk_level", {}).items():
+        console.print(f"    {level}: {count}")
+    console.print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="threatlens",
@@ -340,6 +397,11 @@ def main():
     repo_p = subparsers.add_parser("repo", help="Scan a GitHub repository")
     repo_p.add_argument("url", help="GitHub repository URL")
 
+    lookup_p = subparsers.add_parser("lookup", help="Look up a file by SHA256 hash in cache")
+    lookup_p.add_argument("hash", help="SHA256 hash (full or prefix)")
+
+    stats_p = subparsers.add_parser("stats", help="Show cache statistics")
+
     args = parser.parse_args()
 
     if args.command == "scan":
@@ -349,6 +411,10 @@ def main():
             scan_file(args.target, use_ai=args.ai, ai_provider=args.provider, format=args.format)
     elif args.command == "repo":
         _scan_repo(args.url)
+    elif args.command == "lookup":
+        _lookup_hash(args.hash)
+    elif args.command == "stats":
+        _show_stats()
     else:
         parser.print_help()
 

@@ -112,6 +112,29 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
         os.unlink(tmp_path)
 
 
+@app.get("/api/lookup/{sha256}")
+async def api_lookup(sha256: str):
+    """Look up a previously scanned file by SHA256 hash."""
+    from threatlens.cache import get_cache
+    result = get_cache().get(sha256)
+    if result:
+        return JSONResponse(result)
+
+    # Try prefix search
+    results = get_cache().search(sha256)
+    if results:
+        return JSONResponse({"matches": results})
+
+    raise HTTPException(status_code=404, detail="Hash not found in cache")
+
+
+@app.get("/api/stats")
+async def api_stats():
+    """Cache statistics."""
+    from threatlens.cache import get_cache
+    return JSONResponse(get_cache().get_stats())
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open(os.path.join(TEMPLATES_DIR, "index.html"), "r", encoding="utf-8") as f:
