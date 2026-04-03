@@ -9,3 +9,5 @@ tests/samples/*.exe
 tests/samples/*.dll
 .idea/
 .vscode/
+# Community YARA rules (downloaded separately)
+threatlens/rules/yara_community/
