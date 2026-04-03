@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "threatlens"
+version = "0.1.0"
+description = "AI-Powered File Threat Analyzer — explains what suspicious files do in human language"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Maxim Melnikov", email = "maxmelnikov@example.com"},
+]
+keywords = ["security", "malware", "analysis", "yara", "threat", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+dependencies = [
+    "pefile>=2024.8.26",
+    "httpx>=0.28.0",
+    "python-dotenv>=1.0.1",
+    "rich>=14.0.0",
+]
+
+[project.optional-dependencies]
+yara = ["yara-python>=4.5.0"]
+office = ["oletools>=0.60.0"]
+web = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "python-multipart>=0.0.12"]
+all = ["yara-python>=4.5.0", "oletools>=0.60.0", "fastapi>=0.115.0", "uvicorn>=0.32.0", "python-multipart>=0.0.12"]
+
+[project.scripts]
+threatlens = "threatlens.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/MaximkaVLG/threatlens"
+Repository = "https://github.com/MaximkaVLG/threatlens"
+Issues = "https://github.com/MaximkaVLG/threatlens/issues"
+
+[tool.setuptools.packages.find]
+include = ["threatlens*"]
