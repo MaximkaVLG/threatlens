@@ -36,18 +36,27 @@ if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
+_rate_limit_last_sweep = 0.0
+
+
 def _check_rate_limit(client_ip: str) -> bool:
     """Check if client has exceeded rate limit."""
+    global _rate_limit_last_sweep
     now = time.time()
-    # Clean old entries and remove stale IPs to prevent memory leak
-    timestamps = [t for t in _rate_limits[client_ip] if now - t < RATE_LIMIT_WINDOW]
-    if not timestamps:
-        _rate_limits.pop(client_ip, None)
-    else:
-        _rate_limits[client_ip] = timestamps
-    if len(_rate_limits.get(client_ip, [])) >= RATE_LIMIT_MAX:
+
+    # Sweep ALL stale IPs every 5 minutes to prevent unbounded growth
+    if now - _rate_limit_last_sweep > 300:
+        _rate_limit_last_sweep = now
+        stale = [ip for ip, ts in _rate_limits.items() if not ts or now - ts[-1] > RATE_LIMIT_WINDOW]
+        for ip in stale:
+            del _rate_limits[ip]
+
+    # Clean current IP's old entries
+    timestamps = [t for t in _rate_limits.get(client_ip, []) if now - t < RATE_LIMIT_WINDOW]
+    if len(timestamps) >= RATE_LIMIT_MAX:
         return False
-    _rate_limits[client_ip].append(now)
+    timestamps.append(now)
+    _rate_limits[client_ip] = timestamps
     return True
 
 

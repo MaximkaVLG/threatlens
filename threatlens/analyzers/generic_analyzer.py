@@ -34,7 +34,6 @@ class GenericAnalysis:
     file_paths: list = field(default_factory=list)
     registry_keys: list = field(default_factory=list)
     suspicious_strings: list = field(default_factory=list)
-    all_strings: list = field(default_factory=list)
 
     # Magic bytes
     magic_bytes: str = ""

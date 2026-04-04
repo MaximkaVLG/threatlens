@@ -132,76 +132,77 @@ def _analyze_vba(file_path: str, result: OfficeAnalysis):
         logger.debug("VBA parser error: %s", e)
         return
 
-    if not vba_parser.detect_vba_macros():
-        result.has_macros = False
-        return
-
-    result.has_macros = True
-    result.has_vba = True
-    result.findings.append("[obfuscation] Document contains VBA macros")
-
     try:
-        for (filename, stream_path, vba_filename, vba_code) in vba_parser.extract_macros():
-            result.vba_modules.append({
-                "filename": vba_filename,
-                "stream": stream_path,
-                "code_length": len(vba_code),
-            })
-            result.vba_code_size += len(vba_code)
+        if not vba_parser.detect_vba_macros():
+            result.has_macros = False
+            return
 
-            # Check for suspicious patterns
-            for category, patterns in SUSPICIOUS_VBA.items():
-                for pattern in patterns:
-                    matches = re.findall(pattern, vba_code, re.IGNORECASE)
-                    if matches:
-                        result.suspicious_vba.append({
-                            "category": category,
-                            "pattern": pattern,
-                            "match": matches[0][:80] if matches else "",
-                            "module": vba_filename,
-                        })
+        result.has_macros = True
+        result.has_vba = True
+        result.findings.append("[obfuscation] Document contains VBA macros")
 
-                        if category == "auto_execution":
-                            result.auto_execution = True
-                            result.findings.append(
-                                f"[persistence] Auto-execution macro: {matches[0]} in {vba_filename}"
-                            )
-                        elif category == "shell_execution":
-                            result.findings.append(
-                                f"[injection] Shell/command execution in macro: {matches[0][:60]}"
-                            )
-                        elif category == "network":
-                            result.findings.append(
-                                f"[network] Network access in macro: {matches[0][:60]}"
-                            )
-                        elif category == "obfuscation":
-                            result.findings.append(
-                                f"[obfuscation] Obfuscation technique in macro: {pattern}"
-                            )
-                        elif category == "process_injection":
-                            result.findings.append(
-                                f"[injection] Process injection in macro: {matches[0]}"
-                            )
-                        elif category == "persistence":
-                            result.findings.append(
-                                f"[persistence] Persistence mechanism in macro: {matches[0][:60]}"
-                            )
-                        elif category == "file_operations":
-                            result.findings.append(
-                                f"[file_operations] File operation in macro: {matches[0][:60]}"
-                            )
-                        break  # One finding per category per module
+        try:
+            for (filename, stream_path, vba_filename, vba_code) in vba_parser.extract_macros():
+                result.vba_modules.append({
+                    "filename": vba_filename,
+                    "stream": stream_path,
+                    "code_length": len(vba_code),
+                })
+                result.vba_code_size += len(vba_code)
 
-    except Exception as e:
-        logger.debug("VBA extraction error: %s", e)
+                # Check for suspicious patterns
+                for category, patterns in SUSPICIOUS_VBA.items():
+                    for pattern in patterns:
+                        matches = re.findall(pattern, vba_code, re.IGNORECASE)
+                        if matches:
+                            result.suspicious_vba.append({
+                                "category": category,
+                                "pattern": pattern,
+                                "match": matches[0][:80] if matches else "",
+                                "module": vba_filename,
+                            })
 
-    if result.auto_execution:
-        result.findings.insert(0,
-            "[persistence] DANGER: Document has auto-executing macros — "
-            "code runs automatically when opened!"
-        )
+                            if category == "auto_execution":
+                                result.auto_execution = True
+                                result.findings.append(
+                                    f"[persistence] Auto-execution macro: {matches[0]} in {vba_filename}"
+                                )
+                            elif category == "shell_execution":
+                                result.findings.append(
+                                    f"[injection] Shell/command execution in macro: {matches[0][:60]}"
+                                )
+                            elif category == "network":
+                                result.findings.append(
+                                    f"[network] Network access in macro: {matches[0][:60]}"
+                                )
+                            elif category == "obfuscation":
+                                result.findings.append(
+                                    f"[obfuscation] Obfuscation technique in macro: {pattern}"
+                                )
+                            elif category == "process_injection":
+                                result.findings.append(
+                                    f"[injection] Process injection in macro: {matches[0]}"
+                                )
+                            elif category == "persistence":
+                                result.findings.append(
+                                    f"[persistence] Persistence mechanism in macro: {matches[0][:60]}"
+                                )
+                            elif category == "file_operations":
+                                result.findings.append(
+                                    f"[file_operations] File operation in macro: {matches[0][:60]}"
+                                )
+                            break  # One finding per category per module
 
-    vba_parser.close()
+        except Exception as e:
+            logger.debug("VBA extraction error: %s", e)
+
+        if result.auto_execution:
+            result.findings.insert(0,
+                "[persistence] DANGER: Document has auto-executing macros — "
+                "code runs automatically when opened!"
+            )
+    finally:
+        vba_parser.close()
 
 
 def _analyze_ole(file_path: str, result: OfficeAnalysis):
