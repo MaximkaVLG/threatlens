@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThreatLens — AI File Threat Analyzer</title>
+    <title>ThreatLens — AI-анализатор угроз</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Consolas, monospace; background: #0a0a0a; color: #e0e0e0; min-height: 100vh; }
@@ -26,7 +26,6 @@
         .options { display: flex; gap: 15px; margin-bottom: 30px; align-items: center; justify-content: center; }
         .options label { color: #888; cursor: pointer; }
         .options input[type=checkbox] { accent-color: #00d4ff; }
-        .options select { background: #1a1a1a; color: #e0e0e0; border: 1px solid #333; padding: 5px 10px; border-radius: 6px; }
 
         .btn { background: #00d4ff; color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; }
         .btn:hover { background: #00b8e6; }
@@ -77,23 +76,23 @@
 <body>
 <div class="container">
     <h1><span>Threat</span>Lens</h1>
-    <p class="subtitle">AI-Powered File Threat Analyzer</p>
+    <p class="subtitle">AI-анализатор файловых угроз</p>
 
     <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
         <div class="icon">&#128270;</div>
-        <p>Drop a file here or click to upload</p>
-        <p style="font-size: 0.8em; margin-top: 8px; color: #555;">Supports: .exe .dll .py .js .ps1 .bat .zip .docx and more</p>
+        <p>Перетащите файл сюда или нажмите для загрузки</p>
+        <p style="font-size: 0.8em; margin-top: 8px; color: #555;">Поддерживает: .exe .dll .py .js .ps1 .bat .zip .docx и другие</p>
     </div>
     <input type="file" id="fileInput" style="display:none">
 
     <div class="options">
-        <label><input type="checkbox" id="useAI"> Enable AI Explanation (YandexGPT)</label>
-        <button class="btn" id="scanBtn" disabled onclick="scanFile()">Scan File</button>
+        <label><input type="checkbox" id="useAI"> AI-объяснение (YandexGPT)</label>
+        <button class="btn" id="scanBtn" disabled onclick="scanFile()">Сканировать</button>
     </div>
 
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <p style="margin-top: 15px;">Analyzing file...</p>
+        <p style="margin-top: 15px;">Анализ файла...</p>
     </div>
 
     <div id="result"></div>
@@ -118,10 +117,34 @@ fileInput.addEventListener('change', () => { selectedFile = fileInput.files[0]; 
 
 function updateUI() {
     if (selectedFile) {
-        dropZone.innerHTML = '<div class="icon">&#128196;</div><p>' + selectedFile.name + ' (' + (selectedFile.size / 1024).toFixed(1) + ' KB)</p>';
+        dropZone.innerHTML = '<div class="icon">&#128196;</div><p>' + selectedFile.name + ' (' + (selectedFile.size / 1024).toFixed(1) + ' КБ)</p>';
         scanBtn.disabled = false;
     }
 }
+
+const RISK_LABELS = { LOW: 'НИЗКИЙ', MEDIUM: 'СРЕДНИЙ', HIGH: 'ВЫСОКИЙ', CRITICAL: 'КРИТИЧЕСКИЙ' };
+const SUMMARY_RU = {
+    'This file is almost certainly malicious.': 'Этот файл почти наверняка вредоносный.',
+    'This file shows strong indicators of malicious behavior.': 'Файл демонстрирует явные признаки вредоносного поведения.',
+    'This file contains suspicious elements that warrant caution.': 'Файл содержит подозрительные элементы, требующие осторожности.',
+    'This file appears to be low risk, but always exercise caution.': 'Файл выглядит безопасным, но всегда соблюдайте осторожность.',
+};
+const REC_RU = {
+    'DELETE this file immediately': 'УДАЛИТЕ этот файл немедленно',
+    'Do NOT execute it under any circumstances': 'НЕ запускайте его ни при каких обстоятельствах',
+    'If already executed: change all passwords, run full antivirus scan': 'Если уже запускали: смените все пароли, запустите полную проверку антивирусом',
+    'Check for unauthorized processes in Task Manager': 'Проверьте диспетчер задач на наличие подозрительных процессов',
+    'Do not execute this file': 'Не запускайте этот файл',
+    'Consider deleting it': 'Рекомендуется удалить',
+    'If you must use it, run in a virtual machine only': 'Если необходимо использовать — только в виртуальной машине',
+    'Proceed with caution': 'Действуйте с осторожностью',
+    'Verify the source of this file': 'Проверьте источник файла',
+    'Consider running in a sandbox before execution': 'Перед запуском рекомендуется проверить в песочнице',
+    'File appears safe based on static analysis': 'По результатам статического анализа файл выглядит безопасным',
+    'Dynamic behavior may differ — use caution with unknown sources': 'Поведение при запуске может отличаться — будьте осторожны с файлами из неизвестных источников',
+};
+
+function tr(text, dict) { return dict[text] || text; }
 
 async function scanFile() {
     if (!selectedFile) return;
@@ -139,7 +162,7 @@ async function scanFile() {
         const data = await resp.json();
         renderResult(data);
     } catch (err) {
-        document.getElementById('result').innerHTML = '<p style="color:red;">Error: ' + err.message + '</p>';
+        document.getElementById('result').innerHTML = '<p style="color:red;">Ошибка: ' + err.message + '</p>';
         document.getElementById('result').style.display = 'block';
     }
 
@@ -149,24 +172,25 @@ async function scanFile() {
 
 function renderResult(data) {
     const scoreColor = data.risk_level === 'CRITICAL' ? '#ff1744' : data.risk_level === 'HIGH' ? '#f44336' : data.risk_level === 'MEDIUM' ? '#ff9800' : '#4caf50';
+    const riskLabel = RISK_LABELS[data.risk_level] || data.risk_level;
 
-    let html = '<div class="section-title">File Information</div>';
+    let html = '<div class="section-title">Информация о файле</div>';
     html += '<table class="info-table">';
-    html += '<tr><td>File</td><td>' + data.file + '</td></tr>';
-    html += '<tr><td>Size</td><td>' + data.size.toLocaleString() + ' bytes</td></tr>';
-    html += '<tr><td>Type</td><td>' + data.type + '</td></tr>';
+    html += '<tr><td>Файл</td><td>' + data.file + '</td></tr>';
+    html += '<tr><td>Размер</td><td>' + data.size.toLocaleString() + ' байт</td></tr>';
+    html += '<tr><td>Тип</td><td>' + data.type + '</td></tr>';
     html += '<tr><td>MD5</td><td class="hash">' + data.md5 + '</td></tr>';
     html += '<tr><td>SHA256</td><td class="hash">' + data.sha256 + '</td></tr>';
-    html += '<tr><td>Entropy</td><td>' + data.entropy + ' (' + data.entropy_verdict + ')</td></tr>';
+    html += '<tr><td>Энтропия</td><td>' + data.entropy + ' (' + data.entropy_verdict + ')</td></tr>';
     html += '</table>';
 
     html += '<div style="text-align:center">';
-    html += '<div class="risk-badge risk-' + data.risk_level + '">' + data.risk_level + ' (' + data.risk_score + '/100)</div>';
+    html += '<div class="risk-badge risk-' + data.risk_level + '">' + riskLabel + ' (' + data.risk_score + '/100)</div>';
     html += '<div class="score-bar"><div class="score-fill" style="width:' + data.risk_score + '%;background:' + scoreColor + '"></div></div>';
-    html += '<p>' + data.summary + '</p></div>';
+    html += '<p>' + tr(data.summary, SUMMARY_RU) + '</p></div>';
 
     if (data.findings && data.findings.length > 0) {
-        html += '<div class="section-title">Findings (' + data.findings.length + ')</div>';
+        html += '<div class="section-title">Находки (' + data.findings.length + ')</div>';
         html += '<ul class="findings">';
         data.findings.forEach(f => {
             let cls = '';
@@ -179,13 +203,13 @@ function renderResult(data) {
     }
 
     if (data.ai_explanation) {
-        html += '<div class="ai-box"><h3>AI Explanation</h3>' + data.ai_explanation + '</div>';
+        html += '<div class="ai-box"><h3>AI-анализ (YandexGPT)</h3>' + data.ai_explanation + '</div>';
     }
 
     if (data.recommendations && data.recommendations.length > 0) {
-        html += '<div class="section-title">Recommendations</div>';
+        html += '<div class="section-title">Рекомендации</div>';
         html += '<ul class="recommendations">';
-        data.recommendations.forEach(r => html += '<li>&gt; ' + r + '</li>');
+        data.recommendations.forEach(r => html += '<li>&gt; ' + tr(r, REC_RU) + '</li>');
         html += '</ul>';
     }
 
