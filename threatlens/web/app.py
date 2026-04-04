@@ -158,6 +158,13 @@ async def api_stats():
     return JSONResponse(get_cache().get_stats())
 
 
+@app.get("/api/history")
+async def api_history(limit: int = 50):
+    """Get recent scan history."""
+    from threatlens.cache import get_cache
+    return JSONResponse(get_cache().get_history(limit=min(limit, 200)))
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open(os.path.join(TEMPLATES_DIR, "index.html"), "r", encoding="utf-8") as f:

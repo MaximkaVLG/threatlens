@@ -187,6 +187,21 @@ class AnalysisCache:
             ).fetchall()
             return [dict(r) for r in rows]
 
+    def get_history(self, limit: int = 50) -> list[dict]:
+        """Get recent scan history sorted by last activity."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                """SELECT sha256, file_name, file_size, file_type,
+                          risk_score, risk_level, heuristic_type,
+                          scan_count, created_at
+                   FROM scan_cache
+                   ORDER BY created_at DESC
+                   LIMIT ?""",
+                (limit,)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
 
 # Global cache instance
 _cache = None

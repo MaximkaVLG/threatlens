@@ -7,31 +7,70 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+
+<nav class="nav">
+    <div class="nav-brand" onclick="showPage('scan')"><span>Threat</span>Lens</div>
+    <div class="nav-links">
+        <a class="nav-link active" data-page="scan" onclick="showPage('scan')">Сканировать</a>
+        <a class="nav-link" data-page="history" onclick="showPage('history')">История</a>
+        <a class="nav-link" data-page="lookup" onclick="showPage('lookup')">Поиск по хешу</a>
+        <a class="nav-link" data-page="stats" onclick="showPage('stats')">Статистика</a>
+    </div>
+</nav>
+
 <div class="container">
-    <h1><span>Threat</span>Lens</h1>
-    <p class="subtitle">AI-анализатор файловых угроз</p>
 
-    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <div class="icon">&#128270;</div>
-        <p>Перетащите файл сюда или нажмите для загрузки</p>
-        <p style="font-size: 0.8em; margin-top: 8px; color: #555;">Поддерживает: .exe .dll .py .js .ps1 .bat .zip .docx и другие</p>
+    <!-- SCAN PAGE -->
+    <div id="page-scan" class="page active">
+        <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="icon">&#128270;</div>
+            <p>Перетащите файл сюда или нажмите для загрузки</p>
+            <p style="font-size: 0.8em; margin-top: 8px; color: #555;">Поддерживает: .exe .dll .py .js .ps1 .bat .zip .docx и другие</p>
+        </div>
+        <input type="file" id="fileInput" style="display:none">
+
+        <div class="options">
+            <label><input type="checkbox" id="useAI"> AI-объяснение (YandexGPT)</label>
+            <button class="btn" id="scanBtn" disabled onclick="scanFile()">Сканировать</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px;">Анализ файла...</p>
+        </div>
+
+        <div id="result"></div>
     </div>
-    <input type="file" id="fileInput" style="display:none">
 
-    <div class="options">
-        <label><input type="checkbox" id="useAI"> AI-объяснение (YandexGPT)</label>
-        <button class="btn" id="scanBtn" disabled onclick="scanFile()">Сканировать</button>
+    <!-- HISTORY PAGE -->
+    <div id="page-history" class="page">
+        <h2 class="page-title">История сканирований</h2>
+        <div id="historyList" class="history-list">
+            <p class="loading-text">Загрузка...</p>
+        </div>
     </div>
 
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p style="margin-top: 15px;">Анализ файла...</p>
+    <!-- LOOKUP PAGE -->
+    <div id="page-lookup" class="page">
+        <h2 class="page-title">Поиск по SHA256</h2>
+        <div class="search-box">
+            <input type="text" id="lookupInput" placeholder="Введите SHA256 хеш (полный или начало)" maxlength="64">
+            <button class="btn" onclick="lookupHash()">Найти</button>
+        </div>
+        <div id="lookupResult"></div>
     </div>
 
-    <div id="result"></div>
+    <!-- STATS PAGE -->
+    <div id="page-stats" class="page">
+        <h2 class="page-title">Статистика</h2>
+        <div id="statsContent">
+            <p class="loading-text">Загрузка...</p>
+        </div>
+    </div>
+
 </div>
 
-<footer>ThreatLens &copy; 2026 | github.com/MaximkaVLG/threatlens</footer>
+<footer>ThreatLens &copy; 2026 | <a href="https://github.com/MaximkaVLG/threatlens" style="color:#00d4ff">GitHub</a></footer>
 
 <script src="/static/app.js"></script>
 </body>
