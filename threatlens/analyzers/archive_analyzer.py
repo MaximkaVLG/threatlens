@@ -58,48 +58,27 @@ class ArchiveAnalysis:
     has_nested_archives: bool = False
 
     # Full scan results for each extracted file
-    file_scan_results: list[dict] = field(default_factory=dict)
+    file_scan_results: list[dict] = field(default_factory=list)
 
     findings: list = field(default_factory=list)
 
 
 def _scan_extracted_file(file_path: str, original_name: str) -> dict:
-    """Run full ThreatLens analysis on an extracted file."""
-    from threatlens.analyzers import generic_analyzer, pe_analyzer, script_analyzer
-    from threatlens.scoring.threat_scorer import calculate_score
-    from threatlens.rules.signatures import scan as yara_scan
-    from threatlens.ai.explanations import generate_explanation
+    """Run full ThreatLens analysis on an extracted file (including heuristics)."""
+    from threatlens.core import analyze_file
 
-    generic = generic_analyzer.analyze(file_path)
-    all_findings = list(generic.findings)
-
-    pe = None
-    if generic.detected_type.startswith("PE") or file_path.lower().endswith((".exe", ".dll")):
-        pe = pe_analyzer.analyze(file_path)
-        all_findings.extend(pe.findings)
-
-    script = None
-    ext = os.path.splitext(file_path)[1].lower()
-    if ext in script_analyzer.SCRIPT_EXTENSIONS:
-        script = script_analyzer.analyze(file_path)
-        all_findings.extend(script.findings)
-
-    yara_result = yara_scan(file_path)
-    all_findings.extend(yara_result.findings)
-
-    score = calculate_score(all_findings, generic, pe, script)
-    explanation = generate_explanation(score.categories, lang="ru")
+    result = analyze_file(file_path, use_cache=False)
 
     return {
         "file": original_name,
-        "size": generic.file_size,
-        "type": generic.file_type,
-        "md5": generic.md5,
-        "risk_score": score.score,
-        "risk_level": score.level,
-        "findings": all_findings,
-        "explanation": explanation,
-        "recommendations": score.recommendations,
+        "size": result.size,
+        "type": result.file_type,
+        "md5": result.md5,
+        "risk_score": result.risk_score,
+        "risk_level": result.risk_level,
+        "findings": result.findings,
+        "explanation": result.explanation,
+        "recommendations": result.recommendations,
     }
 
 
@@ -138,12 +117,17 @@ def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
         result.findings.append("Corrupted or invalid ZIP file")
         return result
 
+    with zf:
+        return _analyze_zip_inner(zf, file_path, result, max_extract_size)
+
+
+def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+    """Inner ZIP analysis (zf is guaranteed to be closed by caller)."""
     # Check if password protected
     for info in zf.infolist():
         if info.flag_bits & 0x1:
             result.is_password_protected = True
             result.findings.append("Archive is password-protected (cannot analyze contents)")
-            zf.close()
             return result
 
     # List all files
@@ -186,7 +170,16 @@ def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
         result.findings.append(
             f"Archive too large to extract safely ({total_uncompressed // (1024*1024)} MB)"
         )
-        zf.close()
+        return result
+
+    # Archive bomb detection: check compression ratio
+    compressed_size = os.path.getsize(file_path)
+    if compressed_size > 0 and total_uncompressed / compressed_size > 100:
+        result.findings.append(
+            f"[evasion] Possible archive bomb: compression ratio "
+            f"{total_uncompressed / compressed_size:.0f}:1 "
+            f"({compressed_size} bytes -> {total_uncompressed} bytes)"
+        )
         return result
 
     # Extract and scan each file (with Zip Slip protection)

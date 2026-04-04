@@ -53,11 +53,15 @@ def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
     from threatlens.rules.signatures import scan as yara_scan
     from threatlens.ai.explanations import generate_explanation
 
+    # Read file once, reuse for cache check and analysis
+    with open(file_path, "rb") as f:
+        file_data = f.read()
+
+    sha256 = _hashlib.sha256(file_data).hexdigest()
+
     # Check cache by SHA256
     if use_cache:
         try:
-            with open(file_path, "rb") as f:
-                sha256 = _hashlib.sha256(f.read()).hexdigest()
             from threatlens.cache import get_cache
             cached = get_cache().get(sha256)
             if cached:
@@ -80,8 +84,8 @@ def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
     scan_start = _time.time()
     result = AnalysisResult(file=os.path.basename(file_path))
 
-    # Generic (all files)
-    generic = generic_analyzer.analyze(file_path)
+    # Generic (all files) — pass pre-read data to avoid double read
+    generic = generic_analyzer.analyze(file_path, data=file_data)
     all_findings = list(generic.findings)
     result.generic_analysis = generic
     result.size = generic.file_size

@@ -65,23 +65,20 @@ def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
     if result.pe_analysis and result.pe_analysis.is_pe:
         print_pe_info(result.pe_analysis)
 
-    # Create score-like object for print_risk
+    # print_risk expects an object with score/level/summary attributes
     class _Score:
         pass
     score = _Score()
     score.score = result.risk_score
     score.level = result.risk_level
     score.summary = result.summary
-    score.categories = {}
 
     print_risk(score)
     print_findings(result.findings)
 
-    # Built-in explanation (always works, no AI needed)
-    from threatlens.ai.explanations import generate_explanation
-    builtin_explanation = generate_explanation(score.categories, lang="ru")
-    if builtin_explanation:
-        print_ai_explanation(builtin_explanation)
+    # Built-in explanation (computed in core.py from real categories)
+    if result.explanation:
+        print_ai_explanation(result.explanation)
 
     # Optional: LLM explanation for deeper analysis
     if use_ai:
@@ -91,13 +88,13 @@ def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
 
         provider = get_provider()
         prompt = THREAT_EXPLANATION_PROMPT.format(
-            findings="\n".join(f"- {f}" for f in all_findings) or "No findings",
-            filename=generic.file_name,
-            filetype=generic.file_type,
-            filesize=f"{generic.file_size:,} bytes",
-            risk_score=score.score,
-            risk_level=score.level,
-            categories=", ".join(score.categories.keys()) or "none",
+            findings="\n".join(f"- {f}" for f in result.findings) or "No findings",
+            filename=result.file,
+            filetype=result.file_type,
+            filesize=f"{result.size:,} bytes",
+            risk_score=result.risk_score,
+            risk_level=result.risk_level,
+            categories=", ".join(f for f in result.findings if f.startswith("[")) or "none",
         )
         explanation = provider.explain(prompt)
         from threatlens.output.colors import Panel
@@ -107,7 +104,7 @@ def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
             border_style="magenta", padding=(1, 2),
         ))
 
-    print_recommendations(score.recommendations)
+    print_recommendations(result.recommendations)
     console.print()
 
 

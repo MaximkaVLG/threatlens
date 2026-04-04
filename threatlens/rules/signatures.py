@@ -123,7 +123,8 @@ def _compile_all_rules():
                 logger.error("YARA compile failed: %s", e)
 
         if failed:
-            logger.debug("YARA: skipped %d rule files with errors", len(failed))
+            logger.warning("YARA: skipped %d rule files with errors: %s",
+                           len(failed), ", ".join(os.path.basename(f) for f in failed))
 
     _compiled_rules = compiled
     return compiled

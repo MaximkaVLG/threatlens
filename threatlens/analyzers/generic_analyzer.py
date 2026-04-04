@@ -43,6 +43,9 @@ class GenericAnalysis:
     findings: list = field(default_factory=list)
 
 
+# File types where high entropy is expected (not suspicious)
+COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image", "PDF document"}
+
 # Magic bytes signatures
 MAGIC_SIGNATURES = {
     b"MZ": "PE executable (Windows)",
@@ -191,13 +194,13 @@ def detect_file_type(data: bytes) -> str:
     return "unknown"
 
 
-def analyze(file_path: str) -> GenericAnalysis:
-    """Perform generic analysis on any file."""
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    with open(file_path, "rb") as f:
-        data = f.read()
+def analyze(file_path: str, data: bytes = None) -> GenericAnalysis:
+    """Perform generic analysis on any file. Pass data to avoid re-reading."""
+    if data is None:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        with open(file_path, "rb") as f:
+            data = f.read()
 
     result = GenericAnalysis(
         file_path=file_path,
@@ -216,8 +219,7 @@ def analyze(file_path: str) -> GenericAnalysis:
     result.file_type = result.detected_type
 
     # Known compressed/media formats where high entropy is normal
-    _COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image"}
-    is_compressed_type = result.detected_type in _COMPRESSED_TYPES
+    is_compressed_type = result.detected_type in COMPRESSED_TYPES
 
     # Entropy
     result.entropy = calculate_entropy(data)
@@ -229,7 +231,7 @@ def analyze(file_path: str) -> GenericAnalysis:
             result.entropy_verdict = "encrypted/packed"
             result.findings.append(f"Very high entropy ({result.entropy}) — likely encrypted or packed")
     elif result.entropy > 6.5:
-        result.entropy_verdict = "compressed"
+        result.entropy_verdict = "compressed" if is_compressed_type else "elevated"
     else:
         result.entropy_verdict = "normal"
 

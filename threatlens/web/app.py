@@ -4,13 +4,20 @@ Security: file size limit, rate limiting, safe temp file handling.
 """
 
 import os
+import re
 import time
+import asyncio
+import logging
 import tempfile
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+
+_SHA256_RE = re.compile(r"^[0-9a-fA-F]{1,64}$")
 
 app = FastAPI(title="ThreatLens", description="AI-Powered File Threat Analyzer")
 
@@ -32,9 +39,13 @@ if os.path.exists(STATIC_DIR):
 def _check_rate_limit(client_ip: str) -> bool:
     """Check if client has exceeded rate limit."""
     now = time.time()
-    # Clean old entries
-    _rate_limits[client_ip] = [t for t in _rate_limits[client_ip] if now - t < RATE_LIMIT_WINDOW]
-    if len(_rate_limits[client_ip]) >= RATE_LIMIT_MAX:
+    # Clean old entries and remove stale IPs to prevent memory leak
+    timestamps = [t for t in _rate_limits[client_ip] if now - t < RATE_LIMIT_WINDOW]
+    if not timestamps:
+        _rate_limits.pop(client_ip, None)
+    else:
+        _rate_limits[client_ip] = timestamps
+    if len(_rate_limits.get(client_ip, [])) >= RATE_LIMIT_MAX:
         return False
     _rate_limits[client_ip].append(now)
     return True
@@ -71,7 +82,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
 
     try:
         from threatlens.core import analyze_file
-        result = analyze_file(tmp_path)
+        result = await asyncio.to_thread(analyze_file, tmp_path)
 
         # AI explanation (optional)
         ai_explanation = ""
@@ -89,7 +100,8 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
                 )
                 ai_explanation = prov.explain(prompt)
             except Exception as e:
-                ai_explanation = f"AI error: {e}"
+                logger.error("AI provider error: %s", e)
+                ai_explanation = "AI explanation unavailable. Try again later."
 
         return JSONResponse({
             "file": file.filename,
@@ -115,6 +127,8 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
 @app.get("/api/lookup/{sha256}")
 async def api_lookup(sha256: str):
     """Look up a previously scanned file by SHA256 hash."""
+    if not _SHA256_RE.match(sha256):
+        raise HTTPException(status_code=400, detail="Invalid SHA256 format (expected 1-64 hex characters)")
     from threatlens.cache import get_cache
     result = get_cache().get(sha256)
     if result:

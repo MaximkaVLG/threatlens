@@ -12,6 +12,7 @@ import tempfile
 import subprocess
 import logging
 from dataclasses import dataclass, field
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,27 @@ class RepoAnalysis:
     safe_files: int = 0
 
     findings: list = field(default_factory=list)
+
+
+ALLOWED_HOSTS = {"github.com", "gitlab.com", "bitbucket.org"}
+
+
+def _validate_repo_url(url: str) -> str | None:
+    """Validate repository URL. Returns error message or None if valid."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return "Invalid URL format"
+    if parsed.scheme not in ("https",):
+        return f"Only HTTPS URLs are allowed (got {parsed.scheme!r})"
+    if not parsed.hostname:
+        return "URL has no hostname"
+    hostname = parsed.hostname.lower()
+    if hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
+        return "Loopback/local addresses are not allowed"
+    if hostname not in ALLOWED_HOSTS:
+        return f"Host {hostname!r} is not in allowed list: {', '.join(sorted(ALLOWED_HOSTS))}"
+    return None
 
 
 def _clone_repo(url: str, dest: str) -> bool:
@@ -173,6 +195,11 @@ def analyze(repo_url: str) -> RepoAnalysis:
         repo_name=_parse_repo_url(repo_url),
     )
 
+    url_error = _validate_repo_url(repo_url)
+    if url_error:
+        result.findings.append(f"Invalid repository URL: {url_error}")
+        return result
+
     tmp_dir = tempfile.mkdtemp(prefix="threatlens_repo_")
 
     try:
@@ -221,8 +248,7 @@ def analyze(repo_url: str) -> RepoAnalysis:
                     result.safe_files += 1
 
             except Exception as e:
-                logger.debug("Error scanning %s: %s", rel_path, e)
-                result.safe_files += 1
+                logger.warning("Error scanning %s: %s", rel_path, e)
 
         # Summary
         if result.dangerous_files:

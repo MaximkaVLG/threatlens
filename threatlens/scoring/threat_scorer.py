@@ -48,11 +48,10 @@ def calculate_score(findings: list[str], generic_analysis=None, pe_analysis=None
                 category_hits[category] = category_hits.get(category, 0) + weight
 
     # Bonus points from specific indicators
-    # Known compressed types where high entropy is expected
-    _COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image"}
+    from threatlens.analyzers.generic_analyzer import COMPRESSED_TYPES
 
     if generic_analysis:
-        if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in _COMPRESSED_TYPES:
+        if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in COMPRESSED_TYPES:
             category_hits["packed"] = 15
 
     if pe_analysis:

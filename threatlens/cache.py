@@ -16,7 +16,19 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cache.db")
+def _default_cache_path() -> str:
+    """Determine cache DB path: env var > user cache dir > in-tree fallback."""
+    env_dir = os.environ.get("THREATLENS_CACHE_DIR")
+    if env_dir:
+        return os.path.join(env_dir, "cache.db")
+    # Platform-appropriate user cache directory
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+        return os.path.join(base, "threatlens", "cache.db")
+    return os.path.join(os.path.expanduser("~"), ".cache", "threatlens", "cache.db")
+
+
+DEFAULT_DB_PATH = _default_cache_path()
 
 
 class AnalysisCache:
@@ -24,7 +36,13 @@ class AnalysisCache:
 
     def __init__(self, db_path: str = None):
         self.db_path = db_path or DEFAULT_DB_PATH
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        try:
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        except OSError:
+            # Fall back to in-tree data/ if user cache dir is not writable
+            fallback = os.path.join(os.path.dirname(__file__), "..", "data", "cache.db")
+            os.makedirs(os.path.dirname(fallback), exist_ok=True)
+            self.db_path = fallback
         self._init_db()
 
     def _init_db(self):
@@ -109,11 +127,21 @@ class AnalysisCache:
 
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO scan_cache
+                INSERT INTO scan_cache
                 (sha256, file_name, file_size, file_type, risk_score, risk_level,
                  findings, explanation, recommendations, heuristic_type,
                  heuristic_confidence, yara_matches, scan_time)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(sha256) DO UPDATE SET
+                    risk_score=excluded.risk_score, risk_level=excluded.risk_level,
+                    findings=excluded.findings, explanation=excluded.explanation,
+                    recommendations=excluded.recommendations,
+                    heuristic_type=excluded.heuristic_type,
+                    heuristic_confidence=excluded.heuristic_confidence,
+                    yara_matches=excluded.yara_matches,
+                    scan_time=excluded.scan_time,
+                    scan_count=scan_count + 1,
+                    last_seen=CURRENT_TIMESTAMP
             """, (
                 sha256,
                 result.file if hasattr(result, "file") else result.get("file", ""),

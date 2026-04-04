@@ -1,12 +1,15 @@
 """YandexGPT AI provider for threat explanations."""
 
 import os
+import time
 import logging
 import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+IAM_TOKEN_TTL = 11 * 3600  # Re-acquire after 11 hours (tokens expire at 12h)
 
 
 class YandexGPTProvider:
@@ -16,9 +19,10 @@ class YandexGPTProvider:
         self.oauth_token = os.getenv("YANDEX_OAUTH_TOKEN", "")
         self.folder_id = os.getenv("YANDEX_CLOUD_FOLDER_ID", "")
         self._iam_token = None
+        self._iam_token_time = 0.0
 
     def _get_iam_token(self) -> str:
-        if self._iam_token:
+        if self._iam_token and (time.time() - self._iam_token_time) < IAM_TOKEN_TTL:
             return self._iam_token
         r = httpx.post(
             "https://iam.api.cloud.yandex.net/iam/v1/tokens",
@@ -27,6 +31,7 @@ class YandexGPTProvider:
         )
         r.raise_for_status()
         self._iam_token = r.json()["iamToken"]
+        self._iam_token_time = time.time()
         return self._iam_token
 
     def explain(self, prompt: str) -> str:
@@ -51,6 +56,12 @@ class YandexGPTProvider:
             return f"[AI error: {e}]"
 
 
-def get_provider(name: str = None) -> YandexGPTProvider:
-    """Get AI provider (YandexGPT)."""
-    return YandexGPTProvider()
+_provider_instance = None
+
+
+def get_provider() -> YandexGPTProvider:
+    """Get AI provider singleton (YandexGPT). IAM token is cached across calls."""
+    global _provider_instance
+    if _provider_instance is None:
+        _provider_instance = YandexGPTProvider()
+    return _provider_instance

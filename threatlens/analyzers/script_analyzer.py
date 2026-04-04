@@ -99,9 +99,10 @@ def analyze(file_path: str) -> ScriptAnalysis:
     result.is_script = True
     result.language = LANG_MAP.get(ext, "Unknown")
 
+    MAX_CONTENT_SIZE = 512 * 1024  # 512KB limit for regex analysis (ReDoS protection)
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            content = f.read()
+            content = f.read(MAX_CONTENT_SIZE)
     except Exception:
         result.findings.append("Could not read file as text")
         return result

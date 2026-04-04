@@ -149,9 +149,8 @@ def _extract_behaviors(generic_analysis, pe_analysis, script_analysis, findings:
 
     # From generic analysis
     if generic_analysis:
-        # High entropy only suspicious for non-compressed types
-        _COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image", "PDF document"}
-        if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in _COMPRESSED_TYPES:
+        from threatlens.analyzers.generic_analyzer import COMPRESSED_TYPES
+        if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in COMPRESSED_TYPES:
             behaviors.add("high_entropy")
         # URLs/IPs alone are not suspicious — many legit programs have them
         if len(generic_analysis.ip_addresses) >= 3:
