@@ -87,12 +87,7 @@
     <input type="file" id="fileInput" style="display:none">
 
     <div class="options">
-        <label><input type="checkbox" id="useAI"> Enable AI Explanation</label>
-        <select id="aiProvider">
-            <option value="ollama">Ollama (local)</option>
-            <option value="openai">OpenAI</option>
-            <option value="yandexgpt">YandexGPT</option>
-        </select>
+        <label><input type="checkbox" id="useAI"> Enable AI Explanation (YandexGPT)</label>
         <button class="btn" id="scanBtn" disabled onclick="scanFile()">Scan File</button>
     </div>
 
@@ -138,7 +133,6 @@ async function scanFile() {
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('ai', document.getElementById('useAI').checked);
-    formData.append('provider', document.getElementById('aiProvider').value);
 
     try {
         const resp = await fetch('/api/scan', { method: 'POST', body: formData });

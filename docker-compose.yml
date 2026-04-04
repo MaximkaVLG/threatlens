@@ -4,8 +4,8 @@ services:
     ports:
       - "8888:8888"
     environment:
-      - AI_PROVIDER=ollama
-      - OLLAMA_URL=http://ollama:11434
+      - YANDEX_OAUTH_TOKEN=${YANDEX_OAUTH_TOKEN:-}
+      - YANDEX_CLOUD_FOLDER_ID=${YANDEX_CLOUD_FOLDER_ID:-}
     volumes:
       # Mount scan directory for CLI usage
       - ./scans:/scans
@@ -20,19 +20,3 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=500M
-
-  # Optional: local AI for explanations
-  ollama:
-    image: ollama/ollama:latest
-    profiles: ["ai"]  # Only starts with: docker-compose --profile ai up
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        limits:
-          memory: 8G
-
-volumes:
-  ollama_data:

@@ -41,7 +41,7 @@ def _check_rate_limit(client_ip: str) -> bool:
 
 
 @app.post("/api/scan")
-async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Form(False), provider: str = Form("ollama")):
+async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Form(False)):
     """Scan uploaded file via API."""
     # Rate limiting
     client_ip = request.client.host if request.client else "unknown"
@@ -79,7 +79,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
             try:
                 from threatlens.ai.providers import get_provider
                 from threatlens.ai.prompts import THREAT_EXPLANATION_PROMPT
-                prov = get_provider(provider)
+                prov = get_provider()
                 prompt = THREAT_EXPLANATION_PROMPT.format(
                     findings="\n".join(f"- {f}" for f in result.findings[:20]) or "No findings",
                     filename=file.filename, filetype=result.file_type,

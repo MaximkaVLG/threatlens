@@ -2,8 +2,7 @@
 
 Usage:
     python -m threatlens scan <file>              # Basic analysis
-    python -m threatlens scan <file> --ai          # With AI explanation
-    python -m threatlens scan <file> --ai --provider openai
+    python -m threatlens scan <file> --ai          # With YandexGPT explanation
     python -m threatlens scan <dir> --recursive    # Scan directory
 """
 
@@ -17,7 +16,7 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger("threatlens")
 
 
-def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, format: str = "text"):
+def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
     """Analyze a single file."""
     from threatlens.output.colors import (
         console, print_header, print_file_info, print_risk,
@@ -36,7 +35,7 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
     from threatlens.analyzers import archive_analyzer
     ext = os.path.splitext(file_path)[1].lower()
     if ext in archive_analyzer.ARCHIVE_EXTENSIONS or file_path.lower().endswith((".zip", ".rar", ".7z")):
-        _scan_archive(file_path, use_ai, ai_provider, format, console)
+        _scan_archive(file_path, use_ai, format, console)
         return
 
     # Single entry point — no duplication
@@ -90,7 +89,7 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
         from threatlens.ai.providers import get_provider
         from threatlens.ai.prompts import THREAT_EXPLANATION_PROMPT
 
-        provider = get_provider(ai_provider or "yandexgpt")
+        provider = get_provider()
         prompt = THREAT_EXPLANATION_PROMPT.format(
             findings="\n".join(f"- {f}" for f in all_findings) or "No findings",
             filename=generic.file_name,
@@ -112,7 +111,7 @@ def scan_file(file_path: str, use_ai: bool = False, ai_provider: str = None, for
     console.print()
 
 
-def _scan_archive(file_path: str, use_ai: bool, ai_provider: str, format: str, console):
+def _scan_archive(file_path: str, use_ai: bool, format: str, console):
     """Scan archive and show per-file results."""
     from threatlens.analyzers.archive_analyzer import analyze as analyze_archive
     from threatlens.output.colors import (
@@ -389,8 +388,7 @@ def main():
 
     scan_p = subparsers.add_parser("scan", help="Scan a file or directory")
     scan_p.add_argument("target", help="File or directory to scan")
-    scan_p.add_argument("--ai", action="store_true", help="Enable AI-powered explanation")
-    scan_p.add_argument("--provider", default=None, help="AI provider (ollama/openai/yandexgpt)")
+    scan_p.add_argument("--ai", action="store_true", help="Enable YandexGPT explanation")
     scan_p.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     scan_p.add_argument("--recursive", action="store_true", help="Scan directory recursively")
 
@@ -406,9 +404,9 @@ def main():
 
     if args.command == "scan":
         if args.recursive or os.path.isdir(args.target):
-            scan_directory(args.target, use_ai=args.ai, ai_provider=args.provider, format=args.format)
+            scan_directory(args.target, use_ai=args.ai, format=args.format)
         else:
-            scan_file(args.target, use_ai=args.ai, ai_provider=args.provider, format=args.format)
+            scan_file(args.target, use_ai=args.ai, format=args.format)
     elif args.command == "repo":
         _scan_repo(args.url)
     elif args.command == "lookup":
