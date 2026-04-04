@@ -84,8 +84,9 @@ SUSPICIOUS_PATTERNS = {
         r"NtCreateThreadEx", r"QueueUserAPC", r"SetWindowsHookEx",
     ],
     "crypto": [
-        r"CryptEncrypt", r"CryptDecrypt", r"AES", r"RSA",
-        r"bitcoin", r"monero", r"ethereum", r"wallet",
+        r"CryptEncrypt", r"CryptDecrypt", r"CryptAcquireContext",
+        r"\bAES[-_]?(128|256|CBC|GCM)\b", r"\bRSA[-_]?(2048|4096|OAEP)\b",
+        r"\bbitcoin\b", r"\bmonero\b", r"\bethereum\b", r"\bwallet\.dat\b",
     ],
     "keylogger": [
         r"GetAsyncKeyState", r"SetWindowsHookExA.*WH_KEYBOARD",
@@ -206,25 +207,36 @@ def analyze(file_path: str) -> GenericAnalysis:
     result.sha1 = hashlib.sha1(data).hexdigest()
     result.sha256 = hashlib.sha256(data).hexdigest()
 
+    # File type (detect early — needed for entropy verdict)
+    result.magic_bytes = data[:4].hex()
+    result.detected_type = detect_file_type(data)
+    result.file_type = result.detected_type
+
+    # Known compressed/media formats where high entropy is normal
+    _COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image"}
+    is_compressed_type = result.detected_type in _COMPRESSED_TYPES
+
     # Entropy
     result.entropy = calculate_entropy(data)
     if result.entropy > 7.5:
-        result.entropy_verdict = "encrypted/packed"
-        result.findings.append(f"Very high entropy ({result.entropy}) — likely encrypted or packed")
+        if is_compressed_type:
+            result.entropy_verdict = "compressed"
+            # High entropy is expected for archives/media — not suspicious
+        else:
+            result.entropy_verdict = "encrypted/packed"
+            result.findings.append(f"Very high entropy ({result.entropy}) — likely encrypted or packed")
     elif result.entropy > 6.5:
         result.entropy_verdict = "compressed"
     else:
         result.entropy_verdict = "normal"
 
-    # File type
-    result.magic_bytes = data[:4].hex()
-    result.detected_type = detect_file_type(data)
-    result.file_type = result.detected_type
-
-    # Strings
-    all_strings = extract_strings(data)
-    result.all_strings = all_strings
-    classified = classify_strings(all_strings)
+    # Strings — skip extraction for archives (compressed data produces garbage matches)
+    if is_compressed_type:
+        all_strings = []
+        classified = {"urls": [], "ip_addresses": [], "emails": [], "file_paths": [], "registry_keys": [], "suspicious": []}
+    else:
+        all_strings = extract_strings(data)
+        classified = classify_strings(all_strings)
 
     result.urls = classified["urls"]
     result.ip_addresses = classified["ip_addresses"]

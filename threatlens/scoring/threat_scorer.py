@@ -48,8 +48,11 @@ def calculate_score(findings: list[str], generic_analysis=None, pe_analysis=None
                 category_hits[category] = category_hits.get(category, 0) + weight
 
     # Bonus points from specific indicators
+    # Known compressed types where high entropy is expected
+    _COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image"}
+
     if generic_analysis:
-        if generic_analysis.entropy > 7.5:
+        if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in _COMPRESSED_TYPES:
             category_hits["packed"] = 15
         if generic_analysis.urls:
             category_hits["network"] = category_hits.get("network", 0) + len(generic_analysis.urls) * 3
