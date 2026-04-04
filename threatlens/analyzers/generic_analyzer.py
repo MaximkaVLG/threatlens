@@ -60,28 +60,31 @@ MAGIC_SIGNATURES = {
 # Suspicious string patterns
 SUSPICIOUS_PATTERNS = {
     "password_theft": [
-        r"Login\s*Data", r"Cookies", r"Web\s*Data", r"Chrome", r"Firefox",
-        r"\\Mozilla\\", r"\\Google\\Chrome\\", r"wallet\.dat",
+        # Require full file path context, not bare words
+        r"\\Login\s*Data", r"\\Web\s*Data",
+        r"\\Mozilla\\Firefox\\Profiles", r"\\Google\\Chrome\\User Data",
+        r"wallet\.dat",
         r"key3\.db", r"key4\.db", r"logins\.json", r"signons\.sqlite",
     ],
     "persistence": [
         r"CurrentVersion\\Run", r"CurrentVersion\\RunOnce",
         r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion",
-        r"HKLM\\", r"HKCU\\", r"schtasks", r"\\Startup\\",
+        r"schtasks\s*/create",
+        r"\\Start Menu\\Programs\\Startup\\",
     ],
     "evasion": [
         r"IsDebuggerPresent", r"CheckRemoteDebuggerPresent",
-        r"NtQueryInformationProcess", r"OutputDebugString",
-        r"VirtualBox", r"VMware", r"Sandboxie", r"wine_get_unix_file_name",
+        r"NtQueryInformationProcess",
+        r"wine_get_unix_file_name",
     ],
     "network": [
-        r"InternetOpen", r"HttpSendRequest", r"URLDownloadToFile",
-        r"WinHttp", r"WebClient", r"Invoke-WebRequest",
-        r"curl\s", r"wget\s",
+        r"InternetOpenA", r"InternetOpenW", r"HttpSendRequest",
+        r"URLDownloadToFile",
+        r"Invoke-WebRequest",
     ],
     "injection": [
         r"CreateRemoteThread", r"WriteProcessMemory", r"VirtualAllocEx",
-        r"NtCreateThreadEx", r"QueueUserAPC", r"SetWindowsHookEx",
+        r"NtCreateThreadEx", r"QueueUserAPC",
     ],
     "crypto": [
         r"CryptEncrypt", r"CryptDecrypt", r"CryptAcquireContext",
@@ -90,7 +93,7 @@ SUSPICIOUS_PATTERNS = {
     ],
     "keylogger": [
         r"GetAsyncKeyState", r"SetWindowsHookExA.*WH_KEYBOARD",
-        r"GetKeyState", r"MapVirtualKey", r"keylog",
+        r"GetKeyboardState", r"\bkeylog",
     ],
 }
 

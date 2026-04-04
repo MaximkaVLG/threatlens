@@ -149,11 +149,12 @@ def _extract_behaviors(generic_analysis, pe_analysis, script_analysis, findings:
 
     # From generic analysis
     if generic_analysis:
-        if generic_analysis.entropy > 7.5:
+        # High entropy only suspicious for non-compressed types
+        _COMPRESSED_TYPES = {"ZIP archive", "RAR archive", "PNG image", "JPEG image", "GIF image", "PDF document"}
+        if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in _COMPRESSED_TYPES:
             behaviors.add("high_entropy")
-        if generic_analysis.urls:
-            behaviors.add("has_network_capability")
-        if generic_analysis.ip_addresses:
+        # URLs/IPs alone are not suspicious — many legit programs have them
+        if len(generic_analysis.ip_addresses) >= 3:
             behaviors.add("has_network_capability")
 
         for sus in generic_analysis.suspicious_strings:
@@ -220,15 +221,23 @@ def _extract_behaviors(generic_analysis, pe_analysis, script_analysis, findings:
         if script_analysis.network_activity:
             behaviors.add("has_network_capability")
         if script_analysis.file_access:
-            behaviors.add("accesses_browser_data")
+            # Only flag as browser access if pattern actually matches browser paths
+            for fa in script_analysis.file_access:
+                pat = fa.get("pattern", "").lower()
+                if "browser" in pat or "chrome" in pat or "firefox" in pat or "login" in pat:
+                    behaviors.add("accesses_browser_data")
+                elif "wallet" in pat or "electrum" in pat or "metamask" in pat:
+                    behaviors.add("accesses_crypto_wallets")
+                elif "ssh" in pat or "id_rsa" in pat:
+                    behaviors.add("accesses_ssh_keys")
         if script_analysis.keylogger_patterns:
             behaviors.add("has_keylogger")
-            behaviors.add("has_screenshot_capability")
         if script_analysis.persistence_patterns:
             behaviors.add("has_persistence")
         if script_analysis.exfiltration_patterns:
             behaviors.add("has_exfiltration_channel")
-        if script_analysis.system_commands:
+        # system_commands alone is not "download and execute" — need network + system together
+        if script_analysis.system_commands and script_analysis.network_activity:
             behaviors.add("has_download_and_execute")
 
         # Reverse shell detection: socket + subprocess/cmd + connect

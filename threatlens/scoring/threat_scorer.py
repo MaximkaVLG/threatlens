@@ -54,20 +54,18 @@ def calculate_score(findings: list[str], generic_analysis=None, pe_analysis=None
     if generic_analysis:
         if generic_analysis.entropy > 7.5 and generic_analysis.file_type not in _COMPRESSED_TYPES:
             category_hits["packed"] = 15
-        if generic_analysis.urls:
-            category_hits["network"] = category_hits.get("network", 0) + len(generic_analysis.urls) * 3
-        if generic_analysis.ip_addresses:
-            category_hits["network"] = category_hits.get("network", 0) + len(generic_analysis.ip_addresses) * 5
 
     if pe_analysis:
         if pe_analysis.is_packed:
             category_hits["packed"] = category_hits.get("packed", 0) + 10
-        if not pe_analysis.has_signature:
-            category_hits["unsigned"] = 5
+        # Score suspicious imports once per category (not per function)
         if pe_analysis.suspicious_imports:
+            seen_cats = set()
             for imp in pe_analysis.suspicious_imports:
                 cat = imp["category"]
-                category_hits[cat] = category_hits.get(cat, 0) + RISK_WEIGHTS.get(cat, 5)
+                if cat not in seen_cats:
+                    seen_cats.add(cat)
+                    category_hits[cat] = category_hits.get(cat, 0) + RISK_WEIGHTS.get(cat, 5)
 
     if script_analysis:
         if script_analysis.is_obfuscated:

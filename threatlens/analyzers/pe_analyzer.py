@@ -30,7 +30,7 @@ SUSPICIOUS_IMPORTS = {
         "MapVirtualKeyW", "GetKeyboardState",
     ],
     "process_manipulation": [
-        "OpenProcess", "TerminateProcess", "CreateToolhelp32Snapshot",
+        "TerminateProcess", "CreateToolhelp32Snapshot",
         "Process32First", "Process32Next", "NtUnmapViewOfSection",
     ],
     "privilege_escalation": [
@@ -44,7 +44,7 @@ SUSPICIOUS_IMPORTS = {
     ],
     "file_operations": [
         "DeleteFileA", "DeleteFileW", "MoveFileA",
-        "CopyFileA", "CopyFileW", "CreateFileA", "CreateFileW",
+        "CopyFileA", "CopyFileW",
     ],
     "registry": [
         "RegSetValueExA", "RegSetValueExW", "RegCreateKeyExA",
@@ -152,7 +152,8 @@ def analyze(file_path: str) -> PEAnalysis:
         }
         result.sections.append(section_info)
 
-        if entropy > 7.0:
+        # High entropy in .rsrc/.reloc is normal (icons, compressed resources)
+        if entropy > 7.0 and name not in (".rsrc", ".reloc", ".rdata"):
             result.high_entropy_sections.append(section_info)
             result.findings.append(f"High entropy section '{name}' ({entropy:.1f}) — likely encrypted/packed")
 
@@ -198,18 +199,17 @@ def analyze(file_path: str) -> PEAnalysis:
                 + (f" (+{len(funcs)-5} more)" if len(funcs) > 5 else "")
             )
 
-    # Very low import count = likely packed
-    if result.total_imports < 5 and not result.is_packed:
+    # Very low import count = likely packed (but .NET/Go have few PE imports normally)
+    is_dotnet = "mscoree.dll" in (d.lower() for d in result.imports.keys())
+    if result.total_imports < 5 and not result.is_packed and not is_dotnet:
         result.findings.append(f"Very few imports ({result.total_imports}) — possibly packed or obfuscated")
         result.is_packed = True
 
-    # No digital signature
+    # Digital signature (informational — not a finding by itself)
     has_sig = False
     if hasattr(pe, "DIRECTORY_ENTRY_SECURITY"):
         has_sig = True
     result.has_signature = has_sig
-    if not has_sig:
-        result.findings.append("No digital signature")
 
     # Resources
     if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
@@ -219,14 +219,11 @@ def analyze(file_path: str) -> PEAnalysis:
                     if hasattr(entry, "directory"):
                         for res in entry.directory.entries:
                             size = res.data.struct.Size
-                            if size > 100000:  # Large embedded resource
+                            if size > 500000:  # Very large embedded resource (>500KB)
                                 result.resources.append({
                                     "type": str(resource_type.name or resource_type.id),
                                     "size": size,
                                 })
-                                result.findings.append(
-                                    f"Large resource ({size // 1024} KB) — may contain embedded payload"
-                                )
 
     pe.close()
     return result
