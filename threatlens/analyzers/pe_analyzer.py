@@ -104,6 +104,16 @@ class PEAnalysis:
     # Resources
     resources: list = field(default_factory=list)
 
+    # Advanced analysis
+    imphash: str = ""
+    has_overlay: bool = False
+    overlay_size: int = 0
+    has_rwx_section: bool = False
+    entry_point_suspicious: bool = False
+    has_embedded_pe: bool = False
+    rich_header_hash: str = ""
+    anomalies: list = field(default_factory=list)
+
     findings: list = field(default_factory=list)
 
 
@@ -125,6 +135,13 @@ def analyze(file_path: str) -> PEAnalysis:
         return _analyze_pe_inner(pe, result)
     finally:
         pe.close()
+
+
+# Pre-build lookup dict: function_name -> category (O(1) instead of O(n*m))
+_IMPORT_LOOKUP = {}
+for _cat, _funcs in SUSPICIOUS_IMPORTS.items():
+    for _fn in _funcs:
+        _IMPORT_LOOKUP[_fn] = _cat
 
 
 def _analyze_pe_inner(pe, result: PEAnalysis) -> PEAnalysis:
@@ -173,7 +190,7 @@ def _analyze_pe_inner(pe, result: PEAnalysis) -> PEAnalysis:
     if result.is_packed:
         result.findings.append(f"Packed with {result.detected_packer}")
 
-    # Imports analysis
+    # Imports analysis (O(1) lookup per import via _IMPORT_LOOKUP)
     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
             dll_name = entry.dll.decode("utf-8", errors="ignore")
@@ -184,16 +201,17 @@ def _analyze_pe_inner(pe, result: PEAnalysis) -> PEAnalysis:
                     functions.append(func_name)
                     result.total_imports += 1
 
-                    # Check suspicious imports
-                    for category, suspicious_funcs in SUSPICIOUS_IMPORTS.items():
-                        if func_name in suspicious_funcs:
-                            result.suspicious_imports.append({
-                                "function": func_name,
-                                "dll": dll_name,
-                                "category": category,
-                            })
+                    category = _IMPORT_LOOKUP.get(func_name)
+                    if category:
+                        result.suspicious_imports.append({
+                            "function": func_name,
+                            "dll": dll_name,
+                            "category": category,
+                        })
 
             result.imports[dll_name] = functions
+
+    # Imphash computed in advanced analysis section below
 
     # Generate findings from suspicious imports
     categories_found = set()
@@ -232,5 +250,98 @@ def _analyze_pe_inner(pe, result: PEAnalysis) -> PEAnalysis:
                                     "type": str(resource_type.name or resource_type.id),
                                     "size": size,
                                 })
+
+    # === ADVANCED ANALYSIS ===
+
+    # Overlay detection (data appended after PE end — often payload)
+    try:
+        overlay_offset = pe.get_overlay_data_start_offset()
+        if overlay_offset is not None:
+            overlay_size = len(pe.__data__) - overlay_offset
+            if overlay_size > 1024:
+                result.has_overlay = True
+                result.overlay_size = overlay_size
+                result.anomalies.append(f"Overlay data: {overlay_size // 1024} KB after PE end")
+                if overlay_size > 100 * 1024:
+                    result.findings.append(
+                        f"[obfuscation] Large overlay ({overlay_size // 1024} KB) — may contain embedded payload"
+                    )
+    except Exception:
+        pass
+
+    # RWX sections (Read + Write + Execute = highly suspicious)
+    for section in pe.sections:
+        name = section.Name.decode("utf-8", errors="ignore").rstrip("\x00")
+        chars = section.Characteristics
+        is_rwx = bool((chars & 0x20000000) and (chars & 0x40000000) and (chars & 0x80000000))
+        if is_rwx:
+            result.has_rwx_section = True
+            result.anomalies.append(f"Section '{name}' has RWX permissions")
+            result.findings.append(f"[injection] Section '{name}' is RWX — typical for shellcode/packers")
+
+    # Entry point anomaly
+    try:
+        ep = pe.OPTIONAL_HEADER.AddressOfEntryPoint
+        ep_section = None
+        first_code_section = None
+        for section in pe.sections:
+            sname = section.Name.decode("utf-8", errors="ignore").rstrip("\x00")
+            va_start = section.VirtualAddress
+            va_end = va_start + section.Misc_VirtualSize
+            if first_code_section is None and (section.Characteristics & 0x20000000):
+                first_code_section = sname
+            if va_start <= ep < va_end:
+                ep_section = sname
+
+        if ep_section and first_code_section and ep_section != first_code_section:
+            result.entry_point_suspicious = True
+            result.anomalies.append(f"Entry point in '{ep_section}' instead of '{first_code_section}'")
+            result.findings.append(f"[obfuscation] Entry point in unusual section '{ep_section}'")
+
+        if ep == 0 and not result.is_dll:
+            result.entry_point_suspicious = True
+            result.anomalies.append("Entry point at address 0")
+    except Exception:
+        pass
+
+    # Embedded PE in resources (dropper indicator)
+    if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
+        try:
+            for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+                if not hasattr(resource_type, "directory"):
+                    continue
+                for rentry in resource_type.directory.entries:
+                    if not hasattr(rentry, "directory"):
+                        continue
+                    for res in rentry.directory.entries:
+                        try:
+                            offset = res.data.struct.OffsetToData
+                            size = res.data.struct.Size
+                            if size > 4:
+                                res_data = pe.get_data(offset, min(size, 4))
+                                if res_data[:2] == b"MZ":
+                                    result.has_embedded_pe = True
+                                    result.findings.append(
+                                        f"[injection] Embedded PE in resources ({size // 1024} KB) — dropper"
+                                    )
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+    # Rich header (compiler fingerprint)
+    try:
+        rich = pe.RICH_HEADER
+        if rich:
+            import hashlib
+            result.rich_header_hash = hashlib.md5(rich.clear_data).hexdigest()
+    except Exception:
+        pass
+
+    # Imphash
+    try:
+        result.imphash = pe.get_imphash()
+    except Exception:
+        pass
 
     return result
