@@ -140,8 +140,7 @@ class AnalysisCache:
                     heuristic_confidence=excluded.heuristic_confidence,
                     yara_matches=excluded.yara_matches,
                     scan_time=excluded.scan_time,
-                    scan_count=scan_count + 1,
-                    last_seen=CURRENT_TIMESTAMP
+                    scan_count=scan_count + 1
             """, (
                 sha256,
                 result.file if hasattr(result, "file") else result.get("file", ""),
