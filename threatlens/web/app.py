@@ -65,6 +65,27 @@ if os.path.exists(STATIC_DIR):
 
 _rate_limit_last_sweep = 0.0
 
+# Trusted proxy IPs — only accept X-Forwarded-For from these
+_TRUSTED_PROXIES = {"127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10"}
+
+
+def _get_client_ip(request: Request) -> str:
+    """Extract real client IP, respecting X-Forwarded-For behind trusted proxies."""
+    direct_ip = request.client.host if request.client else "unknown"
+
+    # Only trust X-Forwarded-For if coming from known proxy ranges
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        # X-Forwarded-For: client, proxy1, proxy2 — first is the real client
+        ips = [ip.strip() for ip in forwarded.split(",")]
+        if ips:
+            candidate = ips[0]
+            # Basic validation: must look like an IP
+            if candidate.replace(".", "").replace(":", "").isalnum():
+                return candidate
+
+    return direct_ip
+
 
 def _check_rate_limit(client_ip: str) -> bool:
     """Check if client has exceeded rate limit."""
@@ -90,8 +111,8 @@ def _check_rate_limit(client_ip: str) -> bool:
 @app.post("/api/scan")
 async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Form(False)):
     """Scan uploaded file via API."""
-    # Rate limiting
-    client_ip = request.client.host if request.client else "unknown"
+    # Rate limiting — use X-Forwarded-For behind reverse proxy (Railway, Cloudflare)
+    client_ip = _get_client_ip(request)
     if not _check_rate_limit(client_ip):
         raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
 
@@ -124,7 +145,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error("Analysis error: %s", e)
-            raise HTTPException(status_code=500, detail=f"Analysis failed: {type(e).__name__}")
+            raise HTTPException(status_code=500, detail="Analysis failed. Try a smaller file or different format.")
 
         # AI explanation (optional)
         ai_explanation = ""

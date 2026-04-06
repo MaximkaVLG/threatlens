@@ -90,6 +90,9 @@ def _scan_extracted_file(file_path: str, original_name: str) -> dict:
     }
 
 
+MAX_ARCHIVE_FILES = 5000  # Max files to extract from archive (prevents inode exhaustion)
+
+
 def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> ArchiveAnalysis:
     """Analyze an archive file recursively.
 
@@ -196,6 +199,14 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
 
     result.total_files = len(result.files)
     result.total_size_uncompressed = total_uncompressed
+
+    # File count limit (prevents inode exhaustion from zip bombs with millions of tiny files)
+    if result.total_files > MAX_ARCHIVE_FILES:
+        result.findings.append(
+            f"Archive contains too many files ({result.total_files}, limit {MAX_ARCHIVE_FILES}). "
+            f"Only first {MAX_ARCHIVE_FILES} will be analyzed."
+        )
+        result.files = result.files[:MAX_ARCHIVE_FILES]
 
     if total_uncompressed > max_extract_size:
         result.findings.append(

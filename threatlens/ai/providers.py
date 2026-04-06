@@ -53,7 +53,7 @@ class YandexGPTProvider:
             return r.json()["result"]["alternatives"][0]["message"]["text"]
         except Exception as e:
             logger.error("YandexGPT error: %s", e)
-            return f"[AI error: {e}]"
+            return "[AI explanation unavailable. Service temporarily unreachable.]"
 
 
 _provider_instance = None
