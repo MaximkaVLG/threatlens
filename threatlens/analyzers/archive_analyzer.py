@@ -6,6 +6,7 @@ wants to know which file inside is the threat.
 """
 
 import os
+import subprocess
 import zipfile
 import tempfile
 import shutil
@@ -443,65 +444,88 @@ def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int,
     return result
 
 
+def _extract_7z_system(file_path: str, tmp_dir: str, password: str = None) -> bool:
+    """Try extracting 7z using system 7z binary (supports all encryption methods)."""
+    for bin_path in ["7z", "7za", "/usr/bin/7z", "C:\\Program Files\\7-Zip\\7z.exe"]:
+        try:
+            cmd = [bin_path, "x", f"-o{tmp_dir}", "-y"]
+            if password:
+                cmd.append(f"-p{password}")
+            else:
+                cmd.append("-p")  # empty password
+            cmd.append(file_path)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if proc.returncode == 0:
+                return True
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+    return False
+
+
 def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
-    """Analyze 7z archive."""
+    """Analyze 7z archive. Uses system 7z binary as fallback for unsupported encryption."""
+    tmp_dir = tempfile.mkdtemp(prefix="threatlens_7z_")
+    result.file_scan_results = []
+    extracted = False
+
+    # Method 1: Try py7zr (pure Python)
     try:
         import py7zr
-    except ImportError:
-        result.findings.append("7z support requires: pip install py7zr")
-        return result
-
-    try:
-        # Try opening — if password needed, retry with password
         try:
             szf = py7zr.SevenZipFile(file_path, mode="r", password=password)
             file_list = szf.list()
-        except Exception as e:
-            if "Password" in str(e) or "password" in str(e):
-                result.is_password_protected = True
-                if not password:
-                    result.findings.append("7z archive is password-protected. Provide a password to analyze.")
-                    return result
-                try:
-                    szf = py7zr.SevenZipFile(file_path, mode="r", password=password)
-                    file_list = szf.list()
-                    result.findings.append("Password-protected 7z — unlocked successfully")
-                except Exception:
-                    result.findings.append("Wrong password for 7z archive")
-                    return result
-            else:
-                raise
-
-        with szf:
-            # Check total size
             total_size = sum(info.uncompressed for info in file_list if not info.is_directory)
             if total_size > max_extract_size:
                 result.findings.append(f"Archive too large ({total_size // (1024*1024)} MB)")
-                return result
-
-            tmp_dir = tempfile.mkdtemp(prefix="threatlens_7z_")
-            result.file_scan_results = []
-
-            try:
-                # Safe extraction — extract then verify paths
-                szf.extractall(tmp_dir)
-                # Post-extraction path traversal check
-                tmp_real = os.path.realpath(tmp_dir)
-                for root, dirs, files in os.walk(tmp_dir):
-                    for fname in files:
-                        fpath = os.path.join(root, fname)
-                        if not os.path.realpath(fpath).startswith(tmp_real + os.sep):
-                            result.findings.append(f"[evasion] BLOCKED path traversal in 7z: {fname}")
-                            os.unlink(fpath)
-                _scan_extracted_dir(tmp_dir, result, password=password)
-            finally:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
+                return result
+            with szf:
+                szf.extractall(tmp_dir)
+            extracted = True
+            if password:
+                result.findings.append("Password-protected 7z — unlocked successfully")
+        except Exception as e:
+            err_str = str(e)
+            if "Password" in err_str or "password" in err_str or "Decompression" in err_str:
+                result.is_password_protected = True
+            # py7zr failed — try system 7z
+    except ImportError:
+        pass
 
-    except py7zr.Bad7zFile:
-        result.findings.append("Corrupted or invalid 7z file")
+    # Method 2: Fallback to system 7z binary (supports AES-256 and all methods)
+    if not extracted:
+        if _extract_7z_system(file_path, tmp_dir, password):
+            extracted = True
+            if password:
+                result.findings.append("Password-protected 7z — unlocked with system 7z")
+        elif result.is_password_protected and not password:
+            result.findings.append("7z archive is password-protected. Provide a password to analyze.")
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return result
+
+    if not extracted:
+        if result.is_password_protected:
+            result.findings.append("Cannot decrypt 7z — unsupported encryption method. Install 7-Zip for full support.")
+        else:
+            result.findings.append("Corrupted or invalid 7z file")
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        return result
+
+    try:
+        # Post-extraction path traversal check
+        tmp_real = os.path.realpath(tmp_dir)
+        for root, dirs, files in os.walk(tmp_dir):
+            for fname in files:
+                fpath = os.path.join(root, fname)
+                if not os.path.realpath(fpath).startswith(tmp_real + os.sep):
+                    result.findings.append(f"[evasion] BLOCKED path traversal in 7z: {fname}")
+                    os.unlink(fpath)
+        _scan_extracted_dir(tmp_dir, result, password=password)
     except Exception as e:
         result.findings.append(f"7z error: {type(e).__name__}")
         logger.debug("7z error: %s", e)
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     return result
 
