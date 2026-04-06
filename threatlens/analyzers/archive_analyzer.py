@@ -19,7 +19,15 @@ ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".tar.gz", ".tgz"}
 # Extensions that are suspicious inside archives
 DANGEROUS_EXTENSIONS = {
     ".exe", ".dll", ".sys", ".scr", ".bat", ".cmd", ".ps1", ".vbs",
-    ".js", ".wsf", ".hta", ".msi", ".pif", ".com", ".lnk",
+    ".wsf", ".hta", ".msi", ".pif", ".com", ".lnk",
+}
+# Note: .js NOT included — too many false positives from node_modules
+
+# Directories to skip inside archives (not useful to scan)
+SKIP_ARCHIVE_DIRS = {
+    "node_modules", "__pycache__", ".git", ".svn", ".hg",
+    "vendor", "bower_components", ".tox", ".nox", ".mypy_cache",
+    "__MACOSX", ".DS_Store",
 }
 
 # Double extensions (social engineering)
@@ -148,8 +156,15 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
         return result
 
     total_uncompressed = 0
+    skipped_dirs = 0
     for info in file_list:
         if info.is_dir():
+            continue
+
+        # Skip files inside known safe directories (node_modules, .git, etc.)
+        path_parts = info.filename.replace("\\", "/").split("/")
+        if any(part in SKIP_ARCHIVE_DIRS for part in path_parts):
+            skipped_dirs += 1
             continue
 
         finfo = ArchiveFileInfo(
@@ -261,9 +276,17 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
 def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis):
     """Scan all files in extracted directory. Shared by RAR/7z/tar."""
     for root, dirs, files in os.walk(tmp_dir):
+        # Skip known safe directories
+        dirs[:] = [d for d in dirs if d not in SKIP_ARCHIVE_DIRS]
+
         for fname in files:
             full_path = os.path.join(root, fname)
             rel_path = os.path.relpath(full_path, tmp_dir)
+
+            # Skip files in safe dirs (double check)
+            parts = rel_path.replace("\\", "/").split("/")
+            if any(part in SKIP_ARCHIVE_DIRS for part in parts):
+                continue
 
             # Path traversal check
             if not os.path.realpath(full_path).startswith(os.path.realpath(tmp_dir)):
