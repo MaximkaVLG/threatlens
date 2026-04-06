@@ -46,7 +46,9 @@ async def security_headers(request: Request, call_next):
 # Health check for Railway/Docker
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    import shutil
+    has_7z = shutil.which("7z") is not None or shutil.which("7za") is not None
+    return {"status": "ok", "7z_available": has_7z}
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
