@@ -21,6 +21,8 @@ ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".tar.gz", ".tgz"}
 DANGEROUS_EXTENSIONS = {
     ".exe", ".dll", ".sys", ".scr", ".bat", ".cmd", ".ps1", ".vbs",
     ".wsf", ".hta", ".msi", ".pif", ".com", ".lnk",
+    # Disk images — commonly used for malware delivery (bypass Mark-of-the-Web)
+    ".iso", ".img", ".vhd", ".vhdx",
 }
 # Note: .js NOT included — too many false positives from node_modules
 
