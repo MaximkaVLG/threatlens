@@ -53,15 +53,32 @@ def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
     from threatlens.rules.signatures import scan as yara_scan
     from threatlens.ai.explanations import generate_explanation
 
+    MAX_FILE_SIZE = 200 * 1024 * 1024  # 200 MB hard limit
+
     # Validate input
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
     if os.path.isdir(file_path):
         raise IsADirectoryError(f"Expected a file, got directory: {file_path}")
-    if os.path.getsize(file_path) == 0:
+
+    file_size = os.path.getsize(file_path)
+    if file_size == 0:
         result = AnalysisResult(file=os.path.basename(file_path))
         result.findings = ["Empty file (0 bytes)"]
         result.summary = "Empty file — nothing to analyze."
+        return result
+    if file_size > MAX_FILE_SIZE:
+        result = AnalysisResult(file=os.path.basename(file_path))
+        result.size = file_size
+        result.findings = [f"File too large ({file_size // (1024*1024)} MB, limit {MAX_FILE_SIZE // (1024*1024)} MB). Skipping full analysis."]
+        result.summary = "File exceeds size limit."
+        result.risk_level = "LOW"
+        # Still compute hash without loading entire file
+        h = _hashlib.sha256()
+        with open(file_path, "rb") as f:
+            while chunk := f.read(8192):
+                h.update(chunk)
+        result.sha256 = h.hexdigest()
         return result
 
     # Read file once, reuse for cache check and analysis
