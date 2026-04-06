@@ -101,40 +101,76 @@ SUSPICIOUS_PATTERNS = {
 
 
 def calculate_entropy(data: bytes) -> float:
-    """Calculate Shannon entropy of data (0-8 scale)."""
+    """Calculate Shannon entropy of data (0-8 scale). Optimized with numpy-like counting."""
     if not data:
         return 0.0
-    freq = [0] * 256
-    for byte in data:
-        freq[byte] += 1
     length = len(data)
-    entropy = 0.0
-    for count in freq:
-        if count > 0:
-            p = count / length
-            entropy -= p * math.log2(p)
+    # Use a bytearray counter — much faster than Python loop
+    freq = bytearray(256)
+    try:
+        # Fast path: use collections.Counter
+        from collections import Counter
+        counts = Counter(data)
+        entropy = 0.0
+        for count in counts.values():
+            if count > 0:
+                p = count / length
+                entropy -= p * math.log2(p)
+    except Exception:
+        # Fallback
+        for byte in data:
+            freq[byte] += 1
+        entropy = 0.0
+        for count in freq:
+            if count > 0:
+                p = count / length
+                entropy -= p * math.log2(p)
     return round(entropy, 4)
 
 
-def extract_strings(data: bytes, min_length: int = 4) -> list[str]:
-    """Extract printable ASCII and Unicode strings."""
-    # ASCII strings
-    ascii_pattern = re.compile(rb"[\x20-\x7e]{%d,}" % min_length)
-    strings = [s.decode("ascii", errors="ignore") for s in ascii_pattern.findall(data)]
+def extract_strings(data: bytes, min_length: int = 6, max_strings: int = 5000) -> list[str]:
+    """Extract printable ASCII and Unicode strings. Optimized for large files."""
+    # Limit data size for regex — first 2MB + last 1MB covers headers + appended data
+    if len(data) > 3 * 1024 * 1024:
+        search_data = data[:2 * 1024 * 1024] + data[-1 * 1024 * 1024:]
+    else:
+        search_data = data
 
-    # Unicode (UTF-16LE) strings
-    unicode_pattern = re.compile(rb"(?:[\x20-\x7e]\x00){%d,}" % min_length)
-    for match in unicode_pattern.findall(data):
-        try:
-            strings.append(match.decode("utf-16le").rstrip("\x00"))
-        except Exception:
-            pass
+    # ASCII strings (min_length=6 to reduce noise)
+    ascii_pattern = re.compile(rb"[\x20-\x7e]{%d,}" % min_length)
+    strings = [s.decode("ascii", errors="ignore") for s in ascii_pattern.findall(search_data)]
+
+    # Limit to prevent memory issues
+    if len(strings) > max_strings:
+        strings = strings[:max_strings]
+
+    # Unicode (UTF-16LE) strings — only on smaller files
+    if len(data) < 5 * 1024 * 1024:
+        unicode_pattern = re.compile(rb"(?:[\x20-\x7e]\x00){%d,}" % min_length)
+        for match in unicode_pattern.findall(search_data):
+            try:
+                strings.append(match.decode("utf-16le").rstrip("\x00"))
+            except Exception:
+                pass
 
     return list(set(strings))
 
 
+_URL_RE = re.compile(r"https?://[\w\-._~:/?#\[\]@!$&'()*+,;=%]+", re.I)
+_IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+_EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+_PATH_RE = re.compile(r"[A-Z]:\\[\w\\. -]+", re.I)
+_REG_RE = re.compile(r"(?:HKLM|HKCU|HKCR|HKU|HKCC)\\[\w\\]+", re.I)
+
+# Pre-compile suspicious patterns
+_COMPILED_SUSPICIOUS = {
+    cat: [(re.compile(p, re.I), p) for p in pats]
+    for cat, pats in SUSPICIOUS_PATTERNS.items()
+}
+
+
 def classify_strings(strings: list[str]) -> dict:
-    """Classify extracted strings into categories."""
+    """Classify extracted strings into categories. Optimized: single-pass on joined text."""
     result = {
         "urls": [],
         "ip_addresses": [],
@@ -144,43 +180,28 @@ def classify_strings(strings: list[str]) -> dict:
         "suspicious": [],
     }
 
-    url_re = re.compile(r"https?://[\w\-._~:/?#\[\]@!$&'()*+,;=%]+", re.I)
-    ip_re = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
-    email_re = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-    path_re = re.compile(r"[A-Z]:\\[\w\\. -]+", re.I)
-    reg_re = re.compile(r"(?:HKLM|HKCU|HKCR|HKU|HKCC)\\[\w\\]+", re.I)
+    # Join all strings for single-pass regex (much faster than per-string)
+    blob = "\n".join(strings[:5000])
 
-    seen_suspicious = set()
+    result["urls"] = list(set(_URL_RE.findall(blob)))[:100]
+    result["ip_addresses"] = [
+        ip for ip in set(_IP_RE.findall(blob))
+        if not ip.startswith(("0.", "127.", "255."))
+    ][:50]
+    result["emails"] = list(set(_EMAIL_RE.findall(blob)))[:50]
+    result["file_paths"] = list(set(_PATH_RE.findall(blob)))[:100]
+    result["registry_keys"] = list(set(_REG_RE.findall(blob)))[:50]
 
-    for s in strings:
-        for url in url_re.findall(s):
-            if url not in result["urls"]:
-                result["urls"].append(url)
-        for ip in ip_re.findall(s):
-            if ip not in result["ip_addresses"] and not ip.startswith(("0.", "127.", "255.")):
-                result["ip_addresses"].append(ip)
-        for email in email_re.findall(s):
-            if email not in result["emails"]:
-                result["emails"].append(email)
-        for path in path_re.findall(s):
-            if path not in result["file_paths"]:
-                result["file_paths"].append(path)
-        for reg in reg_re.findall(s):
-            if reg not in result["registry_keys"]:
-                result["registry_keys"].append(reg)
-
-        # Check suspicious patterns
-        for category, patterns in SUSPICIOUS_PATTERNS.items():
-            for pattern in patterns:
-                if re.search(pattern, s, re.I):
-                    key = f"{category}:{s[:80]}"
-                    if key not in seen_suspicious:
-                        seen_suspicious.add(key)
-                        result["suspicious"].append({
-                            "category": category,
-                            "match": s[:120],
-                            "pattern": pattern,
-                        })
+    # Check suspicious patterns (single pass on blob)
+    for category, compiled_patterns in _COMPILED_SUSPICIOUS.items():
+        for compiled_re, pattern_str in compiled_patterns:
+            match = compiled_re.search(blob)
+            if match:
+                result["suspicious"].append({
+                    "category": category,
+                    "match": match.group()[:120],
+                    "pattern": pattern_str,
+                })
 
     return result
 
