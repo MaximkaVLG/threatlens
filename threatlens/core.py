@@ -228,7 +228,7 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
                 (f.scan_result.get("risk_score", 0) for f in archive_result.dangerous_files if f.scan_result),
                 default=0,
             )
-            if max_inner > score.score:
+            if max_inner >= score.score:
                 score.score = max_inner
                 score.level = "CRITICAL" if max_inner >= 70 else "HIGH" if max_inner >= 40 else score.level
                 score.summary = "Архив содержит опасные файлы."

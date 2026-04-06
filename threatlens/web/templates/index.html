@@ -162,9 +162,6 @@ fileInput.addEventListener('change',()=>{selectedFile=fileInput.files[0];updateU
 function updateUploadUI(){if(selectedFile){dropZone.innerHTML='<div class="icon">&#128196;</div><p>'+esc(selectedFile.name)+' ('+(selectedFile.size/1024).toFixed(1)+' КБ)</p>';scanBtn.disabled=false}}
 
 const RL={LOW:'НИЗКИЙ',MEDIUM:'СРЕДНИЙ',HIGH:'ВЫСОКИЙ',CRITICAL:'КРИТИЧЕСКИЙ'};
-const SRU={'This file is almost certainly malicious.':'Этот файл почти наверняка вредоносный.','This file shows strong indicators of malicious behavior.':'Файл демонстрирует явные признаки вредоносного поведения.','This file contains suspicious elements that warrant caution.':'Файл содержит подозрительные элементы, требующие осторожности.','This file appears to be low risk, but always exercise caution.':'Файл выглядит безопасным, но всегда соблюдайте осторожность.'};
-const RRU={'DELETE this file immediately':'УДАЛИТЕ этот файл немедленно','Do NOT execute it under any circumstances':'НЕ запускайте его ни при каких обстоятельствах','If already executed: change all passwords, run full antivirus scan':'Если уже запускали: смените все пароли, запустите полную проверку антивирусом','Check for unauthorized processes in Task Manager':'Проверьте диспетчер задач на подозрительные процессы','Do not execute this file':'Не запускайте этот файл','Consider deleting it':'Рекомендуется удалить','If you must use it, run in a virtual machine only':'Только в виртуальной машине','Proceed with caution':'Действуйте с осторожностью','Verify the source of this file':'Проверьте источник файла','Consider running in a sandbox before execution':'Проверьте в песочнице','File appears safe based on static analysis':'Файл выглядит безопасным','Dynamic behavior may differ — use caution with unknown sources':'Поведение при запуске может отличаться'};
-function tr(t,d){return d[t]||t}
 
 async function scanFile(){
     if(!selectedFile)return;
@@ -197,7 +194,7 @@ function renderResult(d){
     h+='<tr><td>Энтропия</td><td>'+d.entropy+' ('+esc(d.entropy_verdict)+')</td></tr></table>';
     h+='<div style="text-align:center"><div class="risk-badge risk-'+d.risk_level+'">'+(RL[d.risk_level]||d.risk_level)+' ('+d.risk_score+'/100)</div>';
     h+='<div class="score-bar"><div class="score-fill" style="width:'+d.risk_score+'%;background:'+c+'"></div></div>';
-    h+='<p>'+esc(tr(d.summary,SRU))+'</p></div>';
+    h+='<p>'+esc(d.summary)+'</p></div>';
     if(d.explanation){h+='<div class="ai-box"><h3>Объяснение</h3>'+esc(d.explanation)+'</div>'}
     if(d.findings&&d.findings.length){
         h+='<div class="section-title">Находки ('+d.findings.length+')</div><ul class="findings">';
@@ -207,7 +204,7 @@ function renderResult(d){
     if(d.ai_explanation){h+='<div class="ai-box"><h3>AI-анализ (YandexGPT)</h3>'+esc(d.ai_explanation)+'</div>'}
     if(d.recommendations&&d.recommendations.length){
         h+='<div class="section-title">Рекомендации</div><ul class="recommendations">';
-        d.recommendations.forEach(r=>h+='<li>&gt; '+esc(tr(r,RRU))+'</li>');h+='</ul>';
+        d.recommendations.forEach(r=>h+='<li>&gt; '+esc(r)+'</li>');h+='</ul>';
     }
     document.getElementById('result').innerHTML=h;document.getElementById('result').style.display='block';
 }
