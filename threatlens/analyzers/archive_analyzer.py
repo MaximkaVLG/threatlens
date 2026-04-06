@@ -278,7 +278,16 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
             zf.extract(info, tmp_dir, pwd=pwd_bytes)
         zf.close()
 
-        for finfo in result.files:
+        # Only fully scan files with dangerous or archive extensions (skip .txt, .png, etc.)
+        from threatlens.analyzers.script_analyzer import SCRIPT_EXTENSIONS
+        from threatlens.analyzers.office_analyzer import OFFICE_EXTENSIONS
+        scannable_exts = DANGEROUS_EXTENSIONS | ARCHIVE_EXTENSIONS | SCRIPT_EXTENSIONS | OFFICE_EXTENSIONS
+        files_to_scan = [f for f in result.files if f.extension in scannable_exts]
+        safe_skipped = len(result.files) - len(files_to_scan)
+        if safe_skipped > 0:
+            logger.info("Archive: skipping %d safe files, scanning %d dangerous", safe_skipped, len(files_to_scan))
+
+        for finfo in files_to_scan:
             extracted_path = os.path.join(tmp_dir, finfo.name)
             # Double-check path traversal
             if not os.path.realpath(extracted_path).startswith(os.path.realpath(tmp_dir)):
@@ -321,7 +330,12 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
 
 
 def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis, password: str = None):
-    """Scan all files in extracted directory. Shared by RAR/7z/tar."""
+    """Scan files in extracted directory. Only fully scans dangerous/archive extensions."""
+    from threatlens.analyzers.script_analyzer import SCRIPT_EXTENSIONS
+    from threatlens.analyzers.office_analyzer import OFFICE_EXTENSIONS
+    scannable_exts = DANGEROUS_EXTENSIONS | ARCHIVE_EXTENSIONS | SCRIPT_EXTENSIONS | OFFICE_EXTENSIONS
+    files_collected = []
+
     for root, dirs, files in os.walk(tmp_dir):
         # Skip known safe directories
         dirs[:] = [d for d in dirs if d not in SKIP_ARCHIVE_DIRS]
@@ -356,26 +370,31 @@ def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis, password: str = N
                     result.findings.append(f"[evasion] Double extension trick: {fname}")
 
             result.files.append(finfo)
+            files_collected.append((finfo, full_path, rel_path))
 
-            try:
-                scan_result = _scan_extracted_file(full_path, rel_path, password=password)
-                finfo.scan_result = scan_result
-                result.file_scan_results.append(scan_result)
+    # Only fully scan dangerous/archive extensions (skip .txt, .png, .jpg, etc.)
+    for finfo, full_path, rel_path in files_collected:
+        if finfo.extension not in scannable_exts:
+            continue
+        try:
+            scan_result = _scan_extracted_file(full_path, rel_path, password=password)
+            finfo.scan_result = scan_result
+            result.file_scan_results.append(scan_result)
 
-                if scan_result["risk_level"] in ("HIGH", "CRITICAL"):
-                    result.dangerous_files.append(finfo)
-                    result.findings.append(
-                        f"[DANGEROUS] {rel_path} — {scan_result['risk_level']} "
-                        f"({scan_result['risk_score']}/100): "
-                        f"{', '.join(scan_result['findings'][:3])}"
-                    )
-                elif scan_result["risk_level"] == "MEDIUM":
-                    result.suspicious_files.append(finfo)
-                    result.findings.append(
-                        f"[suspicious] {rel_path} — MEDIUM ({scan_result['risk_score']}/100)"
-                    )
-            except Exception as e:
-                logger.debug("Error scanning %s: %s", rel_path, e)
+            if scan_result["risk_level"] in ("HIGH", "CRITICAL"):
+                result.dangerous_files.append(finfo)
+                result.findings.append(
+                    f"[DANGEROUS] {rel_path} — {scan_result['risk_level']} "
+                    f"({scan_result['risk_score']}/100): "
+                    f"{', '.join(scan_result['findings'][:3])}"
+                )
+            elif scan_result["risk_level"] == "MEDIUM":
+                result.suspicious_files.append(finfo)
+                result.findings.append(
+                    f"[suspicious] {rel_path} — MEDIUM ({scan_result['risk_score']}/100)"
+                )
+        except Exception as e:
+            logger.debug("Error scanning %s: %s", rel_path, e)
 
     result.total_files = len(result.files)
 

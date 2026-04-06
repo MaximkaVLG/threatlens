@@ -20,7 +20,22 @@ from fastapi.middleware.cors import CORSMiddleware
 
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{1,64}$")
 
-app = FastAPI(title="ThreatLens", description="AI-Powered File Threat Analyzer")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def _lifespan(application):
+    """Pre-compile YARA rules on startup so first scan is fast."""
+    def _compile():
+        try:
+            from threatlens.rules.signatures import _compile_all_rules
+            _compile_all_rules()
+            logger.info("YARA rules pre-compiled on startup")
+        except Exception as e:
+            logger.warning("YARA pre-warm failed: %s", e)
+    await asyncio.to_thread(_compile)
+    yield
+
+app = FastAPI(title="ThreatLens", description="AI-Powered File Threat Analyzer", lifespan=_lifespan)
 
 # CORS — restrict to same origin by default, allow configured origins
 ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",") if os.environ.get("CORS_ORIGINS") else []
@@ -154,7 +169,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
             logger.error("Analysis error: %s", e)
             raise HTTPException(status_code=500, detail="Analysis failed. Try a smaller file or different format.")
 
-        # AI explanation (optional)
+        # AI explanation (optional, async — non-blocking)
         ai_explanation = ""
         if ai:
             try:
@@ -168,7 +183,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
                     risk_score=result.risk_score, risk_level=result.risk_level,
                     categories="",
                 )
-                ai_explanation = prov.explain(prompt)
+                ai_explanation = await prov.explain_async(prompt)
             except Exception as e:
                 logger.error("AI provider error: %s", e)
                 ai_explanation = "AI explanation unavailable. Try again later."

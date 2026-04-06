@@ -1,10 +1,12 @@
 """Core analysis function — single entry point for all analyzers.
 
 Used by CLI, Web UI, and repo scanner. No duplication.
+Optimized: PE + YARA + Script/Office run in parallel via ThreadPoolExecutor.
 """
 
 import os
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -125,31 +127,60 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
     result.entropy_verdict = generic.entropy_verdict
 
     ext = os.path.splitext(file_path)[1].lower()
-
-    # PE
-    pe = None
-    if generic.detected_type.startswith("PE") or ext in (".exe", ".dll", ".sys"):
-        pe = pe_analyzer.analyze(file_path)
-        all_findings.extend(pe.findings)
-        result.pe_analysis = pe
-
-    # Script
-    script = None
-    if ext in script_analyzer.SCRIPT_EXTENSIONS or generic.detected_type == "Shell script":
-        script = script_analyzer.analyze(file_path)
-        all_findings.extend(script.findings)
-        result.script_analysis = script
-
-    # Office
-    if ext in office_analyzer.OFFICE_EXTENSIONS or generic.detected_type.startswith("Microsoft Office"):
-        office = office_analyzer.analyze(file_path)
-        all_findings.extend(office.findings)
-        result.office_analysis = office
-
-    # Archive (ZIP, RAR, 7z, tar.gz)
     from threatlens.analyzers.archive_analyzer import ARCHIVE_EXTENSIONS, analyze as archive_analyze
-    if ext in ARCHIVE_EXTENSIONS or generic.detected_type in ("ZIP archive", "RAR archive"):
-        archive_result = archive_analyze(file_path, password=password)
+
+    # --- Parallel analysis: PE + YARA + Script + Office run concurrently ---
+    pe = None
+    script = None
+    office = None
+    archive_result = None
+
+    need_pe = generic.detected_type.startswith("PE") or ext in (".exe", ".dll", ".sys")
+    need_script = ext in script_analyzer.SCRIPT_EXTENSIONS or generic.detected_type == "Shell script"
+    need_office = ext in office_analyzer.OFFICE_EXTENSIONS or generic.detected_type.startswith("Microsoft Office")
+    need_archive = ext in ARCHIVE_EXTENSIONS or generic.detected_type in ("ZIP archive", "RAR archive")
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = {}
+
+        if need_pe:
+            futures["pe"] = pool.submit(pe_analyzer.analyze, file_path)
+        if need_script:
+            futures["script"] = pool.submit(script_analyzer.analyze, file_path)
+        if need_office:
+            futures["office"] = pool.submit(office_analyzer.analyze, file_path)
+        if need_archive:
+            futures["archive"] = pool.submit(archive_analyze, file_path, 100 * 1024 * 1024, password)
+
+        # YARA always runs (in parallel with above)
+        futures["yara"] = pool.submit(yara_scan, file_path)
+
+        # Collect results
+        for key, future in futures.items():
+            try:
+                res = future.result(timeout=90)
+                if key == "pe":
+                    pe = res
+                    all_findings.extend(pe.findings)
+                    result.pe_analysis = pe
+                elif key == "script":
+                    script = res
+                    all_findings.extend(script.findings)
+                    result.script_analysis = script
+                elif key == "office":
+                    office = res
+                    all_findings.extend(office.findings)
+                    result.office_analysis = office
+                elif key == "yara":
+                    all_findings.extend(res.findings)
+                    result.yara_matches = res.matches
+                elif key == "archive":
+                    archive_result = res
+            except Exception as e:
+                logger.error("Parallel analyzer %s failed: %s", key, e)
+
+    # Archive post-processing
+    if archive_result:
         all_findings.extend(archive_result.findings)
         result.file_type = f"Archive ({ext})"
 
@@ -163,29 +194,19 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
                 all_findings.insert(0, f"[injection] Archive contains CRITICAL threat (inner score: {max_inner_score}/100)")
 
         # Detect nested encrypted archives — strong malware indicator
-        # Pattern: encrypted ZIP containing encrypted 7z/RAR = almost always malware
         if archive_result.is_password_protected:
             for finfo in archive_result.files:
                 inner_ext = finfo.extension.lower()
                 if inner_ext in (".7z", ".rar", ".zip"):
-                    is_inner_encrypted = finfo.scan_result and "password" in " ".join(finfo.scan_result.get("findings", [])).lower()
-                    # Even if we can't decrypt inner archive, flag it
                     all_findings.insert(0,
                         f"[evasion] Nested encrypted archive detected: encrypted {ext} contains {inner_ext} — "
                         f"this double-encryption pattern is commonly used by malware to evade detection"
                     )
-                    # If inner archive couldn't be fully analyzed, warn strongly
                     if not archive_result.dangerous_files:
                         all_findings.insert(0,
                             f"[obfuscation] WARNING: inner {inner_ext} could not be fully analyzed — "
                             f"contents may be malicious but hidden behind encryption"
                         )
-
-
-    # YARA
-    yara_result = yara_scan(file_path)
-    all_findings.extend(yara_result.findings)
-    result.yara_matches = yara_result.matches
 
     # Heuristic
     heuristic_verdicts = heuristic_analyze(generic, pe, script, all_findings)
