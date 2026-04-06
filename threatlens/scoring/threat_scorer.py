@@ -47,6 +47,13 @@ def calculate_score(findings: list[str], generic_analysis=None, pe_analysis=None
             if f"[{category}]" in finding_lower:
                 category_hits[category] = category_hits.get(category, 0) + weight
 
+    # Nested encrypted archive = very high suspicion
+    findings_text = " ".join(findings).lower()
+    if "nested encrypted archive" in findings_text:
+        category_hits["evasion"] = category_hits.get("evasion", 0) + 40
+    if "could not be fully analyzed" in findings_text and "malicious" in findings_text:
+        category_hits["obfuscation"] = category_hits.get("obfuscation", 0) + 30
+
     # Bonus points from specific indicators
     from threatlens.analyzers.generic_analyzer import COMPRESSED_TYPES
 

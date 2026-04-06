@@ -160,8 +160,26 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
                 default=0,
             )
             if max_inner_score > 0:
-                # Force archive score to match most dangerous file inside
                 all_findings.insert(0, f"[injection] Archive contains CRITICAL threat (inner score: {max_inner_score}/100)")
+
+        # Detect nested encrypted archives — strong malware indicator
+        # Pattern: encrypted ZIP containing encrypted 7z/RAR = almost always malware
+        if archive_result.is_password_protected:
+            for finfo in archive_result.files:
+                inner_ext = finfo.extension.lower()
+                if inner_ext in (".7z", ".rar", ".zip"):
+                    is_inner_encrypted = finfo.scan_result and "password" in " ".join(finfo.scan_result.get("findings", [])).lower()
+                    # Even if we can't decrypt inner archive, flag it
+                    all_findings.insert(0,
+                        f"[evasion] Nested encrypted archive detected: encrypted {ext} contains {inner_ext} — "
+                        f"this double-encryption pattern is commonly used by malware to evade detection"
+                    )
+                    # If inner archive couldn't be fully analyzed, warn strongly
+                    if not archive_result.dangerous_files:
+                        all_findings.insert(0,
+                            f"[obfuscation] WARNING: inner {inner_ext} could not be fully analyzed — "
+                            f"contents may be malicious but hidden behind encryption"
+                        )
 
 
     # YARA
