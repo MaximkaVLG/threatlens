@@ -131,8 +131,18 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
             return result
 
     # List all files
+    try:
+        file_list = zf.infolist()
+    except Exception:
+        result.findings.append("Corrupted ZIP — cannot read file list")
+        return result
+
+    if not file_list:
+        result.findings.append("Empty or corrupted archive — no files inside")
+        return result
+
     total_uncompressed = 0
-    for info in zf.infolist():
+    for info in file_list:
         if info.is_dir():
             continue
 

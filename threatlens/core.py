@@ -53,6 +53,17 @@ def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
     from threatlens.rules.signatures import scan as yara_scan
     from threatlens.ai.explanations import generate_explanation
 
+    # Validate input
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    if os.path.isdir(file_path):
+        raise IsADirectoryError(f"Expected a file, got directory: {file_path}")
+    if os.path.getsize(file_path) == 0:
+        result = AnalysisResult(file=os.path.basename(file_path))
+        result.findings = ["Empty file (0 bytes)"]
+        result.summary = "Empty file — nothing to analyze."
+        return result
+
     # Read file once, reuse for cache check and analysis
     with open(file_path, "rb") as f:
         file_data = f.read()

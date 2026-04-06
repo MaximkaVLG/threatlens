@@ -91,7 +91,13 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
 
     try:
         from threatlens.core import analyze_file
-        result = await asyncio.to_thread(analyze_file, tmp_path)
+        try:
+            result = await asyncio.to_thread(analyze_file, tmp_path)
+        except (IsADirectoryError, FileNotFoundError, PermissionError) as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            logger.error("Analysis error: %s", e)
+            raise HTTPException(status_code=500, detail=f"Analysis failed: {type(e).__name__}")
 
         # AI explanation (optional)
         ai_explanation = ""
