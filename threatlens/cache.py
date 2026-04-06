@@ -17,15 +17,26 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 def _default_cache_path() -> str:
-    """Determine cache DB path: env var > user cache dir > in-tree fallback."""
+    """Determine cache DB path: env var > user cache dir > /tmp fallback."""
     env_dir = os.environ.get("THREATLENS_CACHE_DIR")
     if env_dir:
         return os.path.join(env_dir, "cache.db")
     # Platform-appropriate user cache directory
     if os.name == "nt":
         base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
-        return os.path.join(base, "threatlens", "cache.db")
-    return os.path.join(os.path.expanduser("~"), ".cache", "threatlens", "cache.db")
+        path = os.path.join(base, "threatlens", "cache.db")
+    else:
+        path = os.path.join(os.path.expanduser("~"), ".cache", "threatlens", "cache.db")
+    # Verify we can write — fallback to /tmp for Docker/Railway
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        # Quick write test
+        with open(path + ".test", "w") as f:
+            f.write("ok")
+        os.unlink(path + ".test")
+        return path
+    except (OSError, PermissionError):
+        return os.path.join("/tmp", "threatlens_cache.db")
 
 
 DEFAULT_DB_PATH = _default_cache_path()
