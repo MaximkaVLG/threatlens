@@ -104,6 +104,12 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> Archiv
     # Currently supporting ZIP (most common for cheats/cracks)
     if ext == ".zip":
         return _analyze_zip(file_path, result, max_extract_size)
+    elif ext == ".rar":
+        return _analyze_rar(file_path, result, max_extract_size)
+    elif ext in (".7z",):
+        return _analyze_7z(file_path, result, max_extract_size)
+    elif ext in (".tar", ".gz", ".tgz", ".tar.gz"):
+        return _analyze_tar(file_path, result, max_extract_size)
     else:
         result.findings.append(f"Archive type {ext} detected but extraction not yet supported")
         return result
@@ -248,5 +254,198 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
         )
     elif not result.suspicious_files:
         result.findings.append("No threats detected in archive contents")
+
+    return result
+
+
+def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis):
+    """Scan all files in extracted directory. Shared by RAR/7z/tar."""
+    for root, dirs, files in os.walk(tmp_dir):
+        for fname in files:
+            full_path = os.path.join(root, fname)
+            rel_path = os.path.relpath(full_path, tmp_dir)
+
+            # Path traversal check
+            if not os.path.realpath(full_path).startswith(os.path.realpath(tmp_dir)):
+                result.findings.append(f"[evasion] BLOCKED path traversal: {rel_path}")
+                continue
+
+            ext = os.path.splitext(fname)[1].lower()
+            finfo = ArchiveFileInfo(
+                name=rel_path,
+                size=os.path.getsize(full_path),
+                extension=ext,
+                is_dangerous_ext=ext in DANGEROUS_EXTENSIONS,
+            )
+
+            # Double extension
+            name_lower = fname.lower()
+            for trick in DOUBLE_EXTENSION_TRICKS:
+                if name_lower.endswith(trick):
+                    finfo.is_double_ext = True
+                    result.findings.append(f"[evasion] Double extension trick: {fname}")
+
+            result.files.append(finfo)
+
+            try:
+                scan_result = _scan_extracted_file(full_path, rel_path)
+                finfo.scan_result = scan_result
+                result.file_scan_results.append(scan_result)
+
+                if scan_result["risk_level"] in ("HIGH", "CRITICAL"):
+                    result.dangerous_files.append(finfo)
+                    result.findings.append(
+                        f"[DANGEROUS] {rel_path} — {scan_result['risk_level']} "
+                        f"({scan_result['risk_score']}/100): "
+                        f"{', '.join(scan_result['findings'][:3])}"
+                    )
+                elif scan_result["risk_level"] == "MEDIUM":
+                    result.suspicious_files.append(finfo)
+                    result.findings.append(
+                        f"[suspicious] {rel_path} — MEDIUM ({scan_result['risk_score']}/100)"
+                    )
+            except Exception as e:
+                logger.debug("Error scanning %s: %s", rel_path, e)
+
+    result.total_files = len(result.files)
+
+    if result.dangerous_files:
+        result.findings.insert(0,
+            f"FOUND {len(result.dangerous_files)} DANGEROUS FILE(S) inside archive!"
+        )
+    elif not result.suspicious_files:
+        result.findings.append("No threats detected in archive contents")
+
+
+def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+    """Analyze RAR archive."""
+    try:
+        import rarfile
+    except ImportError:
+        result.findings.append("RAR support requires: pip install rarfile")
+        return result
+
+    try:
+        rf = rarfile.RarFile(file_path)
+    except (rarfile.BadRarFile, rarfile.NotRarFile):
+        result.findings.append("Corrupted or invalid RAR file")
+        return result
+    except rarfile.NeedFirstVolume:
+        result.findings.append("Multi-volume RAR — only first volume can be analyzed")
+        return result
+
+    # Check password
+    if rf.needs_password():
+        result.is_password_protected = True
+        result.findings.append("Archive is password-protected (cannot analyze contents)")
+        rf.close()
+        return result
+
+    # Check total size
+    total_size = sum(info.file_size for info in rf.infolist() if not info.is_dir())
+    if total_size > max_extract_size:
+        result.findings.append(f"Archive too large ({total_size // (1024*1024)} MB)")
+        rf.close()
+        return result
+
+    tmp_dir = tempfile.mkdtemp(prefix="threatlens_rar_")
+    result.file_scan_results = []
+
+    try:
+        rf.extractall(tmp_dir)
+        rf.close()
+        _scan_extracted_dir(tmp_dir, result)
+    except rarfile.BadRarFile:
+        result.findings.append("Error extracting RAR — file may be corrupted")
+    except Exception as e:
+        result.findings.append(f"RAR extraction error: {type(e).__name__}")
+        logger.debug("RAR error: %s", e)
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    return result
+
+
+def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+    """Analyze 7z archive."""
+    try:
+        import py7zr
+    except ImportError:
+        result.findings.append("7z support requires: pip install py7zr")
+        return result
+
+    try:
+        with py7zr.SevenZipFile(file_path, mode="r") as szf:
+            # Check password
+            if szf.needs_password():
+                result.is_password_protected = True
+                result.findings.append("Archive is password-protected (cannot analyze contents)")
+                return result
+
+            # Check total size
+            total_size = sum(info.uncompressed for info in szf.list() if not info.is_directory)
+            if total_size > max_extract_size:
+                result.findings.append(f"Archive too large ({total_size // (1024*1024)} MB)")
+                return result
+
+            tmp_dir = tempfile.mkdtemp(prefix="threatlens_7z_")
+            result.file_scan_results = []
+
+            try:
+                szf.extractall(tmp_dir)
+                _scan_extracted_dir(tmp_dir, result)
+            finally:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    except py7zr.Bad7zFile:
+        result.findings.append("Corrupted or invalid 7z file")
+    except Exception as e:
+        result.findings.append(f"7z error: {type(e).__name__}")
+        logger.debug("7z error: %s", e)
+
+    return result
+
+
+def _analyze_tar(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+    """Analyze tar/tar.gz/tgz archive."""
+    import tarfile
+
+    try:
+        tf = tarfile.open(file_path, "r:*")
+    except (tarfile.TarError, EOFError):
+        result.findings.append("Corrupted or invalid tar archive")
+        return result
+
+    # Check total size and path traversal
+    total_size = 0
+    for member in tf.getmembers():
+        if member.isfile():
+            total_size += member.size
+            # Block path traversal in tar
+            if member.name.startswith("/") or ".." in member.name:
+                result.findings.append(f"[evasion] BLOCKED path traversal in tar: {member.name}")
+                tf.close()
+                return result
+
+    if total_size > max_extract_size:
+        result.findings.append(f"Archive too large ({total_size // (1024*1024)} MB)")
+        tf.close()
+        return result
+
+    tmp_dir = tempfile.mkdtemp(prefix="threatlens_tar_")
+    result.file_scan_results = []
+
+    try:
+        # Safe extraction — filter dangerous members
+        safe_members = [m for m in tf.getmembers()
+                        if not m.name.startswith("/") and ".." not in m.name]
+        tf.extractall(tmp_dir, members=safe_members)
+        tf.close()
+        _scan_extracted_dir(tmp_dir, result)
+    except Exception as e:
+        result.findings.append(f"Tar extraction error: {type(e).__name__}")
+        logger.debug("Tar error: %s", e)
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     return result

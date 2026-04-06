@@ -128,6 +128,13 @@ def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
         all_findings.extend(office.findings)
         result.office_analysis = office
 
+    # Archive (ZIP, RAR, 7z, tar.gz)
+    from threatlens.analyzers.archive_analyzer import ARCHIVE_EXTENSIONS, analyze as archive_analyze
+    if ext in ARCHIVE_EXTENSIONS or generic.detected_type in ("ZIP archive", "RAR archive"):
+        archive_result = archive_analyze(file_path)
+        all_findings.extend(archive_result.findings)
+        result.file_type = f"Archive ({ext})"
+
     # YARA
     yara_result = yara_scan(file_path)
     all_findings.extend(yara_result.findings)
