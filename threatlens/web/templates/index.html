@@ -175,7 +175,12 @@ async function scanFile(){
         const r=await fetch('/api/scan',{method:'POST',body:fd});
         if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'Ошибка')}
         renderResult(await r.json());
-    }catch(e){document.getElementById('result').innerHTML='<p style="color:#f44336;text-align:center;padding:20px">'+esc(e.message)+'</p>';document.getElementById('result').style.display='block'}
+    }catch(e){
+        let msg=e.message;
+        if(msg.includes('Failed to fetch')||msg.includes('NetworkError'))msg='Сервер не ответил. Возможные причины: файл слишком большой для бесплатного сервера (лимит ~10 МБ), или сервер перезагружается. Попробуйте файл поменьше или повторите через минуту.';
+        if(msg.includes('413'))msg='Файл слишком большой (максимум 50 МБ).';
+        if(msg.includes('429'))msg='Слишком много запросов. Подождите минуту.';
+        document.getElementById('result').innerHTML='<p style="color:#f44336;text-align:center;padding:20px">'+esc(msg)+'</p>';document.getElementById('result').style.display='block'}
     document.getElementById('loading').classList.remove('active');scanBtn.disabled=false;
 }
 
