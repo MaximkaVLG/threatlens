@@ -255,9 +255,6 @@ def scan(file_path: str) -> YARAResult:
         logger.debug("yara-python not installed, skipping YARA scan")
         return result
 
-    # Also keep _compile_all_rules working for pre-warm
-    _compile_all_rules()
-
     seen_rules = set()
 
     # Tier 1: Custom rules (fast — ~20 rules)

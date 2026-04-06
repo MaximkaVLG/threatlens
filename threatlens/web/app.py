@@ -27,9 +27,10 @@ async def _lifespan(application):
     """Pre-compile YARA rules on startup so first scan is fast."""
     def _compile():
         try:
-            from threatlens.rules.signatures import _compile_all_rules
-            _compile_all_rules()
-            logger.info("YARA rules pre-compiled on startup")
+            from threatlens.rules.signatures import _compile_custom_rules, _compile_community_rules
+            _compile_custom_rules()
+            _compile_community_rules()
+            logger.info("YARA rules pre-compiled on startup (custom + community)")
         except Exception as e:
             logger.warning("YARA pre-warm failed: %s", e)
     await asyncio.to_thread(_compile)
