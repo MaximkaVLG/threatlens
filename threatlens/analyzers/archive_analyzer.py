@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".tar.gz", ".tgz"}
+ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".tar.gz", ".tgz", ".iso", ".img"}
 
 # Extensions that are suspicious inside archives
 DANGEROUS_EXTENSIONS = {
@@ -130,6 +130,8 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024, password:
         return _analyze_rar(file_path, result, max_extract_size, password=password)
     elif ext in (".7z",):
         return _analyze_7z(file_path, result, max_extract_size, password=password)
+    elif ext in (".iso", ".img"):
+        return _analyze_iso(file_path, result, max_extract_size)
     elif ext in (".tar", ".gz", ".tgz", ".tar.gz"):
         return _analyze_tar(file_path, result, max_extract_size, password=password)
     else:
@@ -545,6 +547,57 @@ def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int, 
     except Exception as e:
         result.findings.append(f"7z error: {type(e).__name__}")
         logger.debug("7z error: %s", e)
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    return result
+
+
+def _analyze_iso(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+    """Analyze ISO/IMG disk image using system 7z for extraction.
+
+    ISO images are commonly used for malware delivery (bypass Mark-of-the-Web).
+    7z can extract ISO 9660 filesystem contents.
+    """
+    result.archive_type = os.path.splitext(file_path)[1].lower()
+    result.findings.append(
+        "[evasion] Disk image detected — ISO/IMG files bypass Windows Mark-of-the-Web protection, "
+        "commonly used for malware delivery"
+    )
+
+    tmp_dir = tempfile.mkdtemp(prefix="threatlens_iso_")
+    result.file_scan_results = []
+
+    # Extract ISO using system 7z
+    extracted = False
+    for bin_path in ["7z", "7za", "/usr/bin/7z"]:
+        try:
+            cmd = [bin_path, "x", f"-o{tmp_dir}", "-y", file_path]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            if proc.returncode == 0:
+                extracted = True
+                break
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+
+    if not extracted:
+        result.findings.append("Cannot extract disk image — 7z not available or extraction failed")
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        return result
+
+    try:
+        # Path traversal check
+        tmp_real = os.path.realpath(tmp_dir)
+        for root, dirs, files in os.walk(tmp_dir):
+            for fname in files:
+                fpath = os.path.join(root, fname)
+                if not os.path.realpath(fpath).startswith(tmp_real + os.sep):
+                    result.findings.append(f"[evasion] BLOCKED path traversal in ISO: {fname}")
+                    os.unlink(fpath)
+        _scan_extracted_dir(tmp_dir, result)
+    except Exception as e:
+        result.findings.append(f"ISO analysis error: {type(e).__name__}")
+        logger.debug("ISO error: %s", e)
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
