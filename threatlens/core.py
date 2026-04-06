@@ -231,11 +231,11 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
             if max_inner > score.score:
                 score.score = max_inner
                 score.level = "CRITICAL" if max_inner >= 70 else "HIGH" if max_inner >= 40 else score.level
-                score.summary = "Archive contains dangerous file(s)."
+                score.summary = "Архив содержит опасные файлы."
                 score.recommendations = [
-                    "DELETE this archive immediately",
-                    "Do NOT extract or execute files inside",
-                    "If already extracted: run full antivirus scan",
+                    "НЕМЕДЛЕННО УДАЛИТЕ этот архив",
+                    "НЕ распаковывайте и НЕ запускайте файлы внутри",
+                    "Если уже распаковали: проведите полное антивирусное сканирование",
                 ]
 
     result.risk_score = score.score

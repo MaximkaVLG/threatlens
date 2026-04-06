@@ -96,32 +96,32 @@ def calculate_score(findings: list[str], generic_analysis=None, pe_analysis=None
 
     # Summary
     if result.level == "CRITICAL":
-        result.summary = "This file is almost certainly malicious."
+        result.summary = "Этот файл почти наверняка является вредоносным."
         result.recommendations = [
-            "DELETE this file immediately",
-            "Do NOT execute it under any circumstances",
-            "If already executed: change all passwords, run full antivirus scan",
-            "Check for unauthorized processes in Task Manager",
+            "НЕМЕДЛЕННО УДАЛИТЕ этот файл",
+            "НЕ запускайте его ни при каких обстоятельствах",
+            "Если уже запускали: смените все пароли и проведите полное антивирусное сканирование",
+            "Проверьте Диспетчер задач на наличие подозрительных процессов",
         ]
     elif result.level == "HIGH":
-        result.summary = "This file shows strong indicators of malicious behavior."
+        result.summary = "Файл содержит явные признаки вредоносного поведения."
         result.recommendations = [
-            "Do not execute this file",
-            "Consider deleting it",
-            "If you must use it, run in a virtual machine only",
+            "Не запускайте этот файл",
+            "Рекомендуется удалить его",
+            "Если необходимо использовать — запускайте только в виртуальной машине",
         ]
     elif result.level == "MEDIUM":
-        result.summary = "This file contains suspicious elements that warrant caution."
+        result.summary = "Файл содержит подозрительные элементы, требующие осторожности."
         result.recommendations = [
-            "Proceed with caution",
-            "Verify the source of this file",
-            "Consider running in a sandbox before execution",
+            "Действуйте с осторожностью",
+            "Проверьте источник этого файла",
+            "Перед запуском рекомендуется проверить в песочнице (sandbox)",
         ]
     else:
-        result.summary = "This file appears to be low risk, but always exercise caution."
+        result.summary = "Файл выглядит безопасным, но всегда соблюдайте осторожность."
         result.recommendations = [
-            "File appears safe based on static analysis",
-            "Dynamic behavior may differ — use caution with unknown sources",
+            "По результатам статического анализа файл безопасен",
+            "Поведение при запуске может отличаться — будьте осторожны с файлами из неизвестных источников",
         ]
 
     return result
