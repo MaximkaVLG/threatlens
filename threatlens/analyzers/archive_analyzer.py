@@ -134,12 +134,25 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024, password:
 
 
 def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
-    """Analyze ZIP archive, with optional password for encrypted archives."""
+    """Analyze ZIP archive, with optional password for encrypted archives.
+
+    Uses pyzipper for AES-256 support (MalwareBazaar, etc.), falls back to zipfile.
+    """
     try:
-        zf = zipfile.ZipFile(file_path, "r")
-    except zipfile.BadZipFile:
-        result.findings.append("Corrupted or invalid ZIP file")
-        return result
+        import pyzipper
+        zf = pyzipper.AESZipFile(file_path, "r")
+    except ImportError:
+        try:
+            zf = zipfile.ZipFile(file_path, "r")
+        except zipfile.BadZipFile:
+            result.findings.append("Corrupted or invalid ZIP file")
+            return result
+    except Exception:
+        try:
+            zf = zipfile.ZipFile(file_path, "r")
+        except zipfile.BadZipFile:
+            result.findings.append("Corrupted or invalid ZIP file")
+            return result
 
     with zf:
         return _analyze_zip_inner(zf, file_path, result, max_extract_size, password=password)
