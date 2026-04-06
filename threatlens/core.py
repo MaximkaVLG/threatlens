@@ -181,6 +181,10 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
 
     # Archive post-processing
     if archive_result:
+        logger.warning("ARCHIVE DEBUG: is_password_protected=%s, files=%s, dangerous=%s",
+            archive_result.is_password_protected,
+            [(f.name, f.extension) for f in archive_result.files],
+            [(f.name, f.extension) for f in archive_result.dangerous_files])
         all_findings.extend(archive_result.findings)
         result.file_type = f"Archive ({ext})"
 
