@@ -135,49 +135,15 @@ def _should_skip(file_path: str, root: str) -> bool:
 
 
 def _scan_single_file(file_path: str) -> dict:
-    """Run ThreatLens analysis on a single file."""
-    from threatlens.analyzers import generic_analyzer, pe_analyzer, script_analyzer, office_analyzer
-    from threatlens.scoring.threat_scorer import calculate_score
-    from threatlens.scoring.heuristic_engine import analyze as heuristic_analyze
-    from threatlens.rules.signatures import scan as yara_scan
-    from threatlens.ai.explanations import generate_explanation
+    """Run ThreatLens analysis on a single file. Delegates to core.analyze_file."""
+    from threatlens.core import analyze_file
 
-    generic = generic_analyzer.analyze(file_path)
-    all_findings = list(generic.findings)
-
-    ext = os.path.splitext(file_path)[1].lower()
-
-    pe = None
-    if generic.detected_type.startswith("PE") or ext in (".exe", ".dll"):
-        pe = pe_analyzer.analyze(file_path)
-        all_findings.extend(pe.findings)
-
-    script = None
-    if ext in script_analyzer.SCRIPT_EXTENSIONS:
-        script = script_analyzer.analyze(file_path)
-        all_findings.extend(script.findings)
-
-    if ext in office_analyzer.OFFICE_EXTENSIONS:
-        office = office_analyzer.analyze(file_path)
-        all_findings.extend(office.findings)
-
-    yara_result = yara_scan(file_path)
-    all_findings.extend(yara_result.findings)
-
-    heuristic_verdicts = heuristic_analyze(generic, pe, script, all_findings)
-    for v in heuristic_verdicts:
-        all_findings.append(
-            f"[HEURISTIC] {v.threat_type.upper()} ({v.confidence:.0%} confidence)"
-        )
-
-    score = calculate_score(all_findings, generic, pe, script)
-    explanation = generate_explanation(score.categories, lang="ru")
-
+    result = analyze_file(file_path, use_cache=False)
     return {
-        "risk_level": score.level,
-        "risk_score": score.score,
-        "findings": all_findings,
-        "explanation": explanation,
+        "risk_level": result.risk_level,
+        "risk_score": result.risk_score,
+        "findings": result.findings,
+        "explanation": result.explanation,
     }
 
 
