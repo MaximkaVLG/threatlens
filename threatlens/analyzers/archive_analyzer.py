@@ -375,7 +375,15 @@ def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
     result.file_scan_results = []
 
     try:
-        rf.extractall(tmp_dir)
+        # Safe extraction — check each member for path traversal
+        tmp_real = os.path.realpath(tmp_dir)
+        for member in rf.infolist():
+            target = os.path.join(tmp_dir, member.filename)
+            target_real = os.path.realpath(target)
+            if not target_real.startswith(tmp_real + os.sep) and target_real != tmp_real:
+                result.findings.append(f"[evasion] BLOCKED path traversal in RAR: {member.filename}")
+                continue
+            rf.extract(member, tmp_dir)
         rf.close()
         _scan_extracted_dir(tmp_dir, result)
     except rarfile.BadRarFile:
@@ -415,7 +423,16 @@ def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int) 
             result.file_scan_results = []
 
             try:
+                # Safe extraction — extract then verify paths
                 szf.extractall(tmp_dir)
+                # Post-extraction path traversal check
+                tmp_real = os.path.realpath(tmp_dir)
+                for root, dirs, files in os.walk(tmp_dir):
+                    for fname in files:
+                        fpath = os.path.join(root, fname)
+                        if not os.path.realpath(fpath).startswith(tmp_real + os.sep):
+                            result.findings.append(f"[evasion] BLOCKED path traversal in 7z: {fname}")
+                            os.unlink(fpath)
                 _scan_extracted_dir(tmp_dir, result)
             finally:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
