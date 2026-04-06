@@ -115,6 +115,7 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
     # Generic (all files) — pass pre-read data to avoid double read
     generic = generic_analyzer.analyze(file_path, data=file_data)
     all_findings = list(generic.findings)
+    archive_result = None  # Set later if archive
     result.generic_analysis = generic
     result.size = generic.file_size
     result.file_type = generic.file_type
@@ -152,6 +153,17 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
         all_findings.extend(archive_result.findings)
         result.file_type = f"Archive ({ext})"
 
+        # Propagate worst risk from contents to archive level
+        if archive_result.dangerous_files:
+            max_inner_score = max(
+                (f.scan_result.get("risk_score", 0) for f in archive_result.dangerous_files if f.scan_result),
+                default=0,
+            )
+            if max_inner_score > 0:
+                # Force archive score to match most dangerous file inside
+                all_findings.insert(0, f"[injection] Archive contains CRITICAL threat (inner score: {max_inner_score}/100)")
+
+
     # YARA
     yara_result = yara_scan(file_path)
     all_findings.extend(yara_result.findings)
@@ -169,6 +181,24 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
 
     # Score
     score = calculate_score(all_findings, generic, pe, script)
+
+    # If archive contains dangerous files, inherit the worst score
+    if ext in ARCHIVE_EXTENSIONS or generic.detected_type in ("ZIP archive", "RAR archive"):
+        if archive_result and archive_result.dangerous_files:
+            max_inner = max(
+                (f.scan_result.get("risk_score", 0) for f in archive_result.dangerous_files if f.scan_result),
+                default=0,
+            )
+            if max_inner > score.score:
+                score.score = max_inner
+                score.level = "CRITICAL" if max_inner >= 70 else "HIGH" if max_inner >= 40 else score.level
+                score.summary = "Archive contains dangerous file(s)."
+                score.recommendations = [
+                    "DELETE this archive immediately",
+                    "Do NOT extract or execute files inside",
+                    "If already extracted: run full antivirus scan",
+                ]
+
     result.risk_score = score.score
     result.risk_level = score.level
     result.summary = score.summary
@@ -177,6 +207,11 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
 
     # Explanation
     result.explanation = generate_explanation(score.categories, lang="ru")
+    # Override explanation for dangerous archives
+    if result.risk_level in ("HIGH", "CRITICAL") and ext in ARCHIVE_EXTENSIONS:
+        inner_explanations = [f.scan_result.get("explanation", "") for f in archive_result.dangerous_files if f.scan_result] if archive_result else []
+        if inner_explanations and inner_explanations[0]:
+            result.explanation = inner_explanations[0]
 
     # Save to cache
     if use_cache:
