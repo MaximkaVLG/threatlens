@@ -25,7 +25,7 @@ rule Stealer_DiscordToken {
         $d2 = "token" ascii wide nocase
         $d3 = "leveldb" ascii wide nocase
         $d4 = "Local Storage" ascii wide nocase
-        $regex = /[MN][A-Za-z\d]{23,27}\.[A-Za-z\d-_]{6}\.[A-Za-z\d-_]{27,40}/
+        $regex = /[MN][A-Za-z0-9]{23,27}\.[A-Za-z0-9\-_]{6}\.[A-Za-z0-9\-_]{27,40}/
     condition:
         3 of ($d*) or $regex
 }

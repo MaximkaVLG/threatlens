@@ -137,7 +137,7 @@ _compiled_community_sources = {}
 
 
 def _compile_custom_rules():
-    """Compile only custom ThreatLens rules (fast tier)."""
+    """Compile only custom ThreatLens rules (fast tier). Skips broken files."""
     global _compiled_custom, _compiled_custom_sources
     if _compiled_custom is not None:
         return _compiled_custom
@@ -153,10 +153,27 @@ def _compile_custom_rules():
 
     if not sources:
         return None
+
+    # Try batch compile first; if it fails, compile per-file (skip broken)
     try:
         _compiled_custom = yara.compile(filepaths=sources)
         _compiled_custom_sources = sources
         logger.info("YARA custom: compiled %d rule files", len(sources))
+    except yara.SyntaxError:
+        good = {}
+        for ns, path in sources.items():
+            try:
+                yara.compile(filepath=path)
+                good[ns] = path
+            except Exception:
+                logger.warning("YARA custom: skipped broken rule %s", os.path.basename(path))
+        if good:
+            try:
+                _compiled_custom = yara.compile(filepaths=good)
+                _compiled_custom_sources = good
+                logger.info("YARA custom: compiled %d/%d rule files", len(good), len(sources))
+            except Exception as e:
+                logger.error("YARA custom compile failed: %s", e)
     except Exception as e:
         logger.error("YARA custom compile error: %s", e)
     return _compiled_custom

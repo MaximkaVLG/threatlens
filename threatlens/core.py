@@ -208,6 +208,22 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
                             f"contents may be malicious but hidden behind encryption"
                         )
 
+        # Detect disk images in encrypted archives — strong malware indicator
+        # (bypasses Mark-of-the-Web protection in Windows)
+        DISK_IMAGE_EXTS = {".iso", ".img", ".vhd", ".vhdx"}
+        if archive_result.is_password_protected:
+            for finfo in archive_result.files:
+                inner_ext = finfo.extension.lower()
+                if inner_ext in DISK_IMAGE_EXTS:
+                    all_findings.insert(0,
+                        f"[evasion] Disk image ({inner_ext}) inside encrypted archive — "
+                        f"this technique bypasses Windows Mark-of-the-Web and is commonly used for malware delivery"
+                    )
+                    all_findings.insert(0,
+                        f"[obfuscation] Password-protected archive containing disk image — "
+                        f"high-confidence malware delivery pattern"
+                    )
+
     # Heuristic
     heuristic_verdicts = heuristic_analyze(generic, pe, script, all_findings)
     for v in heuristic_verdicts:
