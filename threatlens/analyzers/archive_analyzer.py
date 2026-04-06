@@ -71,11 +71,12 @@ class ArchiveAnalysis:
     findings: list = field(default_factory=list)
 
 
-def _scan_extracted_file(file_path: str, original_name: str) -> dict:
-    """Run full ThreatLens analysis on an extracted file (including heuristics)."""
+def _scan_extracted_file(file_path: str, original_name: str, password: str = None) -> dict:
+    """Run full ThreatLens analysis on an extracted file (including nested archives)."""
     from threatlens.core import analyze_file
 
-    result = analyze_file(file_path, use_cache=False)
+    # Pass password for nested archives (MalwareBazaar: ZIP -> 7z -> exe, same password)
+    result = analyze_file(file_path, use_cache=False, password=password)
 
     return {
         "file": original_name,
@@ -123,11 +124,11 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024, password:
     if ext == ".zip":
         return _analyze_zip(file_path, result, max_extract_size, password=password)
     elif ext == ".rar":
-        return _analyze_rar(file_path, result, max_extract_size)
+        return _analyze_rar(file_path, result, max_extract_size, password=password)
     elif ext in (".7z",):
-        return _analyze_7z(file_path, result, max_extract_size)
+        return _analyze_7z(file_path, result, max_extract_size, password=password)
     elif ext in (".tar", ".gz", ".tgz", ".tar.gz"):
-        return _analyze_tar(file_path, result, max_extract_size)
+        return _analyze_tar(file_path, result, max_extract_size, password=password)
     else:
         result.findings.append(f"Archive type {ext} detected but extraction not yet supported")
         return result
@@ -285,7 +286,7 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
                 continue
 
             try:
-                scan_result = _scan_extracted_file(extracted_path, finfo.name)
+                scan_result = _scan_extracted_file(extracted_path, finfo.name, password=pwd_bytes.decode() if pwd_bytes else None)
                 finfo.scan_result = scan_result
                 result.file_scan_results.append(scan_result)
 
@@ -318,7 +319,7 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
     return result
 
 
-def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis):
+def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis, password: str = None):
     """Scan all files in extracted directory. Shared by RAR/7z/tar."""
     for root, dirs, files in os.walk(tmp_dir):
         # Skip known safe directories
@@ -356,7 +357,7 @@ def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis):
             result.files.append(finfo)
 
             try:
-                scan_result = _scan_extracted_file(full_path, rel_path)
+                scan_result = _scan_extracted_file(full_path, rel_path, password=password)
                 finfo.scan_result = scan_result
                 result.file_scan_results.append(scan_result)
 
@@ -385,7 +386,7 @@ def _scan_extracted_dir(tmp_dir: str, result: ArchiveAnalysis):
         result.findings.append("No threats detected in archive contents")
 
 
-def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
     """Analyze RAR archive."""
     try:
         import rarfile
@@ -430,7 +431,7 @@ def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
                 continue
             rf.extract(member, tmp_dir)
         rf.close()
-        _scan_extracted_dir(tmp_dir, result)
+        _scan_extracted_dir(tmp_dir, result, password=password)
     except rarfile.BadRarFile:
         result.findings.append("Error extracting RAR — file may be corrupted")
     except Exception as e:
@@ -442,7 +443,7 @@ def _analyze_rar(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
     return result
 
 
-def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
     """Analyze 7z archive."""
     try:
         import py7zr
@@ -451,15 +452,29 @@ def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int) 
         return result
 
     try:
-        with py7zr.SevenZipFile(file_path, mode="r") as szf:
-            # Check password
-            if szf.needs_password():
+        # Try opening — if password needed, retry with password
+        try:
+            szf = py7zr.SevenZipFile(file_path, mode="r", password=password)
+            file_list = szf.list()
+        except Exception as e:
+            if "Password" in str(e) or "password" in str(e):
                 result.is_password_protected = True
-                result.findings.append("Archive is password-protected (cannot analyze contents)")
-                return result
+                if not password:
+                    result.findings.append("7z archive is password-protected. Provide a password to analyze.")
+                    return result
+                try:
+                    szf = py7zr.SevenZipFile(file_path, mode="r", password=password)
+                    file_list = szf.list()
+                    result.findings.append("Password-protected 7z — unlocked successfully")
+                except Exception:
+                    result.findings.append("Wrong password for 7z archive")
+                    return result
+            else:
+                raise
 
+        with szf:
             # Check total size
-            total_size = sum(info.uncompressed for info in szf.list() if not info.is_directory)
+            total_size = sum(info.uncompressed for info in file_list if not info.is_directory)
             if total_size > max_extract_size:
                 result.findings.append(f"Archive too large ({total_size // (1024*1024)} MB)")
                 return result
@@ -478,7 +493,7 @@ def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int) 
                         if not os.path.realpath(fpath).startswith(tmp_real + os.sep):
                             result.findings.append(f"[evasion] BLOCKED path traversal in 7z: {fname}")
                             os.unlink(fpath)
-                _scan_extracted_dir(tmp_dir, result)
+                _scan_extracted_dir(tmp_dir, result, password=password)
             finally:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -491,7 +506,7 @@ def _analyze_7z(file_path: str, result: ArchiveAnalysis, max_extract_size: int) 
     return result
 
 
-def _analyze_tar(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+def _analyze_tar(file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
     """Analyze tar/tar.gz/tgz archive."""
     import tarfile
 
@@ -526,7 +541,7 @@ def _analyze_tar(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
                         if not m.name.startswith("/") and ".." not in m.name]
         tf.extractall(tmp_dir, members=safe_members)
         tf.close()
-        _scan_extracted_dir(tmp_dir, result)
+        _scan_extracted_dir(tmp_dir, result, password=password)
     except Exception as e:
         result.findings.append(f"Tar extraction error: {type(e).__name__}")
         logger.debug("Tar error: %s", e)
