@@ -65,14 +65,8 @@ def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
     if result.pe_analysis and result.pe_analysis.is_pe:
         print_pe_info(result.pe_analysis)
 
-    # print_risk expects an object with score/level/summary attributes
-    class _Score:
-        pass
-    score = _Score()
-    score.score = result.risk_score
-    score.level = result.risk_level
-    score.summary = result.summary
-
+    from threatlens.scoring.threat_scorer import ThreatScore
+    score = ThreatScore(score=result.risk_score, level=result.risk_level, summary=result.summary)
     print_risk(score)
     print_findings(result.findings)
 

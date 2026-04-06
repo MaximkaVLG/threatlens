@@ -121,6 +121,14 @@ def analyze(file_path: str) -> PEAnalysis:
         result.findings.append("Not a valid PE file")
         return result
 
+    try:
+        return _analyze_pe_inner(pe, result)
+    finally:
+        pe.close()
+
+
+def _analyze_pe_inner(pe, result: PEAnalysis) -> PEAnalysis:
+    """Inner PE analysis — pe is guaranteed to be closed by caller."""
     result.is_pe = True
     result.is_dll = pe.is_dll()
     result.is_64bit = pe.FILE_HEADER.Machine == 0x8664
@@ -133,7 +141,7 @@ def analyze(file_path: str) -> PEAnalysis:
         result.timestamp = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
         # Suspicious timestamps
         year = datetime.datetime.fromtimestamp(ts).year
-        if year < 2000 or year > 2030:
+        if year < 2000 or year > datetime.datetime.now().year + 5:
             result.findings.append(f"Suspicious compilation timestamp: {result.timestamp}")
     except Exception:
         result.timestamp = "unknown"
@@ -225,5 +233,4 @@ def analyze(file_path: str) -> PEAnalysis:
                                     "size": size,
                                 })
 
-    pe.close()
     return result

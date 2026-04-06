@@ -101,30 +101,15 @@ SUSPICIOUS_PATTERNS = {
 
 
 def calculate_entropy(data: bytes) -> float:
-    """Calculate Shannon entropy of data (0-8 scale). Optimized with numpy-like counting."""
+    """Calculate Shannon entropy of data (0-8 scale)."""
     if not data:
         return 0.0
+    from collections import Counter
     length = len(data)
-    # Use a bytearray counter — much faster than Python loop
-    freq = bytearray(256)
-    try:
-        # Fast path: use collections.Counter
-        from collections import Counter
-        counts = Counter(data)
-        entropy = 0.0
-        for count in counts.values():
-            if count > 0:
-                p = count / length
-                entropy -= p * math.log2(p)
-    except Exception:
-        # Fallback
-        for byte in data:
-            freq[byte] += 1
-        entropy = 0.0
-        for count in freq:
-            if count > 0:
-                p = count / length
-                entropy -= p * math.log2(p)
+    entropy = 0.0
+    for count in Counter(data).values():
+        p = count / length
+        entropy -= p * math.log2(p)
     return round(entropy, 4)
 
 

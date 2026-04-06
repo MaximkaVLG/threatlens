@@ -219,7 +219,7 @@ async function loadHistory(){
             const rc=i.risk_level==='CRITICAL'?'#ff1744':i.risk_level==='HIGH'?'#f44336':i.risk_level==='MEDIUM'?'#ff9800':'#4caf50';
             const sz=i.file_size?(i.file_size/1024).toFixed(1)+' КБ':'';
             const thr=i.heuristic_type?' — '+i.heuristic_type.toUpperCase():'';
-            h+='<div class="history-item risk-'+i.risk_level+'" onclick="lookupFromHistory(\''+i.sha256+'\')">';
+            h+='<div class="history-item risk-'+i.risk_level+'" onclick="lookupFromHistory(\''+esc(i.sha256)+'\')">';
             h+='<div><div class="history-file">'+esc(i.file_name||'unknown')+'</div>';
             h+='<div class="history-meta">'+esc(i.sha256.substring(0,16))+'... &middot; '+sz+thr+'</div></div>';
             h+='<div class="history-badge" style="color:'+rc+';border:1px solid '+rc+'">'+(RL[i.risk_level]||i.risk_level)+' '+i.risk_score+'</div></div>';
@@ -239,7 +239,7 @@ async function lookupHash(){
         const data=await r.json();
         if(data.matches){
             let h='<div class="section-title">Найдено '+data.matches.length+' совпадений</div>';
-            data.matches.forEach(m=>{h+='<div class="history-item risk-'+m.risk_level+'" onclick="lookupFromHistory(\''+m.sha256+'\')"><div class="history-file">'+esc(m.file_name)+'</div><div class="history-badge">'+(RL[m.risk_level]||m.risk_level)+' '+m.risk_score+'</div></div>'});
+            data.matches.forEach(m=>{h+='<div class="history-item risk-'+m.risk_level+'" onclick="lookupFromHistory(\''+esc(m.sha256)+'\')"><div class="history-file">'+esc(m.file_name)+'</div><div class="history-badge">'+(RL[m.risk_level]||m.risk_level)+' '+m.risk_score+'</div></div>'});
             el.innerHTML=h;
         }else{renderResult(data);el.innerHTML=document.getElementById('result').innerHTML;document.getElementById('result').style.display='none'}
     }catch(e){el.innerHTML='<p style="color:#f44336">'+esc(e.message)+'</p>'}

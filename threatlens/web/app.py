@@ -140,7 +140,12 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
     try:
         from threatlens.core import analyze_file
         try:
-            result = await asyncio.to_thread(analyze_file, tmp_path)
+            result = await asyncio.wait_for(
+                asyncio.to_thread(analyze_file, tmp_path),
+                timeout=120.0,  # 2 minute hard limit
+            )
+        except asyncio.TimeoutError:
+            raise HTTPException(status_code=504, detail="Analysis timed out (2 min limit). Try a smaller file.")
         except (IsADirectoryError, FileNotFoundError, PermissionError) as e:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:

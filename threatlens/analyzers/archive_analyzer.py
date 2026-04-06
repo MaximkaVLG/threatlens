@@ -104,7 +104,14 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> Archiv
         ArchiveAnalysis with per-file scan results
     """
     result = ArchiveAnalysis()
+    name_lower = file_path.lower()
     ext = os.path.splitext(file_path)[1].lower()
+
+    # Handle double extensions: .tar.gz, .tar.bz2
+    if name_lower.endswith((".tar.gz", ".tar.bz2", ".tar.xz")):
+        ext = ".tar.gz"
+    elif ext == ".tgz":
+        ext = ".tar.gz"
 
     if ext not in ARCHIVE_EXTENSIONS:
         return result
@@ -112,7 +119,6 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> Archiv
     result.is_archive = True
     result.archive_type = ext
 
-    # Currently supporting ZIP (most common for cheats/cracks)
     if ext == ".zip":
         return _analyze_zip(file_path, result, max_extract_size)
     elif ext == ".rar":

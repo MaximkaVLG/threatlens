@@ -1,36 +1,33 @@
-FROM python:3.12-slim
+# Stage 1: Build (install dependencies, compile YARA, download rules)
+FROM python:3.12-slim AS builder
 
-# System dependencies for YARA compilation
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libc-dev \
-    libmagic1 \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+    gcc libc-dev git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir yara-python oletools fastapi uvicorn python-multipart
+    pip install --no-cache-dir yara-python oletools fastapi uvicorn python-multipart py7zr rarfile
 
-# Copy project
 COPY . .
-
-# Install as package
-RUN pip install --no-cache-dir -e .
-
-# Download YARA community rules
+RUN pip install --no-cache-dir .
 RUN python scripts/download_yara_rules.py
 
-# Security: run as non-root user
-RUN useradd -m -s /bin/bash scanner
-RUN chown -R scanner:scanner /app
+# Stage 2: Runtime (no gcc, no git — smaller + more secure)
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app /app
+
+# Security: non-root user
+RUN useradd -m -s /bin/bash scanner && chown -R scanner:scanner /app
 USER scanner
 
-# Web UI port (Railway sets $PORT dynamically)
 EXPOSE 8888
 
-# Default: run web UI — Python reads $PORT from env, no shell expansion needed
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+    CMD python -c "import httpx; httpx.get('http://localhost:8080/health').raise_for_status()" || exit 1
+
 CMD ["python", "-m", "threatlens.web.app"]
