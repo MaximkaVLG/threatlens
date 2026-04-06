@@ -171,7 +171,9 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
             raise HTTPException(status_code=500, detail="Analysis failed. Try a smaller file or different format.")
 
         # DEBUG: trace archive detection
-        print(f"SCAN DEBUG: score={result.risk_score}, level={result.risk_level}, findings_count={len(result.findings)}, findings={result.findings[:5]}", flush=True)
+        print(f"SCAN DEBUG: score={result.risk_score}, level={result.risk_level}, type={result.file_type}, findings={result.findings[:5]}", flush=True)
+        if hasattr(result, '_archive_debug'):
+            print(f"ARCHIVE INFO: {result._archive_debug}", flush=True)
 
         # AI explanation (optional, async — non-blocking)
         ai_explanation = ""
