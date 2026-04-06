@@ -172,7 +172,7 @@ async function scanFile(){
     document.getElementById('result').style.display='none';
     scanBtn.disabled=true;
     const fd=new FormData();fd.append('file',selectedFile);fd.append('ai',document.getElementById('useAI').checked);
-    const pwd=document.getElementById('archivePassword').value;if(pwd)fd.append('password',pwd);
+    fd.append('password',document.getElementById('archivePassword').value||'');
     try{
         const r=await fetch('/api/scan',{method:'POST',body:fd});
         if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'Ошибка')}

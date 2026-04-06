@@ -111,7 +111,7 @@ def _check_rate_limit(client_ip: str) -> bool:
 
 
 @app.post("/api/scan")
-async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Form(False), password: str = Form(None)):
+async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Form(False), password: str = Form("")):
     """Scan uploaded file via API."""
     # Rate limiting — use X-Forwarded-For behind reverse proxy (Railway, Cloudflare)
     client_ip = _get_client_ip(request)
@@ -143,7 +143,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
         from threatlens.core import analyze_file
         try:
             result = await asyncio.wait_for(
-                asyncio.to_thread(analyze_file, tmp_path, True, password),
+                asyncio.to_thread(analyze_file, tmp_path, True, password or None),
                 timeout=120.0,  # 2 minute hard limit
             )
         except asyncio.TimeoutError:
