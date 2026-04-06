@@ -130,23 +130,94 @@ def _compile_all_rules():
     return compiled
 
 
-def scan(file_path: str) -> YARAResult:
-    """Scan file against all YARA rules (single compiled ruleset)."""
-    result = YARAResult()
+_compiled_custom = None
+_compiled_custom_sources = {}
+_compiled_community = None
+_compiled_community_sources = {}
 
+
+def _compile_custom_rules():
+    """Compile only custom ThreatLens rules (fast tier)."""
+    global _compiled_custom, _compiled_custom_sources
+    if _compiled_custom is not None:
+        return _compiled_custom
     if not HAS_YARA:
-        logger.debug("yara-python not installed, skipping YARA scan")
-        return result
+        return None
 
-    rules = _compile_all_rules()
-    if rules is None:
-        return result
+    sources = {}
+    if os.path.exists(RULES_DIR):
+        for f in os.listdir(RULES_DIR):
+            if f.endswith((".yar", ".yara")):
+                ns = os.path.splitext(f)[0]
+                sources[ns] = os.path.join(RULES_DIR, f)
 
-    result.rules_loaded = len(_compiled_sources)
-    seen_rules = set()
-
+    if not sources:
+        return None
     try:
-        matches = rules.match(file_path, timeout=60)
+        _compiled_custom = yara.compile(filepaths=sources)
+        _compiled_custom_sources = sources
+        logger.info("YARA custom: compiled %d rule files", len(sources))
+    except Exception as e:
+        logger.error("YARA custom compile error: %s", e)
+    return _compiled_custom
+
+
+def _compile_community_rules():
+    """Compile community rules (slow tier)."""
+    global _compiled_community, _compiled_community_sources
+    if _compiled_community is not None:
+        return _compiled_community
+    if not HAS_YARA:
+        return None
+
+    sources = {}
+    if os.path.exists(COMMUNITY_DIR):
+        for category in COMMUNITY_CATEGORIES:
+            cat_dir = os.path.join(COMMUNITY_DIR, category)
+            if not os.path.isdir(cat_dir):
+                continue
+            for f in os.listdir(cat_dir):
+                if f.endswith((".yar", ".yara")):
+                    ns = os.path.splitext(f)[0]
+                    base_ns = ns
+                    counter = 1
+                    while ns in sources:
+                        ns = f"{base_ns}_{counter}"
+                        counter += 1
+                    sources[ns] = os.path.join(cat_dir, f)
+
+    if not sources:
+        return None
+
+    failed = set()
+    try:
+        _compiled_community = yara.compile(filepaths=sources)
+        _compiled_community_sources = sources
+        logger.info("YARA community: compiled %d rule files", len(sources))
+    except yara.SyntaxError:
+        good_sources = {}
+        for ns, path in sources.items():
+            try:
+                yara.compile(filepath=path)
+                good_sources[ns] = path
+            except Exception:
+                failed.add(path)
+        if good_sources:
+            try:
+                _compiled_community = yara.compile(filepaths=good_sources)
+                _compiled_community_sources = good_sources
+            except Exception as e:
+                logger.error("YARA community compile failed: %s", e)
+        if failed:
+            logger.warning("YARA: skipped %d community rule files with errors", len(failed))
+
+    return _compiled_community
+
+
+def _match_rules(rules, file_path: str, result: YARAResult, seen_rules: set):
+    """Run YARA match and append findings to result."""
+    try:
+        matches = rules.match(file_path, timeout=30, fast=True)
         for match in matches:
             if match.rule in seen_rules:
                 continue
@@ -171,9 +242,36 @@ def scan(file_path: str) -> YARAResult:
                 f"[{category}] YARA: {description} (rule: {match.rule})"
             )
     except yara.TimeoutError:
-        logger.warning("YARA scan timed out after 60s on %s", os.path.basename(file_path))
+        logger.warning("YARA scan timed out on %s", os.path.basename(file_path))
     except Exception as e:
         logger.error("YARA scan error: %s", e)
+
+
+def scan(file_path: str) -> YARAResult:
+    """Tiered YARA scan: custom rules first, community only if no matches found."""
+    result = YARAResult()
+
+    if not HAS_YARA:
+        logger.debug("yara-python not installed, skipping YARA scan")
+        return result
+
+    # Also keep _compile_all_rules working for pre-warm
+    _compile_all_rules()
+
+    seen_rules = set()
+
+    # Tier 1: Custom rules (fast — ~20 rules)
+    custom = _compile_custom_rules()
+    if custom:
+        result.rules_loaded = len(_compiled_custom_sources)
+        _match_rules(custom, file_path, result, seen_rules)
+
+    # Tier 2: Community rules — only if custom found nothing
+    if not result.matches:
+        community = _compile_community_rules()
+        if community:
+            result.rules_loaded += len(_compiled_community_sources)
+            _match_rules(community, file_path, result, seen_rules)
 
     if result.matches:
         logger.info("YARA: %d matches from %d rule files", len(result.matches), result.rules_loaded)
