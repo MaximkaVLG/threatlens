@@ -93,12 +93,13 @@ def _scan_extracted_file(file_path: str, original_name: str) -> dict:
 MAX_ARCHIVE_FILES = 5000  # Max files to extract from archive (prevents inode exhaustion)
 
 
-def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> ArchiveAnalysis:
+def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024, password: str = None) -> ArchiveAnalysis:
     """Analyze an archive file recursively.
 
     Args:
         file_path: Path to archive
         max_extract_size: Max total extracted size (default 100MB, safety limit)
+        password: Optional password for encrypted archives
 
     Returns:
         ArchiveAnalysis with per-file scan results
@@ -120,7 +121,7 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> Archiv
     result.archive_type = ext
 
     if ext == ".zip":
-        return _analyze_zip(file_path, result, max_extract_size)
+        return _analyze_zip(file_path, result, max_extract_size, password=password)
     elif ext == ".rar":
         return _analyze_rar(file_path, result, max_extract_size)
     elif ext in (".7z",):
@@ -132,8 +133,8 @@ def analyze(file_path: str, max_extract_size: int = 100 * 1024 * 1024) -> Archiv
         return result
 
 
-def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
-    """Analyze ZIP archive."""
+def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
+    """Analyze ZIP archive, with optional password for encrypted archives."""
     try:
         zf = zipfile.ZipFile(file_path, "r")
     except zipfile.BadZipFile:
@@ -141,16 +142,30 @@ def _analyze_zip(file_path: str, result: ArchiveAnalysis, max_extract_size: int)
         return result
 
     with zf:
-        return _analyze_zip_inner(zf, file_path, result, max_extract_size)
+        return _analyze_zip_inner(zf, file_path, result, max_extract_size, password=password)
 
 
-def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_size: int) -> ArchiveAnalysis:
+def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_size: int, password: str = None) -> ArchiveAnalysis:
     """Inner ZIP analysis (zf is guaranteed to be closed by caller)."""
+    pwd_bytes = password.encode("utf-8") if password else None
+
     # Check if password protected
-    for info in zf.infolist():
-        if info.flag_bits & 0x1:
-            result.is_password_protected = True
-            result.findings.append("Archive is password-protected (cannot analyze contents)")
+    is_encrypted = any(info.flag_bits & 0x1 for info in zf.infolist())
+    if is_encrypted:
+        result.is_password_protected = True
+        if not pwd_bytes:
+            result.findings.append("Archive is password-protected. Provide a password to analyze contents.")
+            return result
+        # Verify password works
+        try:
+            test_info = next(i for i in zf.infolist() if not i.is_dir())
+            zf.read(test_info, pwd=pwd_bytes)
+            result.findings.append("Password-protected archive — unlocked successfully")
+        except RuntimeError:
+            result.findings.append("Wrong password — cannot decrypt archive")
+            return result
+        except Exception:
+            result.findings.append("Failed to decrypt archive with provided password")
             return result
 
     # List all files
@@ -245,7 +260,7 @@ def _analyze_zip_inner(zf, file_path: str, result: ArchiveAnalysis, max_extract_
                     f"[evasion] BLOCKED path traversal attempt: {info.filename}"
                 )
                 continue
-            zf.extract(info, tmp_dir)
+            zf.extract(info, tmp_dir, pwd=pwd_bytes)
         zf.close()
 
         for finfo in result.files:

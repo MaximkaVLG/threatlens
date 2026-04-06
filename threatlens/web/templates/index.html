@@ -109,7 +109,8 @@
         </div>
         <input type="file" id="fileInput" style="display:none">
         <div class="options">
-            <label><input type="checkbox" id="useAI"> AI-объяснение (YandexGPT)</label>
+            <input type="password" id="archivePassword" placeholder="Пароль архива (если есть)" style="background:#111;border:1px solid #333;color:#e0e0e0;padding:8px 12px;border-radius:6px;width:200px;font-size:0.9em;">
+            <label><input type="checkbox" id="useAI"> AI-объяснение</label>
             <button class="btn" id="scanBtn" disabled onclick="scanFile()">Сканировать</button>
         </div>
         <div class="loading" id="loading"><div class="spinner"></div><p style="margin-top:15px">Анализ файла...</p></div>
@@ -171,6 +172,7 @@ async function scanFile(){
     document.getElementById('result').style.display='none';
     scanBtn.disabled=true;
     const fd=new FormData();fd.append('file',selectedFile);fd.append('ai',document.getElementById('useAI').checked);
+    const pwd=document.getElementById('archivePassword').value;if(pwd)fd.append('password',pwd);
     try{
         const r=await fetch('/api/scan',{method:'POST',body:fd});
         if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'Ошибка')}

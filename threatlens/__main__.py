@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger("threatlens")
 
 
-def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
+def scan_file(file_path: str, use_ai: bool = False, format: str = "text", password: str = None):
     """Analyze a single file."""
     from threatlens.output.colors import (
         console, print_header, print_file_info, print_risk,
@@ -40,7 +40,7 @@ def scan_file(file_path: str, use_ai: bool = False, format: str = "text"):
 
     # Single entry point — no duplication
     from threatlens.core import analyze_file
-    result = analyze_file(file_path)
+    result = analyze_file(file_path, password=password)
 
     # Output
     if format == "json":
@@ -382,6 +382,7 @@ def main():
     scan_p.add_argument("--ai", action="store_true", help="Enable YandexGPT explanation")
     scan_p.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     scan_p.add_argument("--recursive", action="store_true", help="Scan directory recursively")
+    scan_p.add_argument("--password", "-p", default=None, help="Password for encrypted archives")
 
     repo_p = subparsers.add_parser("repo", help="Scan a GitHub repository")
     repo_p.add_argument("url", help="GitHub repository URL")
@@ -397,7 +398,7 @@ def main():
         if args.recursive or os.path.isdir(args.target):
             scan_directory(args.target, use_ai=args.ai, format=args.format)
         else:
-            scan_file(args.target, use_ai=args.ai, format=args.format)
+            scan_file(args.target, use_ai=args.ai, format=args.format, password=args.password)
     elif args.command == "repo":
         _scan_repo(args.url)
     elif args.command == "lookup":

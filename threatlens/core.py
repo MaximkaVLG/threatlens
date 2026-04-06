@@ -39,7 +39,7 @@ class AnalysisResult:
     office_analysis: object = None
 
 
-def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
+def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -> AnalysisResult:
     """Run full ThreatLens analysis on a single file.
 
     This is THE single function that both CLI and Web use.
@@ -148,7 +148,7 @@ def analyze_file(file_path: str, use_cache: bool = True) -> AnalysisResult:
     # Archive (ZIP, RAR, 7z, tar.gz)
     from threatlens.analyzers.archive_analyzer import ARCHIVE_EXTENSIONS, analyze as archive_analyze
     if ext in ARCHIVE_EXTENSIONS or generic.detected_type in ("ZIP archive", "RAR archive"):
-        archive_result = archive_analyze(file_path)
+        archive_result = archive_analyze(file_path, password=password)
         all_findings.extend(archive_result.findings)
         result.file_type = f"Archive ({ext})"
 
