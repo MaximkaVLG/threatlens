@@ -11,3 +11,11 @@ tests/samples/*.dll
 .vscode/
 # Community YARA rules (downloaded separately)
 threatlens/rules/yara_community/
+
+# ML artifacts (datasets are large, models are binaries)
+data/
+results/
+models/
+*.joblib
+*.pkl
+*.parquet
