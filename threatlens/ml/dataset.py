@@ -143,13 +143,14 @@ def load_cicids2017(
     df = _map_labels(df)
 
     if sample_size and sample_size < len(df):
-        # Stratified sample to preserve class distribution
-        df = df.groupby("Label", group_keys=False).apply(
-            lambda x: x.sample(
-                n=min(len(x), max(1, int(sample_size * len(x) / len(df)))),
-                random_state=random_state,
-            )
-        )
+        # Stratified sample preserving class distribution (manual to avoid
+        # pandas 2.x groupby().apply() dropping group keys)
+        sampled_parts = []
+        total = len(df)
+        for label, group in df.groupby("Label"):
+            n_take = min(len(group), max(1, int(sample_size * len(group) / total)))
+            sampled_parts.append(group.sample(n=n_take, random_state=random_state))
+        df = pd.concat(sampled_parts, ignore_index=True)
         logger.info("Sampled %d rows", len(df))
 
     if balance:
