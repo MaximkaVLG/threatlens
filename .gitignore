@@ -9,6 +9,7 @@ tests/samples/*.exe
 tests/samples/*.dll
 .idea/
 .vscode/
+.claude/
 # Community YARA rules (downloaded separately)
 threatlens/rules/yara_community/
 
