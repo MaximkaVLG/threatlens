@@ -29,6 +29,7 @@ from threatlens.ml.models import (
 )
 from threatlens.ml.evaluate import (
     evaluate_model, print_comparison, print_feature_importance,
+    cross_validate_model, print_cv_comparison,
 )
 
 logging.basicConfig(
@@ -48,6 +49,9 @@ def main():
     parser.add_argument("--output", default="./results", help="Output directory for models and metrics")
     parser.add_argument("--test-size", type=float, default=0.2, help="Test split fraction")
     parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--cv", type=int, default=0,
+                        help="If >1, run K-fold cross-validation on training set "
+                             "before final fit (5 recommended)")
     args = parser.parse_args()
 
     os.makedirs(args.output, exist_ok=True)
@@ -88,6 +92,33 @@ def main():
     pipeline = FeaturePipeline()
     X_train_proc, y_train_enc = pipeline.fit_transform(X_train, y_train)
     X_test_proc, y_test_enc = pipeline.transform(X_test, y_test)
+
+    # ---- Optional K-fold cross-validation on the training set ----
+    if args.cv and args.cv > 1:
+        logger.info("=== %d-fold cross-validation on training set ===", args.cv)
+        cv_results = [
+            cross_validate_model(
+                lambda rs=args.random_state: build_random_forest(random_state=rs),
+                X_train_proc, y_train_enc,
+                n_splits=args.cv, random_state=args.random_state,
+                model_name="RandomForest",
+            ),
+        ]
+        try:
+            cv_results.append(
+                cross_validate_model(
+                    lambda rs=args.random_state: build_xgboost(random_state=rs),
+                    X_train_proc, y_train_enc,
+                    n_splits=args.cv, random_state=args.random_state,
+                    model_name="XGBoost",
+                )
+            )
+        except ImportError:
+            logger.warning("XGBoost unavailable; skipping CV for it")
+
+        print_cv_comparison(
+            cv_results, out_file=os.path.join(args.output, "cv_results.csv"),
+        )
 
     # ---- Train and evaluate models ----
     all_metrics = []

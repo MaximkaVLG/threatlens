@@ -141,3 +141,151 @@ def print_feature_importance(metrics: ModelMetrics, top_n: int = 15):
     for name, imp in metrics.feature_importance[:top_n]:
         bar = "#" * int(imp * 50)
         print(f"  {name:40s} {imp:.4f}  {bar}")
+
+
+# ---------------------------------------------------------------------------
+# K-fold cross-validation
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class CVResult:
+    """Per-fold and aggregate metrics from StratifiedKFold cross-validation."""
+    model_name: str
+    n_splits: int
+    accuracy: list = field(default_factory=list)
+    precision: list = field(default_factory=list)
+    recall: list = field(default_factory=list)
+    f1: list = field(default_factory=list)
+    train_time: list = field(default_factory=list)
+    predict_time: list = field(default_factory=list)
+
+    def summary(self) -> dict:
+        """Return mean, std, and 95% CI half-width for each metric."""
+        out = {"model": self.model_name, "n_splits": self.n_splits}
+        for name, values in (
+            ("accuracy", self.accuracy),
+            ("precision", self.precision),
+            ("recall", self.recall),
+            ("f1", self.f1),
+            ("train_time", self.train_time),
+            ("predict_time", self.predict_time),
+        ):
+            arr = np.asarray(values, dtype=np.float64)
+            mean = float(arr.mean())
+            std = float(arr.std(ddof=1)) if len(arr) > 1 else 0.0
+            # 95% CI half-width assuming approximate normality.
+            # t-critical: df=n_splits-1 → 2.776 (n=3), 2.132 (n=5). We use
+            # 1.96 for n>=5 (close enough) and 2.776 for smaller n.
+            crit = 1.96 if self.n_splits >= 5 else 2.776
+            half_ci = crit * std / np.sqrt(max(1, len(arr)))
+            out[f"{name}_mean"] = mean
+            out[f"{name}_std"] = std
+            out[f"{name}_ci95"] = float(half_ci)
+        return out
+
+
+def cross_validate_model(
+    clf_factory,
+    X,
+    y,
+    n_splits: int = 5,
+    random_state: int = 42,
+    model_name: str = "model",
+) -> CVResult:
+    """Run StratifiedKFold CV and return per-fold metrics.
+
+    Args:
+        clf_factory: zero-arg callable that returns a freshly-constructed
+            estimator. A fresh instance is created per fold to avoid state
+            leakage between folds.
+        X, y: numpy-like arrays; y is the encoded target (integers).
+        n_splits: 3 or 5 recommended.
+        model_name: label used in logs and results.
+    """
+    from collections import Counter
+    from sklearn.model_selection import StratifiedKFold
+
+    X = np.asarray(X)
+    y = np.asarray(y)
+
+    # Drop classes with fewer samples than n_splits — otherwise a fold can
+    # miss them entirely. After dropping, re-encode labels to 0..K-1 so
+    # XGBoost (which requires contiguous class indices) doesn't choke.
+    counts = Counter(y.tolist())
+    rare = {cls for cls, n in counts.items() if n < n_splits}
+    if rare:
+        logger.warning(
+            "Dropping %d class(es) with < %d samples before CV: %s",
+            len(rare), n_splits, sorted(rare),
+        )
+        keep = ~np.isin(y, list(rare))
+        X, y = X[keep], y[keep]
+
+    # Remap remaining labels to contiguous 0..K-1 range.
+    unique_sorted = np.sort(np.unique(y))
+    remap = {int(old): new for new, old in enumerate(unique_sorted)}
+    y = np.array([remap[int(v)] for v in y], dtype=np.int64)
+
+    cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+
+    res = CVResult(model_name=model_name, n_splits=n_splits)
+
+    for fold_idx, (train_idx, test_idx) in enumerate(cv.split(X, y), start=1):
+        X_tr, X_te = X[train_idx], X[test_idx]
+        y_tr, y_te = y[train_idx], y[test_idx]
+
+        clf = clf_factory()
+        t0 = time.time()
+        clf.fit(X_tr, y_tr)
+        res.train_time.append(time.time() - t0)
+
+        t0 = time.time()
+        y_pred = clf.predict(X_te)
+        res.predict_time.append(time.time() - t0)
+
+        res.accuracy.append(accuracy_score(y_te, y_pred))
+        res.precision.append(
+            precision_score(y_te, y_pred, average="weighted", zero_division=0)
+        )
+        res.recall.append(
+            recall_score(y_te, y_pred, average="weighted", zero_division=0)
+        )
+        res.f1.append(f1_score(y_te, y_pred, average="weighted", zero_division=0))
+
+        logger.info(
+            "  %s fold %d/%d: acc=%.4f f1=%.4f (train %.2fs)",
+            model_name, fold_idx, n_splits,
+            res.accuracy[-1], res.f1[-1], res.train_time[-1],
+        )
+
+    return res
+
+
+def print_cv_comparison(cv_results: list, out_file: str = None):
+    """Render CV results as `mean +/- std` table; optionally save to CSV."""
+    rows = []
+    for res in cv_results:
+        s = res.summary()
+        rows.append({
+            "model": s["model"],
+            "accuracy": f"{s['accuracy_mean']:.4f} +/- {s['accuracy_std']:.4f}",
+            "precision": f"{s['precision_mean']:.4f} +/- {s['precision_std']:.4f}",
+            "recall": f"{s['recall_mean']:.4f} +/- {s['recall_std']:.4f}",
+            "f1": f"{s['f1_mean']:.4f} +/- {s['f1_std']:.4f}",
+            "train_s": f"{s['train_time_mean']:.2f} +/- {s['train_time_std']:.2f}",
+            "ci95_f1": f"+/-{s['f1_ci95']:.4f}",
+        })
+    df = pd.DataFrame(rows)
+
+    print("\n" + "=" * 90)
+    print(f"{cv_results[0].n_splits}-FOLD CROSS-VALIDATION  (mean +/- std)")
+    print("=" * 90)
+    print(df.to_string(index=False))
+    print("=" * 90)
+
+    if out_file:
+        numeric = pd.DataFrame([r.summary() for r in cv_results])
+        numeric.to_csv(out_file, index=False)
+        logger.info("Saved CV results to %s", out_file)
+    return df

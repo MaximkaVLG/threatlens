@@ -119,15 +119,32 @@ PCAP file  ->  cicflowmeter  ->  70 CIC-IDS2017 features  ->  ML models
                               (top features)                    (natural language, RU)
 ```
 
-### Models & metrics (50K stratified sample, train/test 80/20)
+### Models & metrics (50K stratified sample, train/test 80/20 + 5-fold CV)
 
-| Model | Accuracy | Precision | Recall | F1 | Train time |
-|-------|---------:|----------:|-------:|---:|-----------:|
-| Random Forest | 0.9975 | 0.9976 | 0.9975 | 0.9975 | 0.88 s |
-| **XGBoost (default)** | **0.9983** | **0.9983** | **0.9983** | **0.9983** | 5.30 s |
-| Isolation Forest (benign-only) | &mdash; | &mdash; | &mdash; | 0.413 | &mdash; |
+| Model | Accuracy | F1 weighted | F1 (5-fold CV) | Train time |
+|-------|---------:|------------:|---------------:|-----------:|
+| Random Forest | 0.9975 | 0.9975 | 0.9968 &plusmn; 0.0004 | 0.82 s |
+| **XGBoost (default)** | **0.9983** | **0.9983** | **0.9983 &plusmn; 0.0003** | 5.14 s |
+| Isolation Forest (benign-only) | 0.7399 | 0.4130 | &mdash; | 0.53 s |
+
+Baseline comparison (5-fold CV, 30K stratified sample):
+
+| Model | F1 weighted | Characterisation |
+|-------|------------:|------------------|
+| LogisticRegression | 0.9596 &plusmn; 0.0027 | linear baseline |
+| LinearSVC | 0.9750 &plusmn; 0.0045 | margin baseline |
+| DecisionTree | 0.9954 &plusmn; 0.0010 | single non-linear tree |
+| Random Forest | 0.9964 &plusmn; 0.0011 | tree ensemble |
+| **XGBoost** | **0.9978 &plusmn; 0.0006** | **production** &mdash; tightest CI |
+
+See [docs/diploma.md](docs/diploma.md) for the full defense writeup and `scripts/compare_baselines.py` to reproduce.
 
 Top predictive features: `Idle Mean`, `Bwd Packet Length Std`, `act_data_pkt_fwd`, `Average Packet Size`, `Bwd Packet Length Mean`.
+
+<p align="center">
+  <img src="docs/screenshots/baseline_comparison.png" alt="Baselines vs production" width="820">
+  <br><em>Baselines vs production &mdash; 5-fold CV on 30K stratified sample</em>
+</p>
 
 <p align="center">
   <img src="docs/screenshots/feature_importance.png" alt="Feature importance" width="560">

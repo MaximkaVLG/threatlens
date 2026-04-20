@@ -6,8 +6,8 @@
     "recall": 0.9974997499749975,
     "f1": 0.9974571783783805,
     "roc_auc": null,
-    "train_time_sec": 0.8777563571929932,
-    "predict_time_sec": 0.052768707275390625,
+    "train_time_sec": 0.8186700344085693,
+    "predict_time_sec": 0.03912234306335449,
     "per_class_report": {
       "0": {
         "precision": 0.9982664685487865,
@@ -355,8 +355,8 @@
     "recall": 0.9982998299829983,
     "f1": 0.9982598591732262,
     "roc_auc": null,
-    "train_time_sec": 5.300158500671387,
-    "predict_time_sec": 0.03748631477355957,
+    "train_time_sec": 5.138888120651245,
+    "predict_time_sec": 0.03424525260925293,
     "per_class_report": {
       "0": {
         "precision": 0.9990089197224975,
@@ -704,8 +704,8 @@
     "recall": 0.47433903576982894,
     "f1": 0.4129993229519296,
     "roc_auc": null,
-    "train_time_sec": 0.5241856575012207,
-    "predict_time_sec": 0.08060383796691895,
+    "train_time_sec": 0.5274562835693359,
+    "predict_time_sec": 0.08249235153198242,
     "per_class_report": {
       "0": {
         "precision": 0.8647458983593438,
