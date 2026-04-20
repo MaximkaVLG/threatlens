@@ -1,0 +1,4 @@
+Model,Accuracy,Precision,Recall,F1,ROC-AUC,Train (s),Predict (s)
+RandomForest,0.9975,0.9976,0.9975,0.9975,N/A,0.88,0.053
+XGBoost,0.9983,0.9984,0.9983,0.9983,N/A,5.3,0.037
+IsolationForest(binary),0.7399,0.3657,0.4743,0.413,N/A,0.52,0.081

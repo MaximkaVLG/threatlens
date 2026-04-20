@@ -20,3 +20,10 @@ models/
 *.joblib
 *.pkl
 *.parquet
+
+# ...except production model snapshot required for Railway / timeweb deploy
+!results/
+!results/cicids2017/
+!results/cicids2017/*.joblib
+!results/cicids2017/metrics.json
+!results/cicids2017/comparison.csv
