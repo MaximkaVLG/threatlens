@@ -97,7 +97,10 @@ function renderResult(data) {
     html += '<tr><td>Тип</td><td>' + esc(data.type) + '</td></tr>';
     html += '<tr><td>MD5</td><td class="hash">' + esc(data.md5) + '</td></tr>';
     html += '<tr><td>SHA256</td><td class="hash">' + esc(data.sha256) + '</td></tr>';
-    html += '<tr><td>Энтропия</td><td>' + data.entropy + ' (' + esc(data.entropy_verdict) + ')</td></tr>';
+    const entNum = Number(data.entropy);
+    const entStr = Number.isFinite(entNum) && entNum > 0 ? entNum.toFixed(2) : 'н/д';
+    const entVerdict = data.entropy_verdict ? ' (' + esc(data.entropy_verdict) + ')' : '';
+    html += '<tr><td>Энтропия</td><td>' + entStr + entVerdict + '</td></tr>';
     html += '</table>';
 
     html += '<div style="text-align:center">';

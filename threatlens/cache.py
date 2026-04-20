@@ -73,6 +73,8 @@ class AnalysisCache:
                     heuristic_confidence REAL,
                     yara_matches TEXT,
                     scan_time REAL,
+                    entropy REAL DEFAULT 0,
+                    entropy_verdict TEXT DEFAULT '',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     scan_count INTEGER DEFAULT 1
                 )
@@ -80,6 +82,15 @@ class AnalysisCache:
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_risk ON scan_cache(risk_level)
             """)
+            # Migration for existing DBs that don't have entropy columns
+            for col, ddl in (
+                ("entropy", "ALTER TABLE scan_cache ADD COLUMN entropy REAL DEFAULT 0"),
+                ("entropy_verdict", "ALTER TABLE scan_cache ADD COLUMN entropy_verdict TEXT DEFAULT ''"),
+            ):
+                try:
+                    conn.execute(ddl)
+                except sqlite3.OperationalError:
+                    pass  # already exists
 
     def get(self, sha256: str) -> Optional[dict]:
         """Get cached result by SHA256 hash. Returns None if not found."""
@@ -98,6 +109,7 @@ class AnalysisCache:
                 (sha256,)
             )
 
+            cols = row.keys()
             return {
                 "sha256": row["sha256"],
                 "file": row["file_name"],
@@ -113,6 +125,8 @@ class AnalysisCache:
                 "yara_matches": json.loads(row["yara_matches"]),
                 "scan_time": row["scan_time"],
                 "scan_count": row["scan_count"],
+                "entropy": row["entropy"] if "entropy" in cols and row["entropy"] is not None else 0.0,
+                "entropy_verdict": row["entropy_verdict"] if "entropy_verdict" in cols and row["entropy_verdict"] is not None else "",
                 "cached": True,
             }
 
@@ -136,13 +150,20 @@ class AnalysisCache:
         explanation = result.explanation if hasattr(result, "explanation") else result.get("explanation", "")
         yara = [m["rule"] for m in result.yara_matches] if hasattr(result, "yara_matches") else result.get("yara_matches", [])
 
+        if isinstance(result, dict):
+            entropy_val = result.get("entropy", 0.0)
+            entropy_v = result.get("entropy_verdict", "")
+        else:
+            entropy_val = getattr(result, "entropy", 0.0)
+            entropy_v = getattr(result, "entropy_verdict", "")
+
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT INTO scan_cache
                 (sha256, file_name, file_size, file_type, risk_score, risk_level,
                  findings, explanation, recommendations, heuristic_type,
-                 heuristic_confidence, yara_matches, scan_time)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 heuristic_confidence, yara_matches, scan_time, entropy, entropy_verdict)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(sha256) DO UPDATE SET
                     risk_score=excluded.risk_score, risk_level=excluded.risk_level,
                     findings=excluded.findings, explanation=excluded.explanation,
@@ -151,6 +172,8 @@ class AnalysisCache:
                     heuristic_confidence=excluded.heuristic_confidence,
                     yara_matches=excluded.yara_matches,
                     scan_time=excluded.scan_time,
+                    entropy=excluded.entropy,
+                    entropy_verdict=excluded.entropy_verdict,
                     scan_count=scan_count + 1
             """, (
                 sha256,
@@ -166,6 +189,8 @@ class AnalysisCache:
                 heuristic_conf,
                 json.dumps(yara, ensure_ascii=False),
                 scan_time,
+                float(entropy_val or 0.0),
+                entropy_v or "",
             ))
 
         logger.debug("Cached result for %s", sha256[:16])

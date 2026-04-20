@@ -121,7 +121,11 @@
 
     <div id="page-network" class="page">
         <h2 class="page-title">Анализ сетевого трафика (PCAP)</h2>
-        <p style="color:#888;margin-bottom:16px;font-size:0.9em">Загрузите PCAP/PCAPNG-дамп — система извлечёт сетевые потоки и классифицирует их через ML-модели, обученные на CIC-IDS2017.</p>
+        <p style="color:#888;margin-bottom:12px;font-size:0.9em">Загрузите PCAP/PCAPNG-дамп — система извлечёт сетевые потоки и классифицирует их через ML-модели, обученные на CIC-IDS2017.</p>
+        <div style="background:#1a1f2e;border-left:3px solid #00d4ff;padding:10px 14px;margin-bottom:18px;border-radius:4px;font-size:0.85em;color:#aaa">
+            <strong style="color:#00d4ff">&#9432; Про датасет:</strong> модель обучена на <a href="https://www.unb.ca/cic/datasets/ids-2017.html" target="_blank" rel="noopener" style="color:#00d4ff">CIC-IDS2017</a> (реальный трафик сети с атаками DoS/DDoS, PortScan, Brute Force, Web Attack, Infiltration, Botnet).
+            Для корректной демонстрации используйте PCAP-дампы из этого датасета — синтетические захваты без типичных статистических паттернов часто классифицируются как BENIGN.
+        </div>
         <div class="upload-zone" id="pcapDropZone" onclick="document.getElementById('pcapInput').click()">
             <div class="icon">&#128225;</div>
             <p>Перетащите PCAP сюда или нажмите для загрузки</p>
@@ -329,6 +333,12 @@ function renderPcapResult(d){
     h+='<div class="stat-card"><div class="stat-number" style="color:#4caf50">'+(s.benign_flows||0)+'</div><div class="stat-label">Безопасных</div></div>';
     h+='</div>';
     h+='<p style="color:#666;font-size:0.85em;margin:10px 0">Модель: <b style="color:#00d4ff">'+esc(d.model)+'</b> &middot; Файл: '+esc(d.file)+' ('+(d.size/1024/1024).toFixed(2)+' МБ)</p>';
+    if(total>0 && attacks===0 && anomalies===0){
+        h+='<div style="background:#2a1f0a;border-left:3px solid #ff9800;padding:10px 14px;margin:12px 0;border-radius:4px;font-size:0.85em;color:#ccc">';
+        h+='<strong style="color:#ff9800">&#9888; Все потоки BENIGN.</strong> Это нормально для обычного пользовательского трафика. ';
+        h+='Модель обучена на CIC-IDS2017 — если ожидали детект, проверьте, что PCAP содержит реальные атаки с типичными статистическими паттернами (много SYN-пакетов за короткое время для PortScan, высокий pkts/s для DoS и т.д.).';
+        h+='</div>';
+    }
 
     const labels=s.labels||{};
     const labelEntries=Object.entries(labels).sort((a,b)=>b[1]-a[1]);

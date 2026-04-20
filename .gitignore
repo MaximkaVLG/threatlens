@@ -27,3 +27,7 @@ models/
 !results/cicids2017/*.joblib
 !results/cicids2017/metrics.json
 !results/cicids2017/comparison.csv
+
+# Local experiment outputs (synthetic training set, ad-hoc runs)
+results/synthetic/
+results/experiments/

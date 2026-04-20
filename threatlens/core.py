@@ -106,6 +106,8 @@ def analyze_file(file_path: str, use_cache: bool = True, password: str = None) -
                     findings=cached["findings"],
                     explanation=cached["explanation"],
                     recommendations=cached["recommendations"],
+                    entropy=cached.get("entropy", 0.0) or 0.0,
+                    entropy_verdict=cached.get("entropy_verdict", "") or "",
                 )
                 return result
         except Exception as e:
