@@ -71,8 +71,30 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 # Security limits
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+MAX_PCAP_SIZE = 200 * 1024 * 1024  # 200MB — network captures are often larger
 RATE_LIMIT_WINDOW = 60  # seconds
 RATE_LIMIT_MAX = 10  # requests per window
+
+# Lazy-loaded ML detector for network flows (models are ~15MB, loaded on first PCAP request)
+_flow_detector = None
+_flow_detector_lock = asyncio.Lock()
+
+
+async def _get_flow_detector():
+    """Return a shared FlowDetector, loading models from disk on first call."""
+    global _flow_detector
+    if _flow_detector is not None:
+        return _flow_detector
+    async with _flow_detector_lock:
+        if _flow_detector is None:
+            from threatlens.network import FlowDetector
+            results_dir = os.environ.get(
+                "THREATLENS_ML_DIR",
+                os.path.join(os.path.dirname(__file__), "..", "..", "results", "cicids2017"),
+            )
+            _flow_detector = await asyncio.to_thread(FlowDetector.from_results_dir, results_dir)
+            logger.info("FlowDetector loaded from %s", results_dir)
+    return _flow_detector
 
 # Simple in-memory rate limiter
 _rate_limits = defaultdict(list)
@@ -213,6 +235,266 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
         })
     finally:
         os.unlink(tmp_path)
+
+
+_PCAP_EXTS = {".pcap", ".pcapng", ".cap"}
+
+
+def _json_safe(obj):
+    """Recursively convert numpy / pandas scalars to native Python types."""
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_safe(v) for v in obj]
+    if hasattr(obj, "item") and callable(obj.item):
+        try:
+            return obj.item()
+        except (ValueError, TypeError):
+            return obj
+    return obj
+
+
+@app.post("/api/network/analyze-pcap")
+async def api_analyze_pcap(
+    request: Request,
+    file: UploadFile = File(...),
+    model: str = Form("xgboost"),
+    max_flows: int = Form(200),
+):
+    """Extract flows from an uploaded PCAP and classify each with the ML models.
+
+    Returns summary statistics plus up to `max_flows` highest-risk flows.
+    """
+    client_ip = _get_client_ip(request)
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
+
+    if model not in {"random_forest", "xgboost"}:
+        raise HTTPException(status_code=400, detail="Model must be 'random_forest' or 'xgboost'")
+
+    max_flows = max(1, min(int(max_flows), 1000))
+
+    # Stream to disk in bounded chunks — PCAPs can be hundreds of MB.
+    suffix = os.path.splitext(file.filename or "capture.pcap")[1].lower()
+    if suffix not in _PCAP_EXTS:
+        raise HTTPException(status_code=400, detail=f"Expected PCAP extension, got {suffix!r}")
+
+    total_size = 0
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, prefix="tl_pcap_") as tmp:
+        tmp_path = tmp.name
+        while chunk := await file.read(1024 * 1024):
+            total_size += len(chunk)
+            if total_size > MAX_PCAP_SIZE:
+                tmp.close()
+                os.unlink(tmp_path)
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"PCAP too large. Maximum size: {MAX_PCAP_SIZE // (1024*1024)}MB",
+                )
+            tmp.write(chunk)
+
+    if total_size == 0:
+        os.unlink(tmp_path)
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        from threatlens.network import FlowExtractor
+
+        extractor = FlowExtractor()
+        try:
+            flows_df = await asyncio.wait_for(
+                asyncio.to_thread(extractor.extract, tmp_path),
+                timeout=180.0,  # 3 min hard limit on parsing
+            )
+        except asyncio.TimeoutError:
+            raise HTTPException(status_code=504, detail="PCAP parsing timed out (3 min limit).")
+        except Exception as e:
+            logger.error("PCAP parse error: %s", e)
+            raise HTTPException(status_code=400, detail="Could not parse PCAP file.")
+
+        if flows_df.empty:
+            return JSONResponse({
+                "file": file.filename,
+                "size": total_size,
+                "summary": {
+                    "total_flows": 0, "attack_flows": 0, "benign_flows": 0,
+                    "anomaly_flows": 0, "labels": {}, "top_talkers": [],
+                },
+                "flows": [],
+                "model": model,
+            })
+
+        detector = await _get_flow_detector()
+        try:
+            predictions = await asyncio.to_thread(detector.predict, flows_df, model)
+        except Exception as e:
+            logger.error("Prediction error: %s", e)
+            raise HTTPException(status_code=500, detail="ML prediction failed.")
+
+        summary = detector.summary(predictions)
+
+        # Rank: attacks first (by confidence), then anomalies, then benign.
+        ranked = predictions.assign(
+            _sort=lambda d: d["is_attack"] * 1e6
+                            + d.get("anomaly_flag", 0) * 1e3
+                            + d["confidence"].fillna(0),
+        ).sort_values("_sort", ascending=False).drop(columns="_sort")
+
+        top_flows = ranked.head(max_flows).to_dict(orient="records")
+
+        return JSONResponse(_json_safe({
+            "file": file.filename,
+            "size": total_size,
+            "summary": summary,
+            "flows": top_flows,
+            "model": model,
+        }))
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+
+_IP_RE = re.compile(r"^[0-9a-fA-F:.]{1,45}$")
+# CIC-IDS2017 class labels (plus fallback "unknown"). Strict whitelist
+# prevents prompt-injected text from reaching the LLM via the label field.
+_ALLOWED_LABELS = frozenset({
+    "BENIGN", "DoS Hulk", "DoS GoldenEye", "DoS slowloris", "DoS Slowhttptest",
+    "Heartbleed", "DDoS", "PortScan", "FTP-Patator", "SSH-Patator",
+    "Web Attack \u2013 Brute Force", "Web Attack \u2013 XSS", "Web Attack \u2013 Sql Injection",
+    "Web Attack  Brute Force", "Web Attack  XSS", "Web Attack  Sql Injection",
+    "Bot", "Infiltration",
+})
+_PROTO_NAMES = {6: "TCP", 17: "UDP", 1: "ICMP"}
+
+
+def _num(d: dict, *keys, default: float = 0.0) -> float:
+    """Read the first available numeric key, coercing to float."""
+    for k in keys:
+        if k in d and d[k] is not None:
+            try:
+                return float(d[k])
+            except (TypeError, ValueError):
+                continue
+    return default
+
+
+def _sanitize_flow_for_prompt(flow: dict) -> dict:
+    """Validate and extract a safe subset of fields from a flow dict.
+
+    Guards against prompt-injection by enforcing regex on string fields and
+    dropping anything not in the expected schema. All numeric fields are
+    coerced to floats.
+    """
+    src_ip = str(flow.get("src_ip", ""))
+    dst_ip = str(flow.get("dst_ip", ""))
+    if not _IP_RE.match(src_ip) or not _IP_RE.match(dst_ip):
+        raise HTTPException(status_code=400, detail="Invalid IP in flow data")
+
+    label = str(flow.get("label", "BENIGN"))
+    if label not in _ALLOWED_LABELS:
+        raise HTTPException(status_code=400, detail="Unknown label")
+
+    protocol_num = int(_num(flow, "protocol"))
+    proto_str = _PROTO_NAMES.get(protocol_num, f"IP {protocol_num}")
+
+    return {
+        "src_ip": src_ip,
+        "dst_ip": dst_ip,
+        "src_port": int(_num(flow, "src_port")),
+        "dst_port": int(_num(flow, "dst_port", "Destination Port")),
+        "protocol": proto_str,
+        "label": label,
+        "confidence": f"{_num(flow, 'confidence'):.3f}",
+        "anomaly": "да" if int(_num(flow, "anomaly_flag")) else "нет",
+        "anomaly_score": f"{_num(flow, 'anomaly_score'):.3f}",
+        "flow_duration": f"{_num(flow, 'Flow Duration'):.0f}",
+        "fwd_pkts": int(_num(flow, "Total Fwd Packets")),
+        "bwd_pkts": int(_num(flow, "Total Backward Packets")),
+        "fwd_bytes": int(_num(flow, "Total Length of Fwd Packets")),
+        "bwd_bytes": int(_num(flow, "Total Length of Bwd Packets")),
+        "avg_pkt_size": f"{_num(flow, 'Average Packet Size'):.1f}",
+        "bytes_per_sec": f"{_num(flow, 'Flow Bytes/s'):.1f}",
+        "pkts_per_sec": f"{_num(flow, 'Flow Packets/s'):.1f}",
+        "syn": int(_num(flow, "SYN Flag Count")),
+        "ack": int(_num(flow, "ACK Flag Count")),
+        "rst": int(_num(flow, "RST Flag Count")),
+        "fin": int(_num(flow, "FIN Flag Count")),
+        "psh": int(_num(flow, "PSH Flag Count")),
+        "urg": int(_num(flow, "URG Flag Count")),
+        "init_win_fwd": int(_num(flow, "Init_Win_bytes_forward")),
+        "init_win_bwd": int(_num(flow, "Init_Win_bytes_backward")),
+        "down_up_ratio": f"{_num(flow, 'Down/Up Ratio'):.2f}",
+    }
+
+
+@app.post("/api/network/explain-flow-shap")
+async def api_explain_flow_shap(request: Request):
+    """Return top-K SHAP feature contributions for the model's prediction.
+
+    Body: {"flow": {...flow feature dict...}, "model": "xgboost"|"random_forest", "top_k": 10}
+    """
+    client_ip = _get_client_ip(request)
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
+
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    if not isinstance(payload, dict) or not isinstance(payload.get("flow"), dict):
+        raise HTTPException(status_code=400, detail="Body must be {\"flow\": {...}}")
+
+    model_name = payload.get("model", "xgboost")
+    if model_name not in {"xgboost", "random_forest"}:
+        raise HTTPException(status_code=400, detail="Model must be 'xgboost' or 'random_forest'")
+    top_k = max(1, min(int(payload.get("top_k", 10) or 10), 30))
+
+    detector = await _get_flow_detector()
+    try:
+        explanation = await asyncio.to_thread(
+            detector.explain_shap, payload["flow"], model_name, top_k
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("SHAP explain error: %s", e)
+        raise HTTPException(status_code=500, detail="SHAP computation failed.")
+
+    return JSONResponse(_json_safe(explanation))
+
+
+@app.post("/api/network/explain-flow")
+async def api_explain_flow(request: Request):
+    """Generate a YandexGPT explanation for a single classified flow.
+
+    Body: {"flow": { ...flow fields from /api/network/analyze-pcap... }}
+    """
+    client_ip = _get_client_ip(request)
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
+
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    if not isinstance(payload, dict) or not isinstance(payload.get("flow"), dict):
+        raise HTTPException(status_code=400, detail="Body must be {\"flow\": {...}}")
+
+    fields = _sanitize_flow_for_prompt(payload["flow"])
+
+    from threatlens.ai.providers import get_provider
+    from threatlens.ai.prompts import NETWORK_FLOW_PROMPT
+    prompt = NETWORK_FLOW_PROMPT.format(**fields)
+
+    try:
+        explanation = await get_provider().explain_async(prompt)
+    except Exception as e:
+        logger.error("explain-flow AI error: %s", e)
+        raise HTTPException(status_code=502, detail="AI service unavailable.")
+
+    return JSONResponse({"explanation": explanation, "label": fields["label"]})
 
 
 @app.get("/api/lookup/{sha256}")

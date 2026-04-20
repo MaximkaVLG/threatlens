@@ -62,7 +62,8 @@ class FeaturePipeline:
         X = X.replace([np.inf, -np.inf], np.nan).fillna(0)
         # Keep only the columns the pipeline knows about
         X = X[self.feature_names]
-        X_scaled = self.scaler.transform(X)
+        # Pass numpy array to scaler — it was fitted without feature names
+        X_scaled = self.scaler.transform(X.values)
 
         y_encoded = None
         if y is not None:
