@@ -259,11 +259,13 @@ async def api_analyze_pcap(
     request: Request,
     file: UploadFile = File(...),
     model: str = Form("xgboost"),
-    max_flows: int = Form(200),
+    max_flows: int = Form(50),
 ):
     """Extract flows from an uploaded PCAP and classify each with the ML models.
 
     Returns summary statistics plus up to `max_flows` highest-risk flows.
+    Caller may request up to 200 explicitly; the conservative default keeps
+    a single response well under 100 KB to avoid bandwidth / parse DoS.
     """
     client_ip = _get_client_ip(request)
     if not _check_rate_limit(client_ip):
@@ -272,7 +274,9 @@ async def api_analyze_pcap(
     if model not in {"random_forest", "xgboost"}:
         raise HTTPException(status_code=400, detail="Model must be 'random_forest' or 'xgboost'")
 
-    max_flows = max(1, min(int(max_flows), 1000))
+    # Hard cap lowered from 1000 to 200 — with 70 feature cols per flow, an
+    # unbounded response could exceed several MB.
+    max_flows = max(1, min(int(max_flows), 200))
 
     # Stream to disk in bounded chunks — PCAPs can be hundreds of MB.
     suffix = os.path.splitext(file.filename or "capture.pcap")[1].lower()
@@ -357,15 +361,33 @@ async def api_analyze_pcap(
 
 
 _IP_RE = re.compile(r"^[0-9a-fA-F:.]{1,45}$")
-# CIC-IDS2017 class labels (plus fallback "unknown"). Strict whitelist
-# prevents prompt-injected text from reaching the LLM via the label field.
+# CIC-IDS2017 class labels normalised to use a plain ASCII hyphen. We run
+# incoming labels through `_normalize_label` before whitelist check so that
+# any en-dash / em-dash / double-space variant from the original CSV is
+# equivalent. Strict whitelist keeps prompt-injection out of the LLM path.
 _ALLOWED_LABELS = frozenset({
     "BENIGN", "DoS Hulk", "DoS GoldenEye", "DoS slowloris", "DoS Slowhttptest",
     "Heartbleed", "DDoS", "PortScan", "FTP-Patator", "SSH-Patator",
-    "Web Attack \u2013 Brute Force", "Web Attack \u2013 XSS", "Web Attack \u2013 Sql Injection",
-    "Web Attack  Brute Force", "Web Attack  XSS", "Web Attack  Sql Injection",
+    "Web Attack - Brute Force", "Web Attack - XSS", "Web Attack - Sql Injection",
     "Bot", "Infiltration",
 })
+# Characters CIC-IDS2017 uses interchangeably with ASCII hyphen in labels.
+_DASH_VARIANTS = ("\u2013", "\u2014", "\u2012", "\u2212")  # en, em, figure, minus
+
+
+def _normalize_label(label: str) -> str:
+    """Collapse CIC-IDS2017 label variants (unicode dashes, double spaces)
+    down to a single canonical ASCII form so the whitelist check matches
+    regardless of which CSV encoding produced the label."""
+    label = label.strip()
+    for d in _DASH_VARIANTS:
+        label = label.replace(d, "-")
+    # Original CSVs sometimes drop the dash altogether: "Web Attack  Brute Force".
+    while "  " in label:
+        label = label.replace("  ", " - ", 1) if "Web Attack" in label else label.replace("  ", " ")
+    return label
+
+
 _PROTO_NAMES = {6: "TCP", 17: "UDP", 1: "ICMP"}
 
 
@@ -392,7 +414,7 @@ def _sanitize_flow_for_prompt(flow: dict) -> dict:
     if not _IP_RE.match(src_ip) or not _IP_RE.match(dst_ip):
         raise HTTPException(status_code=400, detail="Invalid IP in flow data")
 
-    label = str(flow.get("label", "BENIGN"))
+    label = _normalize_label(str(flow.get("label", "BENIGN")))
     if label not in _ALLOWED_LABELS:
         raise HTTPException(status_code=400, detail="Unknown label")
 

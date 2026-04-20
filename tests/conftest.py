@@ -8,6 +8,11 @@ import pytest
 # Ensure threatlens package is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+# tests/test_full.py is an integration *script* (calls sys.exit at import time)
+# rather than a pytest module. Excluding it keeps `pytest` from aborting the
+# whole session during collection. Run it directly with `python tests/test_full.py`.
+collect_ignore = ["test_full.py"]
+
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 
 

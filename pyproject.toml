@@ -35,7 +35,28 @@ dependencies = [
 yara = ["yara-python>=4.5.0"]
 office = ["oletools>=0.60.0"]
 web = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "python-multipart>=0.0.12"]
-all = ["yara-python>=4.5.0", "oletools>=0.60.0", "fastapi>=0.115.0", "uvicorn>=0.32.0", "python-multipart>=0.0.12"]
+# Network IDS module: PCAP -> flow features -> ML predictions
+ml = [
+    "scikit-learn>=1.5.0",
+    "xgboost>=2.1.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "joblib>=1.4.0",
+    "shap>=0.46.0",
+    "matplotlib>=3.9.0",
+]
+network = [
+    "scapy>=2.7.0",
+    "cicflowmeter>=0.5.0",
+]
+all = [
+    "yara-python>=4.5.0", "oletools>=0.60.0",
+    "fastapi>=0.115.0", "uvicorn>=0.32.0", "python-multipart>=0.0.12",
+    "scikit-learn>=1.5.0", "xgboost>=2.1.0", "pandas>=2.2.0", "numpy>=1.26.0",
+    "joblib>=1.4.0", "shap>=0.46.0", "matplotlib>=3.9.0",
+    "scapy>=2.7.0", "cicflowmeter>=0.5.0",
+    "pyzipper>=0.3.6",
+]
 
 [project.scripts]
 threatlens = "threatlens.__main__:main"

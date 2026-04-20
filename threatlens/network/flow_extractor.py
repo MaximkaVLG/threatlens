@@ -20,6 +20,7 @@ Notes on CICFlowMeter conventions:
 from __future__ import annotations
 
 import logging
+import threading
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
@@ -28,6 +29,13 @@ import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+# cicflowmeter's FlowSession constructor insists on a writer. We swap in a
+# no-op writer via monkey-patching its module-level factory, but that factory
+# is module-global: if two extractions run concurrently we'd see interleaved
+# patch / restore. This lock serialises the patch region only — actual PCAP
+# parsing happens outside of it.
+_CIC_PATCH_LOCK = threading.Lock()
 
 # Inactivity threshold separating active vs idle periods (CICFlowMeter default)
 ACTIVE_IDLE_THRESHOLD_US = 5_000_000  # 5 seconds in microseconds
@@ -653,12 +661,16 @@ class CicFlowExtractor:
         # FlowSession's constructor insists on creating a writer. Patch the
         # factory (imported by-name into flow_session) so writer.write() is
         # a no-op — we only need the in-memory self.flows dict.
-        orig_factory = _fs_mod.output_writer_factory
-        _fs_mod.output_writer_factory = lambda *_a, **_k: _NullWriter()
-        try:
-            session = FlowSession(output_mode="none", output=None)
-        finally:
-            _fs_mod.output_writer_factory = orig_factory
+        # Serialise the patch region so two concurrent extract() calls don't
+        # observe each other's monkey-patched factory. The window is tiny —
+        # only the FlowSession constructor runs under the lock.
+        with _CIC_PATCH_LOCK:
+            orig_factory = _fs_mod.output_writer_factory
+            _fs_mod.output_writer_factory = lambda *_a, **_k: _NullWriter()
+            try:
+                session = FlowSession(output_mode="none", output=None)
+            finally:
+                _fs_mod.output_writer_factory = orig_factory
 
         packet_count = 0
         errors = 0

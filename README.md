@@ -129,6 +129,12 @@ PCAP file  ->  cicflowmeter  ->  70 CIC-IDS2017 features  ->  ML models
 
 Top predictive features: `Idle Mean`, `Bwd Packet Length Std`, `act_data_pkt_fwd`, `Average Packet Size`, `Bwd Packet Length Mean`.
 
+<p align="center">
+  <img src="docs/screenshots/feature_importance.png" alt="Feature importance" width="560">
+  <img src="docs/screenshots/confusion_matrix.png" alt="Confusion matrix" width="560">
+  <br><em>Top-20 features by XGBoost gain &mdash; row-normalised confusion matrix on a balanced CIC-IDS2017 slice</em>
+</p>
+
 ### Attack classes
 
 `BENIGN` | `DoS Hulk` | `DoS GoldenEye` | `DoS slowloris` | `DoS Slowhttptest` | `Heartbleed` | `DDoS` | `PortScan` | `FTP-Patator` | `SSH-Patator` | `Web Attack &ndash; Brute Force` | `Web Attack &ndash; XSS` | `Web Attack &ndash; Sql Injection` | `Bot` | `Infiltration`

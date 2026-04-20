@@ -299,7 +299,7 @@ async function analyzePcap(){
     const fd=new FormData();
     fd.append('file',selectedPcap);
     fd.append('model',document.getElementById('pcapModel').value);
-    fd.append('max_flows','200');
+    fd.append('max_flows','50');
     try{
         const r=await fetch('/api/network/analyze-pcap',{method:'POST',body:fd});
         if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'Ошибка')}
