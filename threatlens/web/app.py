@@ -99,6 +99,33 @@ async def _get_flow_detector():
 # Simple in-memory rate limiter
 _rate_limits = defaultdict(list)
 
+# 60-second in-memory cache for /api/stats so that dashboard polling
+# (every 30s from each connected browser) doesn't hammer SQLite.
+_USAGE_STATS_TTL = 60.0
+_usage_stats_cache: dict = {"data": None, "ts": 0.0}
+
+
+def _record_scan_event_safe(
+    scan_type: str,
+    verdict: str,
+    start_monotonic: float,
+    file_size_bytes=None,
+    client_ip: str = "",
+) -> None:
+    """Write a stats row, swallow any failure. Telemetry must not break scans."""
+    try:
+        from threatlens.cache import get_cache, hash_client_ip
+        duration_ms = int((time.monotonic() - start_monotonic) * 1000)
+        get_cache().record_scan_event(
+            scan_type=scan_type,
+            verdict=verdict,
+            duration_ms=duration_ms,
+            file_size_bytes=file_size_bytes,
+            client_ip_hash=hash_client_ip(client_ip),
+        )
+    except Exception:
+        logger.exception("Failed to record scan event (telemetry only; scan unaffected)")
+
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -148,6 +175,9 @@ def _check_rate_limit(client_ip: str) -> bool:
     return True
 
 
+_RISK_TO_VERDICT = {"LOW": "clean", "MEDIUM": "suspicious", "HIGH": "malicious", "CRITICAL": "malicious"}
+
+
 @app.post("/api/scan")
 async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Form(False), password: str = Form("")):
     """Scan uploaded file via API."""
@@ -155,6 +185,7 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
     client_ip = _get_client_ip(request)
     if not _check_rate_limit(client_ip):
         raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
+    _stats_start = time.monotonic()
 
     # File size check (read in chunks)
     content = b""
@@ -216,6 +247,14 @@ async def api_scan(request: Request, file: UploadFile = File(...), ai: bool = Fo
                 logger.error("AI provider error: %s", e)
                 ai_explanation = "AI explanation unavailable. Try again later."
 
+        _record_scan_event_safe(
+            scan_type="file",
+            verdict=_RISK_TO_VERDICT.get(result.risk_level, "clean"),
+            start_monotonic=_stats_start,
+            file_size_bytes=result.size,
+            client_ip=client_ip,
+        )
+
         return JSONResponse({
             "file": file.filename,
             "size": result.size,
@@ -270,6 +309,7 @@ async def api_analyze_pcap(
     client_ip = _get_client_ip(request)
     if not _check_rate_limit(client_ip):
         raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
+    _stats_start = time.monotonic()
 
     if model not in {"random_forest", "xgboost"}:
         raise HTTPException(status_code=400, detail="Model must be 'random_forest' or 'xgboost'")
@@ -317,6 +357,11 @@ async def api_analyze_pcap(
             raise HTTPException(status_code=400, detail="Could not parse PCAP file.")
 
         if flows_df.empty:
+            _record_scan_event_safe(
+                scan_type="pcap", verdict="BENIGN",
+                start_monotonic=_stats_start,
+                file_size_bytes=total_size, client_ip=client_ip,
+            )
             return JSONResponse({
                 "file": file.filename,
                 "size": total_size,
@@ -345,6 +390,15 @@ async def api_analyze_pcap(
         ).sort_values("_sort", ascending=False).drop(columns="_sort")
 
         top_flows = ranked.head(max_flows).to_dict(orient="records")
+
+        labels = summary.get("labels", {}) if isinstance(summary, dict) else {}
+        non_benign = {lbl: n for lbl, n in labels.items() if lbl and lbl != "BENIGN"}
+        verdict = max(non_benign, key=non_benign.get) if non_benign else "BENIGN"
+        _record_scan_event_safe(
+            scan_type="pcap", verdict=verdict,
+            start_monotonic=_stats_start,
+            file_size_bytes=total_size, client_ip=client_ip,
+        )
 
         return JSONResponse(_json_safe({
             "file": file.filename,
@@ -520,28 +574,57 @@ async def api_explain_flow(request: Request):
 
 
 @app.get("/api/lookup/{sha256}")
-async def api_lookup(sha256: str):
+async def api_lookup(request: Request, sha256: str):
     """Look up a previously scanned file by SHA256 hash."""
     if not _SHA256_RE.match(sha256):
         raise HTTPException(status_code=400, detail="Invalid SHA256 format (expected 1-64 hex characters)")
+    _stats_start = time.monotonic()
+    client_ip = _get_client_ip(request)
+
     from threatlens.cache import get_cache
     result = get_cache().get(sha256)
     if result:
+        _record_scan_event_safe(
+            scan_type="hash_lookup", verdict="found",
+            start_monotonic=_stats_start, client_ip=client_ip,
+        )
         return JSONResponse(result)
 
     # Try prefix search
     results = get_cache().search(sha256)
     if results:
+        _record_scan_event_safe(
+            scan_type="hash_lookup", verdict="found",
+            start_monotonic=_stats_start, client_ip=client_ip,
+        )
         return JSONResponse({"matches": results})
 
+    _record_scan_event_safe(
+        scan_type="hash_lookup", verdict="not_found",
+        start_monotonic=_stats_start, client_ip=client_ip,
+    )
     raise HTTPException(status_code=404, detail="Hash not found in cache")
+
+
+@app.get("/api/cache-stats")
+async def api_cache_stats():
+    """Cache statistics (unique files, cache hits, risk breakdown)."""
+    from threatlens.cache import get_cache
+    return JSONResponse(get_cache().get_stats())
 
 
 @app.get("/api/stats")
 async def api_stats():
-    """Cache statistics."""
+    """Public usage statistics, cached in memory for 60 seconds."""
+    now = time.monotonic()
+    cached = _usage_stats_cache.get("data")
+    if cached is not None and (now - _usage_stats_cache.get("ts", 0.0)) < _USAGE_STATS_TTL:
+        return JSONResponse(cached)
     from threatlens.cache import get_cache
-    return JSONResponse(get_cache().get_stats())
+    data = await asyncio.to_thread(get_cache().get_usage_stats)
+    _usage_stats_cache["data"] = data
+    _usage_stats_cache["ts"] = now
+    return JSONResponse(data)
 
 
 @app.get("/api/history")

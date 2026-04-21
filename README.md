@@ -226,11 +226,50 @@ curl -X POST http://localhost:8888/api/network/explain-flow \
      -H "Content-Type: application/json" \
      -d '{"flow": {...}}'
 
-# Hash lookup, scan history, stats
+# Hash lookup, scan history
 curl http://localhost:8888/api/lookup/abc123...
 curl http://localhost:8888/api/history
+
+# Cache metrics (unique files, cache hits, risk breakdown)
+curl http://localhost:8888/api/cache-stats
+
+# Public usage metrics (scan events, unique users, threats)
 curl http://localhost:8888/api/stats
 ```
+
+### Stats API
+
+`GET /api/stats` exposes aggregate usage telemetry suitable for a public
+dashboard. Response is cached in memory for 60 seconds. Individual scan
+records are never exposed — only totals, 7d / 24h windows and a 30-day
+daily histogram.
+
+```json
+{
+  "total_scans": 1287,
+  "scans_last_7d": 142,
+  "scans_last_24h": 23,
+  "unique_users_total": 89,
+  "unique_users_7d": 21,
+  "threats_detected_total": 317,
+  "scans_by_type": {"file": 940, "pcap": 311, "hash_lookup": 36},
+  "avg_scan_duration_ms": 2140.7,
+  "first_scan_at": 1745606400,
+  "daily_scans_last_30d": [{"date": "2026-03-23", "count": 18}, ...]
+}
+```
+
+Unique users are counted via `sha256(STATS_SALT + client_ip)` — the raw
+IP is never persisted.
+
+**`STATS_SALT` must be set in the environment** (systemd drop-in / `.env`).
+If it is missing, the app logs a `WARNING` and falls back to a
+per-process random salt via `secrets.token_hex(16)`; this keeps hashes
+unpredictable but resets the unique-user counter on every restart.
+
+`GET /api/cache-stats` (previously `/api/stats`) keeps the legacy cache
+metrics (unique files, cache hits, risk breakdown) used by the internal
+"Статистика" page.
 
 ## Project layout
 

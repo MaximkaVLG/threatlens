@@ -228,7 +228,7 @@ async function loadStats() {
     el.innerHTML = '<p class="loading-text">Загрузка...</p>';
 
     try {
-        const resp = await fetch('/api/stats');
+        const resp = await fetch('/api/cache-stats');
         const data = await resp.json();
 
         const total = data.total_files || 0;

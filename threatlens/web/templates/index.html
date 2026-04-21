@@ -82,12 +82,32 @@
         .risk-bar-count { width: 40px; font-size: 0.85em; color: #888; }
         footer { text-align: center; color: #444; margin-top: 40px; padding: 20px; font-size: 0.85em; }
         footer a { color: #00d4ff; text-decoration: none; }
+        .usage-band { border-top: 1px solid #1a1a1a; background: #0d0d0d; margin-top: 40px; padding: 28px 20px 16px; }
+        .usage-inner { max-width: 900px; margin: 0 auto; }
+        .usage-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .usage-stat { background: #111; border: 1px solid #1a1a1a; }
+        .usage-stat .stat-number { transition: color 0.2s; }
+        .usage-since { text-align: center; color: #555; font-size: 0.82em; margin-top: 14px; }
+        .usage-since strong { color: #00d4ff; font-weight: normal; }
         @media (max-width: 600px) {
             .nav { padding: 10px 12px; }
             .nav-link { padding: 6px 10px; font-size: 0.8em; }
             .history-item { flex-direction: column; align-items: flex-start; }
         }
     </style>
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=108703340', 'ym');
+
+        ym(108703340, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/108703340" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
 </head>
 <body>
 
@@ -174,7 +194,19 @@
     </div>
 </div>
 
-<footer>ThreatLens &copy; 2026 | <a href="https://github.com/MaximkaVLG/threatlens">GitHub</a></footer>
+<section class="usage-band" id="usageBand" aria-label="Публичная статистика использования">
+    <div class="usage-inner">
+        <div class="usage-stats-grid">
+            <div class="stat-card usage-stat"><div class="stat-number" id="usTotal">—</div><div class="stat-label">Всего сканирований</div></div>
+            <div class="stat-card usage-stat"><div class="stat-number" id="usThreats" style="color:#ff1744">—</div><div class="stat-label">Обнаружено угроз</div></div>
+            <div class="stat-card usage-stat"><div class="stat-number" id="usUsers" style="color:#4caf50">—</div><div class="stat-label">Уникальных пользователей</div></div>
+            <div class="stat-card usage-stat"><div class="stat-number" id="usToday" style="color:#ff9800">—</div><div class="stat-label">Активных за 24&nbsp;ч</div></div>
+        </div>
+        <div class="usage-since" id="usSince"></div>
+    </div>
+</section>
+
+<footer>ThreatLens &copy; 2026 | <a href="https://github.com/MaximkaVLG/threatlens">GitHub</a> | <a href="/api/stats">API статистики</a></footer>
 
 <script>
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
@@ -504,7 +536,7 @@ function renderPcapCharts(d){
 async function loadStats(){
     const el=document.getElementById('statsContent');el.innerHTML='<p class="loading-text">Загрузка...</p>';
     try{
-        const r=await fetch('/api/stats');const d=await r.json();
+        const r=await fetch('/api/cache-stats');const d=await r.json();
         const t=d.total_files||0,s=d.total_scans||0,hi=d.cache_hits||0,lv=d.by_risk_level||{};
         let h='<div class="stats-grid">';
         h+='<div class="stat-card"><div class="stat-number">'+t+'</div><div class="stat-label">Уникальных файлов</div></div>';
@@ -524,6 +556,40 @@ async function loadStats(){
         el.innerHTML=h;
     }catch(e){el.innerHTML='<p style="color:#f44336">'+esc(e.message)+'</p>'}
 }
+
+/* ========== Public usage dashboard (footer band) ========== */
+const _usageAnim={};
+function _countUp(elId,to){
+    const el=document.getElementById(elId);if(!el)return;
+    const from=_usageAnim[elId]||0;if(from===to){el.textContent=to.toLocaleString('ru-RU');return}
+    const start=performance.now(),dur=800;
+    function step(t){
+        const p=Math.min(1,(t-start)/dur);
+        const v=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));
+        el.textContent=v.toLocaleString('ru-RU');
+        if(p<1)requestAnimationFrame(step);else _usageAnim[elId]=to;
+    }
+    requestAnimationFrame(step);
+}
+async function loadUsageStats(){
+    try{
+        const r=await fetch('/api/stats',{cache:'no-store'});
+        if(!r.ok)return;
+        const d=await r.json();
+        _countUp('usTotal',d.total_scans||0);
+        _countUp('usThreats',d.threats_detected_total||0);
+        _countUp('usUsers',d.unique_users_total||0);
+        _countUp('usToday',d.scans_last_24h||0);
+        const since=document.getElementById('usSince');
+        if(d.first_scan_at){
+            const dt=new Date(d.first_scan_at*1000);
+            const fmt=dt.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+            since.innerHTML='Работает с <strong>'+esc(fmt)+'</strong>';
+        }else{since.textContent=''}
+    }catch(e){/* network blip — keep last values */}
+}
+loadUsageStats();
+setInterval(loadUsageStats,30000);
 </script>
 </body>
 </html>

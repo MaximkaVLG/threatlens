@@ -99,13 +99,67 @@ class TestLookupEndpoint:
                 assert r.json()["risk_level"]
 
 
-class TestStatsEndpoint:
-    def test_stats(self):
-        r = client.get("/api/stats")
+class TestCacheStatsEndpoint:
+    def test_cache_stats(self):
+        r = client.get("/api/cache-stats")
         assert r.status_code == 200
         data = r.json()
         assert "total_files" in data
         assert "total_scans" in data
+        assert "cache_hits" in data
+        assert "by_risk_level" in data
+
+
+class TestUsageStatsEndpoint:
+    REQUIRED_KEYS = {
+        "total_scans", "scans_last_7d", "scans_last_24h",
+        "unique_users_total", "unique_users_7d", "threats_detected_total",
+        "scans_by_type", "avg_scan_duration_ms",
+        "daily_scans_last_30d", "first_scan_at",
+    }
+
+    def test_stats_schema(self):
+        # Invalidate the 60s in-memory cache so the response reflects current state
+        from threatlens.web import app as app_mod
+        app_mod._usage_stats_cache["data"] = None
+
+        r = client.get("/api/stats")
+        assert r.status_code == 200
+        data = r.json()
+        missing = self.REQUIRED_KEYS - set(data.keys())
+        assert not missing, f"Missing keys: {missing}"
+        assert set(data["scans_by_type"].keys()) == {"file", "pcap", "hash_lookup"}
+        assert isinstance(data["daily_scans_last_30d"], list)
+
+    def test_scan_increments_total(self):
+        from threatlens.web import app as app_mod
+        app_mod._usage_stats_cache["data"] = None
+        before = client.get("/api/stats").json()["total_scans"]
+
+        client.post("/api/scan", files={"file": ("inc.txt", b"hello stats")}, data={"ai": "false"})
+
+        app_mod._usage_stats_cache["data"] = None
+        after = client.get("/api/stats").json()["total_scans"]
+        assert after >= before + 1
+
+    def test_stats_write_failure_does_not_break_scan(self, monkeypatch):
+        """Telemetry is best-effort — failures in the stats layer must not
+        bubble up into the user-facing scan response."""
+        from threatlens import cache as cache_mod
+
+        real_cache = cache_mod.get_cache()
+
+        def explode(*a, **kw):
+            raise RuntimeError("stats DB is on fire")
+
+        monkeypatch.setattr(real_cache, "record_scan_event", explode)
+        r = client.post(
+            "/api/scan",
+            files={"file": ("boom.txt", b"scan should still succeed")},
+            data={"ai": "false"},
+        )
+        assert r.status_code == 200
+        assert "sha256" in r.json()
 
 
 class TestHistoryEndpoint:

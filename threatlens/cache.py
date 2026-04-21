@@ -9,12 +9,55 @@ Storage: SQLite database (zero dependencies, works everywhere).
 import os
 import json
 import time
+import secrets
 import sqlite3
 import hashlib
+import ipaddress
 import logging
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_stats_salt() -> str:
+    """Read STATS_SALT from env; if missing, generate a per-process salt and warn.
+
+    A stable hardcoded default would let anyone reproduce user hashes by
+    guessing the salt, so we deliberately refuse that path. The trade-off
+    is that unique-user counts reset on app restart — acceptable for a pet
+    project and a loud signal to the operator to set STATS_SALT.
+    """
+    salt = os.environ.get("STATS_SALT", "").strip()
+    if salt:
+        return salt
+    generated = secrets.token_hex(16)
+    logger.warning(
+        "STATS_SALT is not set — generated ephemeral per-process salt. "
+        "Unique-user stats will reset on restart. Set STATS_SALT in the "
+        "environment for stable cross-restart aggregation."
+    )
+    return generated
+
+
+_STATS_SALT = _resolve_stats_salt()
+
+
+def hash_client_ip(raw_ip: Optional[str]) -> str:
+    """Return sha256(salt + ip) for privacy-preserving unique-user counting.
+
+    Validates that `raw_ip` parses as IPv4/IPv6; if not, hashes the literal
+    string anyway (keeps bucketing consistent even for malformed inputs).
+    Empty/None -> empty string (skips the user from unique counts).
+    """
+    if not raw_ip:
+        return ""
+    try:
+        ip = str(ipaddress.ip_address(raw_ip.strip()))
+    except (ValueError, AttributeError):
+        ip = str(raw_ip).strip()
+        if not ip:
+            return ""
+    return hashlib.sha256((_STATS_SALT + ip).encode("utf-8")).hexdigest()
 
 def _default_cache_path() -> str:
     """Determine cache DB path: env var > user cache dir > /tmp fallback."""
@@ -91,6 +134,19 @@ class AnalysisCache:
                     conn.execute(ddl)
                 except sqlite3.OperationalError:
                     pass  # already exists
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS scan_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp INTEGER NOT NULL,
+                    scan_type TEXT NOT NULL,
+                    verdict TEXT NOT NULL,
+                    duration_ms INTEGER NOT NULL,
+                    file_size_bytes INTEGER,
+                    client_ip_hash TEXT
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_scan_events_ts ON scan_events(timestamp)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_scan_events_user ON scan_events(client_ip_hash)")
 
     def get(self, sha256: str) -> Optional[dict]:
         """Get cached result by SHA256 hash. Returns None if not found."""
@@ -236,6 +292,107 @@ class AnalysisCache:
                 (limit,)
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def record_scan_event(
+        self,
+        scan_type: str,
+        verdict: str,
+        duration_ms: int,
+        file_size_bytes: Optional[int] = None,
+        client_ip_hash: str = "",
+    ) -> None:
+        """Insert one usage-telemetry row. Safe to call in a try/except wrapper."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """INSERT INTO scan_events
+                   (timestamp, scan_type, verdict, duration_ms, file_size_bytes, client_ip_hash)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    int(time.time()),
+                    scan_type,
+                    verdict,
+                    int(duration_ms),
+                    int(file_size_bytes) if file_size_bytes is not None else None,
+                    client_ip_hash or "",
+                ),
+            )
+
+    def get_usage_stats(self) -> dict:
+        """Aggregate public metrics over scan_events. No per-scan rows exposed."""
+        now = int(time.time())
+        cutoff_24h = now - 24 * 3600
+        cutoff_7d = now - 7 * 24 * 3600
+        cutoff_30d = now - 30 * 24 * 3600
+
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+
+            total_scans = conn.execute("SELECT COUNT(*) FROM scan_events").fetchone()[0]
+            scans_24h = conn.execute(
+                "SELECT COUNT(*) FROM scan_events WHERE timestamp >= ?", (cutoff_24h,)
+            ).fetchone()[0]
+            scans_7d = conn.execute(
+                "SELECT COUNT(*) FROM scan_events WHERE timestamp >= ?", (cutoff_7d,)
+            ).fetchone()[0]
+
+            unique_total = conn.execute(
+                "SELECT COUNT(DISTINCT client_ip_hash) FROM scan_events "
+                "WHERE client_ip_hash != ''"
+            ).fetchone()[0]
+            unique_7d = conn.execute(
+                "SELECT COUNT(DISTINCT client_ip_hash) FROM scan_events "
+                "WHERE client_ip_hash != '' AND timestamp >= ?",
+                (cutoff_7d,),
+            ).fetchone()[0]
+
+            # Threats: file 'suspicious'/'malicious', pcap anything != BENIGN,
+            # hash_lookup never counts as a threat.
+            threats = conn.execute(
+                """SELECT COUNT(*) FROM scan_events
+                   WHERE (scan_type = 'file' AND verdict IN ('suspicious','malicious'))
+                      OR (scan_type = 'pcap' AND verdict != 'BENIGN')"""
+            ).fetchone()[0]
+
+            by_type = {"file": 0, "pcap": 0, "hash_lookup": 0}
+            for row in conn.execute(
+                "SELECT scan_type, COUNT(*) AS n FROM scan_events GROUP BY scan_type"
+            ):
+                by_type[row["scan_type"]] = row["n"]
+
+            avg_row = conn.execute(
+                "SELECT AVG(duration_ms) FROM scan_events"
+            ).fetchone()
+            avg_duration = float(avg_row[0]) if avg_row and avg_row[0] is not None else 0.0
+
+            first_row = conn.execute(
+                "SELECT MIN(timestamp) FROM scan_events"
+            ).fetchone()
+            first_scan_at = int(first_row[0]) if first_row and first_row[0] is not None else None
+
+            # Daily buckets for the last 30 days. SQLite's date('now','unixepoch')
+            # is UTC by default — matches our timestamp column semantics.
+            daily_rows = conn.execute(
+                """SELECT date(timestamp, 'unixepoch') AS d, COUNT(*) AS n
+                   FROM scan_events
+                   WHERE timestamp >= ?
+                   GROUP BY d
+                   ORDER BY d""",
+                (cutoff_30d,),
+            ).fetchall()
+            daily_scans_last_30d = [{"date": r["d"], "count": r["n"]} for r in daily_rows]
+
+        return {
+            "total_scans": int(total_scans),
+            "scans_last_7d": int(scans_7d),
+            "scans_last_24h": int(scans_24h),
+            "unique_users_total": int(unique_total),
+            "unique_users_7d": int(unique_7d),
+            "threats_detected_total": int(threats),
+            "scans_by_type": by_type,
+            "avg_scan_duration_ms": round(avg_duration, 1),
+            "first_scan_at": first_scan_at,
+            "daily_scans_last_30d": daily_scans_last_30d,
+        }
 
 
 # Global cache instance
