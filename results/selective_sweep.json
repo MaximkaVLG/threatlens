@@ -1,0 +1,167 @@
+{
+  "sweep": [
+    {
+      "coverage_target": 0.99,
+      "n_total": 1282,
+      "n_abstained": 252,
+      "n_accepted": 1030,
+      "abstention_rate": 0.19656786271450857,
+      "all_flows_f1_attack": 0.04437140509449466,
+      "accepted_f1_attack": 0.055327868852459015,
+      "accepted_precision_attack": 0.9642857142857143,
+      "accepted_recall_attack": 0.028481012658227847,
+      "confusion_accepted": [
+        [
+          81,
+          1
+        ],
+        [
+          921,
+          27
+        ]
+      ],
+      "attack_abstention_rate": 0.20269133725820015,
+      "benign_abstention_rate": 0.11827956989247312
+    },
+    {
+      "coverage_target": 0.95,
+      "n_total": 1282,
+      "n_abstained": 719,
+      "n_accepted": 563,
+      "abstention_rate": 0.5608424336973479,
+      "all_flows_f1_attack": 0.039538714991762765,
+      "accepted_f1_attack": 0.09448818897637795,
+      "accepted_precision_attack": 0.96,
+      "accepted_recall_attack": 0.049689440993788817,
+      "confusion_accepted": [
+        [
+          79,
+          1
+        ],
+        [
+          459,
+          24
+        ]
+      ],
+      "attack_abstention_rate": 0.5937762825904122,
+      "benign_abstention_rate": 0.13978494623655913
+    },
+    {
+      "coverage_target": 0.9,
+      "n_total": 1282,
+      "n_abstained": 762,
+      "n_accepted": 520,
+      "abstention_rate": 0.594383775351014,
+      "all_flows_f1_attack": 0.015012510425354461,
+      "accepted_f1_attack": 0.04,
+      "accepted_precision_attack": 0.9,
+      "accepted_recall_attack": 0.020454545454545454,
+      "confusion_accepted": [
+        [
+          79,
+          1
+        ],
+        [
+          431,
+          9
+        ]
+      ],
+      "attack_abstention_rate": 0.6299411269974768,
+      "benign_abstention_rate": 0.13978494623655913
+    },
+    {
+      "coverage_target": 0.85,
+      "n_total": 1282,
+      "n_abstained": 850,
+      "n_accepted": 432,
+      "abstention_rate": 0.6630265210608425,
+      "all_flows_f1_attack": 0.015025041736227046,
+      "accepted_f1_attack": 0.042352941176470586,
+      "accepted_precision_attack": 1.0,
+      "accepted_recall_attack": 0.021634615384615384,
+      "confusion_accepted": [
+        [
+          16,
+          0
+        ],
+        [
+          407,
+          9
+        ]
+      ],
+      "attack_abstention_rate": 0.6501261564339781,
+      "benign_abstention_rate": 0.8279569892473119
+    },
+    {
+      "coverage_target": 0.8,
+      "n_total": 1282,
+      "n_abstained": 890,
+      "n_accepted": 392,
+      "abstention_rate": 0.6942277691107644,
+      "all_flows_f1_attack": 0.0100418410041841,
+      "accepted_f1_attack": 0.031413612565445025,
+      "accepted_precision_attack": 1.0,
+      "accepted_recall_attack": 0.015957446808510637,
+      "confusion_accepted": [
+        [
+          16,
+          0
+        ],
+        [
+          370,
+          6
+        ]
+      ],
+      "attack_abstention_rate": 0.6837678721614803,
+      "benign_abstention_rate": 0.8279569892473119
+    },
+    {
+      "coverage_target": 0.7,
+      "n_total": 1282,
+      "n_abstained": 1070,
+      "n_accepted": 212,
+      "abstention_rate": 0.8346333853354134,
+      "all_flows_f1_attack": 0.0100418410041841,
+      "accepted_f1_attack": 0.057692307692307696,
+      "accepted_precision_attack": 1.0,
+      "accepted_recall_attack": 0.0297029702970297,
+      "confusion_accepted": [
+        [
+          10,
+          0
+        ],
+        [
+          196,
+          6
+        ]
+      ],
+      "attack_abstention_rate": 0.8301093355761143,
+      "benign_abstention_rate": 0.8924731182795699
+    },
+    {
+      "coverage_target": 0.5,
+      "n_total": 1282,
+      "n_abstained": 1260,
+      "n_accepted": 22,
+      "abstention_rate": 0.982839313572543,
+      "all_flows_f1_attack": 0.006705783738474434,
+      "accepted_f1_attack": 0.3076923076923077,
+      "accepted_precision_attack": 1.0,
+      "accepted_recall_attack": 0.18181818181818182,
+      "confusion_accepted": [
+        [
+          0,
+          0
+        ],
+        [
+          18,
+          4
+        ]
+      ],
+      "attack_abstention_rate": 0.9814970563498738,
+      "benign_abstention_rate": 1.0
+    }
+  ],
+  "n_attack": 1189,
+  "n_benign": 93
+}

@@ -1,0 +1,79 @@
+{
+  "cic2017": {
+    "n": 100001,
+    "n_accepted": 99062,
+    "abstention_rate": 0.00938990610093899,
+    "all_flows_f1_attack": 0.9930116302795348,
+    "accepted_f1_attack": 0.9977448618727897,
+    "accepted_accuracy": 0.9991116674405928,
+    "confusion_matrix_accepted": [
+      [
+        79507,
+        59
+      ],
+      [
+        29,
+        19467
+      ]
+    ]
+  },
+  "cic2018": {
+    "n": 99985,
+    "n_accepted": 99348,
+    "abstention_rate": 0.006370955643346502,
+    "all_flows_f1_attack": 0.8785046728971962,
+    "accepted_f1_attack": 0.8804539920669207,
+    "accepted_accuracy": 0.9387204573821315,
+    "confusion_matrix_accepted": [
+      [
+        70841,
+        623
+      ],
+      [
+        5465,
+        22419
+      ]
+    ]
+  },
+  "synthetic": {
+    "n": 23775,
+    "n_accepted": 22914,
+    "abstention_rate": 0.036214511041009464,
+    "all_flows_f1_attack": 0.9863587308439457,
+    "accepted_f1_attack": 1.0,
+    "accepted_accuracy": 1.0,
+    "confusion_matrix_accepted": [
+      [
+        65,
+        0
+      ],
+      [
+        0,
+        22849
+      ]
+    ]
+  },
+  "real_world": {
+    "n": 1282,
+    "n_accepted": 1030,
+    "abstention_rate": 0.19656786271450857,
+    "all_flows_f1_attack": 0.04437140509449466,
+    "accepted_f1_attack": 0.055327868852459015,
+    "accepted_accuracy": 0.10485436893203884,
+    "confusion_matrix_accepted": [
+      [
+        81,
+        1
+      ],
+      [
+        921,
+        27
+      ]
+    ],
+    "distance_stats": {
+      "median_all": 14.71558168208729,
+      "p95_all": 122.40513496645538,
+      "max_all": 1350.4331559229963
+    }
+  }
+}

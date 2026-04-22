@@ -37,6 +37,19 @@ models/
 !results/combined_v2/metrics.json
 !results/combined_v2/comparison.csv
 !results/combined_v2/head_to_head.json
+!results/combined_v2/mahalanobis_abstainer.joblib
+
+# Day 6-8 evaluation JSON artefacts (small, worth committing for reproducibility)
+!results/real_world_eval_ab.json
+!results/feature_drift_diag.json
+!results/selective_eval.json
+!results/selective_sweep.json
+
+# Real-world flow extraction cache (parquet) — large enough to regenerate,
+# but keep small version committed to skip 16 min re-extract during CI
+# (Actually, stay ignored — it's 1282 rows times 89 cols of float, small,
+# but not source-of-truth. Regenerate on demand.)
+results/real_world_flows_cache.parquet
 
 # Local experiment outputs (synthetic training set, ad-hoc runs)
 results/synthetic/
