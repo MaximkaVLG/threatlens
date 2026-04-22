@@ -1,0 +1,477 @@
+{
+  "shared_labels": [
+    "BENIGN",
+    "PortScan",
+    "FTP-Patator",
+    "SSH-Patator",
+    "DoS slowloris"
+  ],
+  "drift_per_label_top10": {
+    "BENIGN": [
+      {
+        "feature": "FIN Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.49855102040816324,
+        "cic_mean": 0.016,
+        "cic_std": 0.125475097130865,
+        "syn_mean": 2.010204081632653,
+        "syn_std": 0.13001030512664213
+      },
+      {
+        "feature": "SYN Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.7403510204081633,
+        "cic_mean": 0.0488,
+        "cic_std": 0.21544966929656678,
+        "syn_mean": 3.010204081632653,
+        "syn_std": 0.10049854899791943
+      },
+      {
+        "feature": "ACK Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.3727838860544217,
+        "cic_mean": 0.2818,
+        "cic_std": 0.449876383020936,
+        "syn_mean": 12.210884353741497,
+        "syn_std": 7.735624184953895
+      },
+      {
+        "feature": "Init_Win_bytes_backward",
+        "ks_d": 0.9924,
+        "ks_p": 4e-323,
+        "wasserstein_norm": 0.9567198638916016,
+        "cic_mean": 2466.107,
+        "cic_std": 9548.576265430935,
+        "syn_mean": 65160.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Fwd Packet Length Min",
+        "ks_d": 0.9808,
+        "ks_p": 1.1e-322,
+        "wasserstein_norm": 0.0325006793478261,
+        "cic_mean": 21.1158,
+        "cic_std": 42.279280863798995,
+        "syn_mean": 66.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Flow IAT Min",
+        "ks_d": 0.9802,
+        "ks_p": 1.14e-322,
+        "wasserstein_norm": 0.002594673327609485,
+        "cic_mean": 209130.6708,
+        "cic_std": 3336057.2052223007,
+        "syn_mean": 0.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Min Packet Length",
+        "ks_d": 0.9785986394557823,
+        "ks_p": 1.24e-322,
+        "wasserstein_norm": 0.16264838641338888,
+        "cic_mean": 20.0866,
+        "cic_std": 23.95907970770163,
+        "syn_mean": 65.95918367346938,
+        "syn_std": 0.6986629701479058
+      },
+      {
+        "feature": "Init_Win_bytes_forward",
+        "ks_d": 0.9656,
+        "ks_p": 2.4e-322,
+        "wasserstein_norm": 0.8759940765380859,
+        "cic_mean": 6915.4606,
+        "cic_std": 14838.87821359983,
+        "syn_mean": 64240.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Fwd Packet Length Mean",
+        "ks_d": 0.854,
+        "ks_p": 1.2910850939491947e-225,
+        "wasserstein_norm": 0.0289370308065808,
+        "cic_mean": 63.31237517942806,
+        "cic_std": 183.66839437067281,
+        "syn_mean": 75.38519354322926,
+        "syn_std": 3.993894483948873
+      },
+      {
+        "feature": "Avg Fwd Segment Size",
+        "ks_d": 0.854,
+        "ks_p": 1.2910850939491947e-225,
+        "wasserstein_norm": 0.0289370308065808,
+        "cic_mean": 63.31237517942806,
+        "cic_std": 183.66839437067281,
+        "syn_mean": 75.38519354322926,
+        "syn_std": 3.993894483948873
+      }
+    ],
+    "PortScan": [
+      {
+        "feature": "Total Length of Fwd Packets",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.6442800000000001,
+        "cic_mean": 1.0272,
+        "cic_std": 1.159681059602165,
+        "syn_mean": 110.5548,
+        "syn_std": 4.154443038483016
+      },
+      {
+        "feature": "Fwd Packet Length Max",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.9349655172413793,
+        "cic_mean": 1.0224,
+        "cic_std": 1.1346797962420938,
+        "syn_mean": 55.2504,
+        "syn_std": 1.854211379535785
+      },
+      {
+        "feature": "Fwd Packet Length Min",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.9353172413793104,
+        "cic_mean": 0.998,
+        "cic_std": 0.999997999998,
+        "syn_mean": 55.2464,
+        "syn_std": 1.8525892798998917
+      },
+      {
+        "feature": "Fwd Packet Length Mean",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.9352097701149424,
+        "cic_mean": 1.0069,
+        "cic_std": 1.0151366361234335,
+        "syn_mean": 55.249066666666664,
+        "syn_std": 1.8527124907371175
+      },
+      {
+        "feature": "Flow IAT Min",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.14816656716417914,
+        "cic_mean": 49.6358,
+        "cic_std": 21.773698775357392,
+        "syn_mean": 0.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Min Packet Length",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.9815185185185186,
+        "cic_mean": 0.998,
+        "cic_std": 0.999997999998,
+        "syn_mean": 54.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Avg Fwd Segment Size",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.9352097701149424,
+        "cic_mean": 1.0069,
+        "cic_std": 1.0151366361234335,
+        "syn_mean": 55.249066666666664,
+        "syn_std": 1.8527124907371175
+      },
+      {
+        "feature": "Subflow Fwd Bytes",
+        "ks_d": 1.0,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.6442800000000001,
+        "cic_mean": 1.0272,
+        "cic_std": 1.159681059602165,
+        "syn_mean": 110.5548,
+        "syn_std": 4.154443038483016
+      },
+      {
+        "feature": "Max Packet Length",
+        "ks_d": 0.9998,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.011534392265193347,
+        "cic_mean": 6.8594,
+        "cic_std": 61.346817616238276,
+        "syn_mean": 55.2504,
+        "syn_std": 1.854211379535785
+      },
+      {
+        "feature": "Packet Length Mean",
+        "ks_d": 0.9998,
+        "ks_p": 0.0,
+        "wasserstein_norm": 0.045109424167639814,
+        "cic_mean": 2.8900790474531997,
+        "cic_std": 16.39844297793648,
+        "syn_mean": 54.83393333333333,
+        "syn_std": 1.236679998131193
+      }
+    ],
+    "FTP-Patator": [
+      {
+        "feature": "Total Length of Fwd Packets",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.8435550861859675,
+        "cic_mean": 60.0072,
+        "cic_std": 46.34942446417215,
+        "syn_mean": 1218.2083333333333,
+        "syn_std": 236.19800647738091
+      },
+      {
+        "feature": "Total Length of Bwd Packets",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.746849057048562,
+        "cic_mean": 93.8096,
+        "cic_std": 93.92938064226762,
+        "syn_mean": 1149.8541666666667,
+        "syn_std": 257.8335210285355
+      },
+      {
+        "feature": "Fwd Packet Length Max",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.741922619047619,
+        "cic_mean": 18.991,
+        "cic_std": 5.563247163303101,
+        "syn_mean": 81.3125,
+        "syn_std": 0.8454843286542927
+      },
+      {
+        "feature": "Fwd Packet Length Min",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.9846363636363638,
+        "cic_mean": 0.014,
+        "cic_std": 0.44249745761981496,
+        "syn_mean": 65.0,
+        "syn_std": 3.3166247903554
+      },
+      {
+        "feature": "Fwd Packet Length Mean",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.8607149248408378,
+        "cic_mean": 9.389072222219,
+        "cic_std": 2.4895941703712023,
+        "syn_mean": 71.88653926482874,
+        "syn_std": 0.998699019014349
+      },
+      {
+        "feature": "Bwd Packet Length Max",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.830068,
+        "cic_mean": 16.9932,
+        "cic_std": 16.999998639999948,
+        "syn_mean": 100.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Bwd Packet Length Min",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.8598484848484849,
+        "cic_mean": 0.0,
+        "cic_std": 0.0,
+        "syn_mean": 56.75,
+        "syn_std": 5.043560250458004
+      },
+      {
+        "feature": "Bwd Packet Length Mean",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.8787400885796014,
+        "cic_mean": 6.264453331676,
+        "cic_std": 6.266979741500462,
+        "syn_mean": 76.65153442690207,
+        "syn_std": 1.350844892015856
+      },
+      {
+        "feature": "Fwd PSH Flags",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.7978761904761905,
+        "cic_mean": 0.4982,
+        "cic_std": 0.4999967599895023,
+        "syn_mean": 6.083333333333333,
+        "syn_std": 1.6562172428626494
+      },
+      {
+        "feature": "Min Packet Length",
+        "ks_d": 1.0,
+        "ks_p": 5.527912923849414e-117,
+        "wasserstein_norm": 0.8484848484848485,
+        "cic_mean": 0.0,
+        "cic_std": 0.0,
+        "syn_mean": 56.0,
+        "syn_std": 4.47213595499958
+      }
+    ],
+    "SSH-Patator": [],
+    "DoS slowloris": [
+      {
+        "feature": "Bwd Packet Length Min",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.9999636363636365,
+        "cic_mean": 0.0024,
+        "cic_std": 0.11997599759951989,
+        "syn_mean": 66.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Flow IAT Min",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.022550061328124968,
+        "cic_mean": 288640.785,
+        "cic_std": 517689.7964065539,
+        "syn_mean": 0.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Fwd PSH Flags",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.7348,
+        "cic_mean": 0.316,
+        "cic_std": 0.4649128950674523,
+        "syn_mean": 3.99,
+        "syn_std": 0.8265792964582003
+      },
+      {
+        "feature": "Min Packet Length",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.9999454545454545,
+        "cic_mean": 0.0036,
+        "cic_std": 0.14692528713601347,
+        "syn_mean": 66.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "FIN Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.668888888888889,
+        "cic_mean": 0.0,
+        "cic_std": 0.0,
+        "syn_mean": 2.006666666666667,
+        "syn_std": 0.08137703743822468
+      },
+      {
+        "feature": "SYN Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.8946666666666667,
+        "cic_mean": 0.316,
+        "cic_std": 0.4649128950674523,
+        "syn_mean": 3.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "PSH Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.6641199999999999,
+        "cic_mean": 0.6694,
+        "cic_std": 0.4704292082768671,
+        "syn_mean": 3.99,
+        "syn_std": 0.8265792964582003
+      },
+      {
+        "feature": "ACK Flag Count",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.8655155555555556,
+        "cic_mean": 0.3306,
+        "cic_std": 0.4704292082768671,
+        "syn_mean": 13.313333333333333,
+        "syn_std": 1.5149770808680756
+      },
+      {
+        "feature": "Init_Win_bytes_forward",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.6972283451281811,
+        "cic_mean": 19609.7164,
+        "cic_std": 13629.46599019826,
+        "syn_mean": 64240.0,
+        "syn_std": 0.0
+      },
+      {
+        "feature": "Init_Win_bytes_backward",
+        "ks_d": 1.0,
+        "ks_p": 1e-323,
+        "wasserstein_norm": 0.98626702168475,
+        "cic_mean": 893.8546,
+        "cic_std": 4730.086278648503,
+        "syn_mean": 65160.0,
+        "syn_std": 0.0
+      }
+    ]
+  },
+  "drift_summary_per_label": {
+    "BENIGN": {
+      "n_features_compared": 68,
+      "n_p_lt_001": 62,
+      "n_ks_d_gte_0.5": 39,
+      "pct_significant": 91.2,
+      "median_ks_d": 0.6179,
+      "median_wasserstein_norm": 0.023260268118899686
+    },
+    "PortScan": {
+      "n_features_compared": 66,
+      "n_p_lt_001": 42,
+      "n_ks_d_gte_0.5": 35,
+      "pct_significant": 63.6,
+      "median_ks_d": 0.5642,
+      "median_wasserstein_norm": 0.01135308471454878
+    },
+    "FTP-Patator": {
+      "n_features_compared": 58,
+      "n_p_lt_001": 56,
+      "n_ks_d_gte_0.5": 54,
+      "pct_significant": 96.6,
+      "median_ks_d": 0.8894333333333333,
+      "median_wasserstein_norm": 0.45525616567760396
+    },
+    "DoS slowloris": {
+      "n_features_compared": 65,
+      "n_p_lt_001": 64,
+      "n_ks_d_gte_0.5": 61,
+      "pct_significant": 98.5,
+      "median_ks_d": 0.6612,
+      "median_wasserstein_norm": 0.2459371092701626
+    }
+  },
+  "confidence_signature": {
+    "cic2017_benign": {
+      "n": 5000,
+      "confidence_p25": 0.9999432563781738,
+      "confidence_median": 0.999987006187439,
+      "confidence_p75": 0.9999929666519165,
+      "confidence_low_pct": 0.0
+    },
+    "synthetic": {
+      "n": 5000,
+      "confidence_p25": 0.9991703033447266,
+      "confidence_median": 0.9997338652610779,
+      "confidence_p75": 0.9998434782028198,
+      "confidence_low_pct": 0.0
+    },
+    "real_world": {
+      "n": 1282,
+      "confidence_p25": 0.9899952411651611,
+      "confidence_median": 0.9998329281806946,
+      "confidence_p75": 0.9998982548713684,
+      "confidence_low_pct": 0.078003120124805
+    }
+  }
+}
