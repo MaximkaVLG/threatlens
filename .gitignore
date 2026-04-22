@@ -28,6 +28,17 @@ models/
 !results/cicids2017/metrics.json
 !results/cicids2017/comparison.csv
 
+# Day 5 combined-retrain candidate (Day 11 will decide whether to flip prod)
+# RandomForest stays ignored — its joblib is ~816 MB and the project's
+# primary model is XGBoost anyway.
+!results/combined_v2/
+!results/combined_v2/xgboost.joblib
+!results/combined_v2/feature_pipeline.joblib
+!results/combined_v2/metrics.json
+!results/combined_v2/comparison.csv
+!results/combined_v2/head_to_head.json
+
 # Local experiment outputs (synthetic training set, ad-hoc runs)
 results/synthetic/
 results/experiments/
+results/*_training.log
