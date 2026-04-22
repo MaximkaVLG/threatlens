@@ -32,6 +32,7 @@ services:
     volumes:
       - ../../data/synthetic:/work/pcaps
       - ./attacks:/work/attacks:ro
+      - ./generate.py:/work/generate.py:ro
     depends_on:
       - victim
     restart: "no"

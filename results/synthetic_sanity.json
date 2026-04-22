@@ -1,0 +1,73 @@
+{
+  "n_flows": 143841,
+  "n_classes": 6,
+  "labels": [
+    "BENIGN",
+    "DoS Hulk",
+    "DoS slowloris",
+    "FTP-Patator",
+    "PortScan",
+    "SSH-Patator"
+  ],
+  "cv_folds": 5,
+  "cv_f1_weighted_mean": 0.9999859127768417,
+  "cv_f1_weighted_std": 1.725436106797726e-05,
+  "cv_f1_per_fold": [
+    1.0,
+    1.0,
+    1.0,
+    0.9999650909380604,
+    0.9999644729461485
+  ],
+  "in_sample_classification_report": {
+    "BENIGN": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 294.0
+    },
+    "DoS Hulk": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 130066.0
+    },
+    "DoS slowloris": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 300.0
+    },
+    "FTP-Patator": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 48.0
+    },
+    "PortScan": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 13106.0
+    },
+    "SSH-Patator": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 27.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 143841.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 143841.0
+    }
+  }
+}
