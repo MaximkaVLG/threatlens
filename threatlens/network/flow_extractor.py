@@ -716,6 +716,21 @@ class CicFlowExtractor:
             compute_spectral_features,
             SPECTRAL_FEATURE_COLUMNS,
         )
+        # YARA-on-payload features: a second pass over the PCAP via scapy
+        # reassembles per-flow L7 payloads and runs the file-side YARA
+        # ruleset against them. Yields 3 features that fire when a flow
+        # carries a malicious file (HTTP/SMTP/FTP), zero otherwise.
+        from threatlens.network.payload_yara import (
+            compute_yara_features,
+            YARA_FEATURE_COLUMNS,
+            _canonical_key,
+        )
+
+        try:
+            yara_by_flow = compute_yara_features(pcap_path)
+        except Exception as e:
+            logger.warning("YARA payload pass failed for %s: %s", pcap_path, e)
+            yara_by_flow = {}
 
         rows = []
         for flow in flows:
@@ -728,16 +743,38 @@ class CicFlowExtractor:
                 # pkt.time is float seconds since epoch -> convert to us.
                 ts_us = [int(float(p[0].time) * 1_000_000) for p in flow.packets]
                 row.update(compute_spectral_features(ts_us))
+
+                # Match this row to its YARA features by canonical 5-tuple.
+                # Destination port lives in the CIC "Destination Port" column.
+                dst_port = int(_safe_float(data.get("dst_port",
+                                                    row.get("Destination Port", 0))))
+                key = _canonical_key(
+                    str(row.get("src_ip", "")),
+                    str(row.get("dst_ip", "")),
+                    int(row.get("src_port", 0)),
+                    dst_port,
+                    int(row.get("protocol", 0)),
+                )
+                yara_feats = yara_by_flow.get(key)
+                if yara_feats:
+                    row.update(yara_feats)
+                else:
+                    for col in YARA_FEATURE_COLUMNS:
+                        row[col] = 0.0
+
                 rows.append(row)
             except Exception as e:
                 logger.debug("Skipping flow with mapping error: %s", e)
 
         if not rows:
             return pd.DataFrame(
-                columns=CIC_FEATURE_COLUMNS + SPECTRAL_FEATURE_COLUMNS + ["src_ip", "dst_ip", "src_port", "protocol", "timestamp"]
+                columns=CIC_FEATURE_COLUMNS + SPECTRAL_FEATURE_COLUMNS + YARA_FEATURE_COLUMNS + ["src_ip", "dst_ip", "src_port", "protocol", "timestamp"]
             )
         df = pd.DataFrame(rows)
         for col in SPECTRAL_FEATURE_COLUMNS:
+            if col not in df.columns:
+                df[col] = 0.0
+        for col in YARA_FEATURE_COLUMNS:
             if col not in df.columns:
                 df[col] = 0.0
         return df
