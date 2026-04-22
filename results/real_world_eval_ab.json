@@ -1,0 +1,588 @@
+{
+  "summary": {
+    "real_pcap": {
+      "scope": "real_pcap",
+      "n_captures": 8,
+      "n_flows": 440,
+      "binary_old": {
+        "accuracy": 0.21136363636363636,
+        "f1_attack": 0.0,
+        "confusion_matrix": [
+          [
+            93,
+            0
+          ],
+          [
+            347,
+            0
+          ]
+        ]
+      },
+      "binary_new": {
+        "accuracy": 0.21363636363636362,
+        "f1_attack": 0.017045454545454544,
+        "confusion_matrix": [
+          [
+            91,
+            2
+          ],
+          [
+            344,
+            3
+          ]
+        ]
+      },
+      "per_class": {
+        "n_strict_flows": 160,
+        "old_f1_weighted": 0.4273221343873518,
+        "new_f1_weighted": 0.42314999999999997,
+        "old_report": {
+          "BENIGN": {
+            "precision": 0.58125,
+            "recall": 1.0,
+            "f1-score": 0.7351778656126482,
+            "support": 93.0
+          },
+          "SSH-Patator": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 67.0
+          },
+          "accuracy": 0.58125,
+          "macro avg": {
+            "precision": 0.290625,
+            "recall": 0.5,
+            "f1-score": 0.3675889328063241,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.33785156250000004,
+            "recall": 0.58125,
+            "f1-score": 0.4273221343873518,
+            "support": 160.0
+          }
+        },
+        "new_report": {
+          "BENIGN": {
+            "precision": 0.5796178343949044,
+            "recall": 0.978494623655914,
+            "f1-score": 0.728,
+            "support": 93.0
+          },
+          "DoS Hulk": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "DoS slowloris": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "PortScan": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "SSH-Patator": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 67.0
+          },
+          "accuracy": 0.56875,
+          "macro avg": {
+            "precision": 0.1159235668789809,
+            "recall": 0.1956989247311828,
+            "f1-score": 0.1456,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.33690286624203825,
+            "recall": 0.56875,
+            "f1-score": 0.42314999999999997,
+            "support": 160.0
+          }
+        }
+      }
+    },
+    "ctu13": {
+      "scope": "ctu13",
+      "n_captures": 3,
+      "n_flows": 842,
+      "binary_old": {
+        "accuracy": 0.0,
+        "f1_attack": 0.0,
+        "confusion_matrix": [
+          [
+            0,
+            0
+          ],
+          [
+            842,
+            0
+          ]
+        ]
+      },
+      "binary_new": {
+        "accuracy": 0.06769596199524941,
+        "f1_attack": 0.12680756395995552,
+        "confusion_matrix": [
+          [
+            0,
+            0
+          ],
+          [
+            785,
+            57
+          ]
+        ]
+      },
+      "per_class": {
+        "n_strict_flows": 842,
+        "old_f1_weighted": 0.0,
+        "new_f1_weighted": 0.0,
+        "old_report": {
+          "BENIGN": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "Bot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          },
+          "accuracy": 0.0,
+          "macro avg": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          },
+          "weighted avg": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          }
+        },
+        "new_report": {
+          "BENIGN": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "Bot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          },
+          "DoS Hulk": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "DoS slowloris": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "PortScan": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "accuracy": 0.0,
+          "macro avg": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          },
+          "weighted avg": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          }
+        }
+      }
+    },
+    "combined": {
+      "scope": "combined",
+      "n_captures": 11,
+      "n_flows": 1282,
+      "binary_old": {
+        "accuracy": 0.07254290171606864,
+        "f1_attack": 0.0,
+        "confusion_matrix": [
+          [
+            93,
+            0
+          ],
+          [
+            1189,
+            0
+          ]
+        ]
+      },
+      "binary_new": {
+        "accuracy": 0.11778471138845553,
+        "f1_attack": 0.09592326139088729,
+        "confusion_matrix": [
+          [
+            91,
+            2
+          ],
+          [
+            1129,
+            60
+          ]
+        ]
+      },
+      "per_class": {
+        "n_strict_flows": 1002,
+        "old_f1_weighted": 0.015765728816339922,
+        "new_f1_weighted": 0.016320981225953886,
+        "old_report": {
+          "BENIGN": {
+            "precision": 0.09281437125748503,
+            "recall": 1.0,
+            "f1-score": 0.16986301369863013,
+            "support": 93.0
+          },
+          "Bot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          },
+          "SSH-Patator": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 67.0
+          },
+          "accuracy": 0.09281437125748503,
+          "macro avg": {
+            "precision": 0.03093812375249501,
+            "recall": 0.3333333333333333,
+            "f1-score": 0.05662100456621005,
+            "support": 1002.0
+          },
+          "weighted avg": {
+            "precision": 0.008614507511922264,
+            "recall": 0.09281437125748503,
+            "f1-score": 0.015765728816339922,
+            "support": 1002.0
+          }
+        },
+        "new_report": {
+          "BENIGN": {
+            "precision": 0.09660297239915075,
+            "recall": 0.978494623655914,
+            "f1-score": 0.1758454106280193,
+            "support": 93.0
+          },
+          "Bot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 842.0
+          },
+          "DoS Hulk": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "DoS slowloris": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "PortScan": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "SSH-Patator": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 67.0
+          },
+          "accuracy": 0.09081836327345309,
+          "macro avg": {
+            "precision": 0.016100495399858458,
+            "recall": 0.16308243727598568,
+            "f1-score": 0.02930756843800322,
+            "support": 1002.0
+          },
+          "weighted avg": {
+            "precision": 0.008966144144831358,
+            "recall": 0.09081836327345309,
+            "f1-score": 0.016320981225953886,
+            "support": 1002.0
+          }
+        }
+      }
+    }
+  },
+  "per_capture_real_pcap": [
+    {
+      "name": "slips_ssh-bruteforce.pcap",
+      "n_flows": 67,
+      "label_binary": "ATTACK",
+      "label_class": "SSH-Patator",
+      "old": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 67
+        }
+      },
+      "new": {
+        "binary_correct_pct": 1.4925373134328357,
+        "label_counts": {
+          "BENIGN": 66,
+          "PortScan": 1
+        }
+      },
+      "extract_seconds": 1.15,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "slips_test12_icmp-portscan.pcap",
+      "n_flows": 0,
+      "label_binary": "ATTACK",
+      "label_class": "PortScan",
+      "extract_seconds": 0.02,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "slips_test7_malicious.pcap",
+      "n_flows": 279,
+      "label_binary": "ATTACK",
+      "label_class": null,
+      "old": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 279
+        }
+      },
+      "new": {
+        "binary_correct_pct": 0.7168458781362007,
+        "label_counts": {
+          "BENIGN": 277,
+          "DoS Hulk": 1,
+          "PortScan": 1
+        }
+      },
+      "extract_seconds": 1.59,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "slips_test8_malicious.pcap",
+      "n_flows": 1,
+      "label_binary": "ATTACK",
+      "label_class": null,
+      "old": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "new": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "extract_seconds": 0.12,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "wireshark_dns-mdns.pcap",
+      "n_flows": 83,
+      "label_binary": "BENIGN",
+      "label_class": "BENIGN",
+      "old": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 83
+        }
+      },
+      "new": {
+        "binary_correct_pct": 98.79518072289156,
+        "label_counts": {
+          "BENIGN": 82,
+          "DoS Hulk": 1
+        }
+      },
+      "extract_seconds": 0.34,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "wireshark_http2-data-reassembly.pcap",
+      "n_flows": 1,
+      "label_binary": "BENIGN",
+      "label_class": "BENIGN",
+      "old": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "new": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "extract_seconds": 0.03,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "wireshark_http2_follow_multistream.pcapng",
+      "n_flows": 1,
+      "label_binary": "BENIGN",
+      "label_class": "BENIGN",
+      "old": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "new": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "DoS slowloris": 1
+        }
+      },
+      "extract_seconds": 0.14,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "wireshark_tls-renegotiation.pcap",
+      "n_flows": 1,
+      "label_binary": "BENIGN",
+      "label_class": "BENIGN",
+      "old": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "new": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 1
+        }
+      },
+      "extract_seconds": 0.04,
+      "scope": "real_pcap"
+    },
+    {
+      "name": "wireshark_tls12-chacha20.pcap",
+      "n_flows": 7,
+      "label_binary": "BENIGN",
+      "label_class": "BENIGN",
+      "old": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 7
+        }
+      },
+      "new": {
+        "binary_correct_pct": 100.0,
+        "label_counts": {
+          "BENIGN": 7
+        }
+      },
+      "extract_seconds": 0.05,
+      "scope": "real_pcap"
+    }
+  ],
+  "per_capture_ctu13": [
+    {
+      "name": "botnet-42/botnet-capture-20110810-neris.pcap",
+      "n_flows": 580,
+      "label_binary": "ATTACK",
+      "label_class": "Bot",
+      "old": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 580
+        }
+      },
+      "new": {
+        "binary_correct_pct": 3.4482758620689653,
+        "label_counts": {
+          "BENIGN": 560,
+          "DoS slowloris": 18,
+          "DoS Hulk": 2
+        }
+      },
+      "extract_seconds": 228.17,
+      "scope": "ctu13"
+    },
+    {
+      "name": "botnet-43/botnet-capture-20110811-neris.pcap",
+      "n_flows": 259,
+      "label_binary": "ATTACK",
+      "label_class": "Bot",
+      "old": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 259
+        }
+      },
+      "new": {
+        "binary_correct_pct": 13.8996138996139,
+        "label_counts": {
+          "BENIGN": 223,
+          "DoS Hulk": 22,
+          "DoS slowloris": 12,
+          "PortScan": 2
+        }
+      },
+      "extract_seconds": 108.65,
+      "scope": "ctu13"
+    },
+    {
+      "name": "botnet-48/botnet-capture-20110816-sogou.pcap",
+      "n_flows": 3,
+      "label_binary": "ATTACK",
+      "label_class": "Bot",
+      "old": {
+        "binary_correct_pct": 0.0,
+        "label_counts": {
+          "BENIGN": 3
+        }
+      },
+      "new": {
+        "binary_correct_pct": 33.33333333333333,
+        "label_counts": {
+          "BENIGN": 2,
+          "PortScan": 1
+        }
+      },
+      "extract_seconds": 11.22,
+      "scope": "ctu13"
+    }
+  ]
+}
