@@ -1,0 +1,115 @@
+{
+  "csv": "Wednesday-14-02-2018.csv",
+  "n_flows": 1048575,
+  "label_counts": {
+    "BENIGN": 667626,
+    "FTP-Patator": 193360,
+    "SSH-Patator": 187589
+  },
+  "in_dist_xgb_f1_weighted_2017": 0.9982598591732262,
+  "cross_dist_xgb_f1_weighted_2018": 0.5019,
+  "cross_dist_xgb_f1_macro_2018": 0.1314,
+  "cross_dist_accuracy": 0.6363,
+  "binary_accuracy": 0.6582,
+  "binary_f1_attack": 0.1137,
+  "binary_confusion_matrix": {
+    "labels": [
+      "BENIGN",
+      "ATTACK"
+    ],
+    "matrix": [
+      [
+        667217,
+        409
+      ],
+      [
+        357967,
+        22982
+      ]
+    ],
+    "format": "rows=true, cols=predicted"
+  },
+  "multiclass_confusion_matrix_truth_classes": {
+    "labels": [
+      "BENIGN",
+      "FTP-Patator",
+      "SSH-Patator"
+    ],
+    "all_pred_labels": [
+      "BENIGN",
+      "PortScan",
+      "DoS slowloris",
+      "SSH-Patator",
+      "DoS GoldenEye"
+    ],
+    "matrix": [
+      [
+        667217,
+        0,
+        0
+      ],
+      [
+        170380,
+        0,
+        0
+      ],
+      [
+        187587,
+        0,
+        1
+      ]
+    ]
+  },
+  "classification_report": {
+    "BENIGN": {
+      "precision": 0.6508265833255299,
+      "recall": 0.9993873815579382,
+      "f1-score": 0.7882952014697455,
+      "support": 667626.0
+    },
+    "DoS GoldenEye": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "DoS slowloris": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "FTP-Patator": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 193360.0
+    },
+    "PortScan": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "SSH-Patator": {
+      "precision": 1.0,
+      "recall": 5.330802978852705e-06,
+      "f1-score": 1.0661549123087584e-05,
+      "support": 187589.0
+    },
+    "accuracy": 0.63630927687576,
+    "macro avg": {
+      "precision": 0.2751377638875883,
+      "recall": 0.16656545206015283,
+      "f1-score": 0.13138431050314478,
+      "support": 1048575.0
+    },
+    "weighted avg": {
+      "precision": 0.5932792108521472,
+      "recall": 0.63630927687576,
+      "f1-score": 0.5019081822146997,
+      "support": 1048575.0
+    }
+  },
+  "inference_seconds": 25.02
+}

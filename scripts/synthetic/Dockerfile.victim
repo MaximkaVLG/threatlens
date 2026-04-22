@@ -1,0 +1,26 @@
+# Victim image — exposes common attack surfaces so the attacker side can
+# generate realistic SSH brute-force, HTTP DoS, port scans, etc.
+FROM ubuntu:24.04
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        openssh-server \
+        vsftpd \
+        nginx \
+        iputils-ping \
+        iproute2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up a known-weak credential set so hydra/medusa have something to find.
+# This is intentional — the victim only exists inside a private docker network
+# and is never reachable from the host.
+RUN useradd -m -s /bin/bash testuser && echo 'testuser:password123' | chpasswd
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Anonymous FTP — another brute-force target
+RUN echo "anonymous_enable=YES\nlocal_enable=YES\nwrite_enable=NO" >> /etc/vsftpd.conf
+
+EXPOSE 22 21 80
+CMD service ssh start && service vsftpd start && nginx -g 'daemon off;'

@@ -1,0 +1,177 @@
+{
+  "summary": {
+    "n_pcaps": 9,
+    "n_flows_total": 440,
+    "binary_accuracy": 0.2114,
+    "binary_f1_attack": 0.0,
+    "binary_confusion_matrix": {
+      "labels": [
+        "BENIGN",
+        "ATTACK"
+      ],
+      "matrix": [
+        [
+          93,
+          0
+        ],
+        [
+          347,
+          0
+        ]
+      ],
+      "format": "rows=true, cols=predicted"
+    },
+    "per_class_f1_weighted_strict_only": 0.4273,
+    "per_class_report_strict_only": {
+      "BENIGN": {
+        "precision": 0.58125,
+        "recall": 1.0,
+        "f1-score": 0.7351778656126482,
+        "support": 93.0
+      },
+      "SSH-Patator": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 67.0
+      },
+      "accuracy": 0.58125,
+      "macro avg": {
+        "precision": 0.290625,
+        "recall": 0.5,
+        "f1-score": 0.3675889328063241,
+        "support": 160.0
+      },
+      "weighted avg": {
+        "precision": 0.33785156250000004,
+        "recall": 0.58125,
+        "f1-score": 0.4273221343873518,
+        "support": 160.0
+      }
+    }
+  },
+  "per_pcap": [
+    {
+      "pcap": "slips_ssh-bruteforce.pcap",
+      "flows": 67,
+      "extract_seconds": 1.03,
+      "expected_binary": "ATTACK",
+      "expected_class": "SSH-Patator",
+      "strict": true,
+      "predicted_labels": {
+        "BENIGN": 67
+      },
+      "binary_correct_pct": 0.0,
+      "mean_confidence": 0.9999,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "slips_test12_icmp-portscan.pcap",
+      "flows": 0,
+      "extract_seconds": 0.01,
+      "expected_binary": "ATTACK",
+      "expected_class": "PortScan",
+      "strict": false,
+      "predicted_labels": {},
+      "binary_correct_pct": null
+    },
+    {
+      "pcap": "slips_test7_malicious.pcap",
+      "flows": 279,
+      "extract_seconds": 1.25,
+      "expected_binary": "ATTACK",
+      "expected_class": null,
+      "strict": false,
+      "predicted_labels": {
+        "BENIGN": 279
+      },
+      "binary_correct_pct": 0.0,
+      "mean_confidence": 0.9935,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "slips_test8_malicious.pcap",
+      "flows": 1,
+      "extract_seconds": 0.11,
+      "expected_binary": "ATTACK",
+      "expected_class": null,
+      "strict": false,
+      "predicted_labels": {
+        "BENIGN": 1
+      },
+      "binary_correct_pct": 0.0,
+      "mean_confidence": 1.0,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "wireshark_dns-mdns.pcap",
+      "flows": 83,
+      "extract_seconds": 0.29,
+      "expected_binary": "BENIGN",
+      "expected_class": "BENIGN",
+      "strict": true,
+      "predicted_labels": {
+        "BENIGN": 83
+      },
+      "binary_correct_pct": 100.0,
+      "mean_confidence": 0.9903,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "wireshark_http2-data-reassembly.pcap",
+      "flows": 1,
+      "extract_seconds": 0.08,
+      "expected_binary": "BENIGN",
+      "expected_class": "BENIGN",
+      "strict": true,
+      "predicted_labels": {
+        "BENIGN": 1
+      },
+      "binary_correct_pct": 100.0,
+      "mean_confidence": 0.8787,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "wireshark_http2_follow_multistream.pcapng",
+      "flows": 1,
+      "extract_seconds": 0.14,
+      "expected_binary": "BENIGN",
+      "expected_class": "BENIGN",
+      "strict": true,
+      "predicted_labels": {
+        "BENIGN": 1
+      },
+      "binary_correct_pct": 100.0,
+      "mean_confidence": 0.9998,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "wireshark_tls-renegotiation.pcap",
+      "flows": 1,
+      "extract_seconds": 0.07,
+      "expected_binary": "BENIGN",
+      "expected_class": "BENIGN",
+      "strict": true,
+      "predicted_labels": {
+        "BENIGN": 1
+      },
+      "binary_correct_pct": 100.0,
+      "mean_confidence": 0.998,
+      "anomaly_flag_pct": 0.0
+    },
+    {
+      "pcap": "wireshark_tls12-chacha20.pcap",
+      "flows": 7,
+      "extract_seconds": 0.08,
+      "expected_binary": "BENIGN",
+      "expected_class": "BENIGN",
+      "strict": true,
+      "predicted_labels": {
+        "BENIGN": 7
+      },
+      "binary_correct_pct": 100.0,
+      "mean_confidence": 0.9996,
+      "anomaly_flag_pct": 0.0
+    }
+  ]
+}

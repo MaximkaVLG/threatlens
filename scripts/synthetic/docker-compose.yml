@@ -1,0 +1,44 @@
+# Attack-lab network for generating synthetic PCAPs.
+# The attacker and victim share a private bridge network (172.28.0.0/16) and
+# are never exposed to the host. Traffic is captured from inside the attacker
+# container by tcpdump and written to a bind-mounted directory on the host.
+#
+# Usage:
+#   cd scripts/synthetic && docker compose up -d --build
+#   docker exec lab-attacker bash /work/attacks/portscan.sh
+#   docker compose down
+services:
+  victim:
+    build:
+      context: .
+      dockerfile: Dockerfile.victim
+    container_name: lab-victim
+    networks:
+      attack-lab:
+        ipv4_address: 172.28.0.10
+    restart: "no"
+
+  attacker:
+    build:
+      context: .
+      dockerfile: Dockerfile.attacker
+    container_name: lab-attacker
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    networks:
+      attack-lab:
+        ipv4_address: 172.28.0.20
+    volumes:
+      - ../../data/synthetic:/work/pcaps
+      - ./attacks:/work/attacks:ro
+    depends_on:
+      - victim
+    restart: "no"
+
+networks:
+  attack-lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

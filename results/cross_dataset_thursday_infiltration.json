@@ -1,0 +1,113 @@
+{
+  "csv": "Thursday-01-03-2018.csv",
+  "n_flows": 331100,
+  "label_counts": {
+    "BENIGN": 238037,
+    "Infiltration": 93063
+  },
+  "in_dist_xgb_f1_weighted_2017": 0.9982598591732262,
+  "cross_dist_xgb_f1_weighted_2018": 0.6011,
+  "cross_dist_xgb_f1_macro_2018": 0.1195,
+  "cross_dist_accuracy": 0.7184,
+  "binary_accuracy": 0.7185,
+  "binary_f1_attack": 0.0007,
+  "binary_confusion_matrix": {
+    "labels": [
+      "BENIGN",
+      "ATTACK"
+    ],
+    "matrix": [
+      [
+        237856,
+        181
+      ],
+      [
+        93032,
+        31
+      ]
+    ],
+    "format": "rows=true, cols=predicted"
+  },
+  "multiclass_confusion_matrix_truth_classes": {
+    "labels": [
+      "BENIGN",
+      "Infiltration"
+    ],
+    "all_pred_labels": [
+      "DoS slowloris",
+      "SSH-Patator",
+      "DoS GoldenEye",
+      "BENIGN",
+      "DoS Slowhttptest",
+      "PortScan"
+    ],
+    "matrix": [
+      [
+        237856,
+        0
+      ],
+      [
+        93032,
+        0
+      ]
+    ]
+  },
+  "classification_report": {
+    "BENIGN": {
+      "precision": 0.7188414206619762,
+      "recall": 0.9992396140095867,
+      "f1-score": 0.8361594234740959,
+      "support": 238037.0
+    },
+    "DoS GoldenEye": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "DoS Slowhttptest": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "DoS slowloris": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "Infiltration": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 93063.0
+    },
+    "PortScan": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "SSH-Patator": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 0.0
+    },
+    "accuracy": 0.7183811537299909,
+    "macro avg": {
+      "precision": 0.10269163152313945,
+      "recall": 0.14274851628708382,
+      "f1-score": 0.11945134621058513,
+      "support": 331100.0
+    },
+    "weighted avg": {
+      "precision": 0.5167950928725908,
+      "recall": 0.7183811537299909,
+      "f1-score": 0.6011382684551596,
+      "support": 331100.0
+    }
+  },
+  "inference_seconds": 8.18
+}
