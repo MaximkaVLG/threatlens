@@ -409,9 +409,21 @@ class FlowExtractor:
         if not finalized:
             return pd.DataFrame(columns=CIC_FEATURE_COLUMNS + _META_COLUMNS)
 
+        # Spectral features are additive — they don't replace any CIC feature,
+        # they live alongside as extra columns. The trained CIC-IDS2017
+        # detector ignores them; the combined model (Day 8) consumes them.
+        from threatlens.network.spectral_features import (
+            compute_spectral_features,
+            SPECTRAL_FEATURE_COLUMNS,
+        )
+
         rows = []
         for flow in finalized:
             features = compute_features(flow)
+            spectral = compute_spectral_features(
+                [p.ts_us for p in flow.fwd + flow.bwd]
+            )
+            features.update(spectral)
             features["src_ip"] = flow.src_ip
             features["dst_ip"] = flow.dst_ip
             features["src_port"] = flow.src_port
@@ -420,6 +432,9 @@ class FlowExtractor:
 
         df = pd.DataFrame(rows)
         for col in CIC_FEATURE_COLUMNS:
+            if col not in df.columns:
+                df[col] = 0.0
+        for col in SPECTRAL_FEATURE_COLUMNS:
             if col not in df.columns:
                 df[col] = 0.0
         return df
@@ -693,6 +708,15 @@ class CicFlowExtractor:
             packet_count, errors, len(flows),
         )
 
+        # Spectral features are additive: 8 frequency-domain features computed
+        # from packet IATs. They sit alongside CIC-IDS2017 features as extra
+        # columns. The CIC-trained model ignores them; the combined model
+        # (Day 8) consumes them.
+        from threatlens.network.spectral_features import (
+            compute_spectral_features,
+            SPECTRAL_FEATURE_COLUMNS,
+        )
+
         rows = []
         for flow in flows:
             try:
@@ -700,15 +724,23 @@ class CicFlowExtractor:
                 epoch = float(flow.packets[0][0].time) if flow.packets else 0.0
                 row = _map_cicflowmeter_row(data)
                 row["timestamp"] = epoch
+                # cicflowmeter stores packets as (pkt, direction) tuples.
+                # pkt.time is float seconds since epoch -> convert to us.
+                ts_us = [int(float(p[0].time) * 1_000_000) for p in flow.packets]
+                row.update(compute_spectral_features(ts_us))
                 rows.append(row)
             except Exception as e:
                 logger.debug("Skipping flow with mapping error: %s", e)
 
         if not rows:
             return pd.DataFrame(
-                columns=CIC_FEATURE_COLUMNS + ["src_ip", "dst_ip", "src_port", "protocol", "timestamp"]
+                columns=CIC_FEATURE_COLUMNS + SPECTRAL_FEATURE_COLUMNS + ["src_ip", "dst_ip", "src_port", "protocol", "timestamp"]
             )
-        return pd.DataFrame(rows)
+        df = pd.DataFrame(rows)
+        for col in SPECTRAL_FEATURE_COLUMNS:
+            if col not in df.columns:
+                df[col] = 0.0
+        return df
 
 
 # Public alias — new code should use `FlowExtractor`. The legacy

@@ -139,3 +139,49 @@ docker compose down
 4. **No application-layer payload diversity.** Curl always sends the
    same User-Agent; nginx serves the same default page. Statistical
    features capture this; sequence features (planned: Day 5) would too.
+
+## Day 3 addendum (2026-04-22): spectral feature validation
+
+After integrating 8 FFT/spectral features (see
+[`docs/spectral_features.md`](spectral_features.md) — TODO), we re-extracted
+the 33 PCAPs to produce a 86-column CSV (70 CIC + 8 spectral + 8 metadata).
+
+**Discrimination test** (Kruskal-Wallis across the 6 attack classes,
+capped at 5000 flows/class to neutralise DoS Hulk's 90% share):
+
+| Spectral feature | KW p-value | Verdict |
+|---|---:|---|
+| Spectral Peak Freq | < 1e-300 | DISCRIMINATES |
+| Spectral Peak Magnitude | < 1e-300 | DISCRIMINATES |
+| Spectral Entropy | < 1e-300 | DISCRIMINATES |
+| Spectral Centroid | < 1e-300 | DISCRIMINATES |
+| Spectral Bandwidth | < 1e-300 | DISCRIMINATES |
+| Low Freq Energy Ratio | < 1e-300 | DISCRIMINATES |
+| IAT Periodicity Score | < 1e-300 | DISCRIMINATES |
+| IAT Zero Crossing Rate | < 1e-300 | DISCRIMINATES |
+
+**=> 8 / 8 features discriminate at p < 0.001.**
+
+**Physical sanity check** — the per-class medians match the temporal
+signatures we hoped to capture:
+
+| Signal | Class | Median | Interpretation |
+|---|---|---:|---|
+| `Low Freq Energy Ratio` | DoS slowloris | **1.000** | 100% of energy <1 Hz — the slowloris signature |
+| `IAT Periodicity Score` | SSH-Patator | **0.683** | botnet-style beaconing (regular login retries) |
+| `IAT Periodicity Score` | FTP-Patator | 0.584 | similar pattern, slightly noisier |
+| `IAT Zero Crossing Rate` | BENIGN | 0.500 | maximum jitter (sequential curl GETs vary) |
+| `Spectral Entropy` | SSH-Patator | 3.762 | broadband (many distinct IATs) |
+| All spectral features | DoS Hulk, PortScan | 0.000 | single-packet flows (n<10 → spectral=0 by design) |
+
+The all-zeros for DoS Hulk and PortScan are correct behavior:
+`hping3 --flood --syn` and `nmap` produce 1-packet flows, below the
+`_MIN_PACKETS=10` threshold for stable spectra. The existing 70 CIC
+features already classify these classes well; spectral features add
+signal where temporal *structure* matters (beaconing, slowloris).
+
+**Conclusion:** spectral features are not just non-zero — they recover
+exactly the temporal patterns we predicted (low-freq dominance for
+slowloris, periodicity for brute-force beacons, broadband entropy for
+attack diversity). Day 8 retraining with the 78-feature combined set
+should improve F1 on the multi-packet attack classes.
