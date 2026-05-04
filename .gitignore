@@ -5,6 +5,8 @@ __pycache__/
 venv/
 *.egg-info/
 uploads/
+.pytest_cache/
+.pytest-tmp/
 tests/samples/*.exe
 tests/samples/*.dll
 .idea/
@@ -13,6 +15,17 @@ tests/samples/*.dll
 # Community YARA rules (downloaded separately)
 threatlens/rules/yara_community/
 
+# Local-only working files
+CLAUDE.md
+logs/
+tools/
+*_eval.log
+*_extraction.log
+results/python_only_v*_eval.log
+results/real_world_eval_ab.log
+results/selective_eval.log
+results/selective_sweep.log
+
 # ML artifacts (datasets are large, models are binaries)
 data/
 results/
@@ -20,6 +33,12 @@ models/
 *.joblib
 *.pkl
 *.parquet
+
+# Day 13 sandbox-ingest output — modern (2024-2026) malware PCAPs.
+# Re-downloadable by `python scripts/ingest_sandbox_pcaps.py`.
+# We keep the parquet (small) but never commit raw PCAPs (50-200 MB each,
+# may also be flagged by users' antivirus on `git clone`).
+data/sandbox_malware/
 
 # ...except production model snapshot required for Railway / timeweb deploy
 !results/
@@ -38,6 +57,24 @@ models/
 !results/combined_v2/comparison.csv
 !results/combined_v2/head_to_head.json
 !results/combined_v2/mahalanobis_abstainer.joblib
+
+# Day 9 python-only retrain — closes the Java-vs-Python extractor drift gap.
+# These artifacts are the candidate for the production swap on Day 11.
+!results/python_only/
+!results/python_only/xgboost.joblib
+!results/python_only/feature_pipeline.joblib
+!results/python_only/mahalanobis_abstainer.joblib
+!results/python_only/mahalanobis_abstainer_summary.json
+!results/python_only/metrics.json
+!results/python_only/real_world_eval.json
+!results/python_only/ctu_test_holdout.parquet
+!results/python_only/diverse_benign_flows.parquet
+!results/python_only/attack_volume_flows.parquet
+# Day 11 + Day 12 + Day 13 evaluation artefacts (small, reproducibility-critical)
+!results/python_only/workload_metric.json
+!results/python_only/active_learning_demo.json
+!results/python_only/sandbox_eval.json
+!results/python_only/sandbox_malware_flows.parquet
 
 # Day 6-8 evaluation JSON artefacts (small, worth committing for reproducibility)
 !results/real_world_eval_ab.json

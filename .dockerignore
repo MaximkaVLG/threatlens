@@ -1,14 +1,71 @@
 .git
+.gitattributes
+.gitignore
+.github
+
+# Secrets / local config
 .env
-__pycache__
+.env.*
+.claude/
+
+# Python build / cache
+__pycache__/
 *.pyc
-.venv
-venv
+*.pyo
+.pytest_cache/
+.pytest-tmp/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# IDEs
+.idea/
+.vscode/
+
+# Test fixtures that can be regenerated
 tests/calibration/samples
 tests/samples/*.exe
 tests/samples/*.dll
+
+# YARA community rules — re-downloaded inside builder stage
 threatlens/rules/yara_community
-*.egg-info
-.idea
-.vscode
+
+# Runtime mount targets
 scans/
+
+# ---- Big stuff that must NOT enter the build context ----
+#
+# Without these excludes the build context blows up to ~3.6 GB:
+#   data/                 = 2.8 GB (training PCAPs + CIC-IDS2017 CSVs)
+#   results/combined_v2/  = 787 MB (intermediate model bundle, superseded
+#                                   by python_only)
+#   real_world_flows_cache.parquet = ~50 MB cached extract
+#
+# The Day 9e python_only bundle (~3.8 MB) is small enough to ship.
+
+data/
+results/combined_v2/
+results/synthetic/
+results/real_world_flows_cache.parquet
+results/*_training.log
+results/*_eval.log
+results/experiments/
+
+# Old project zip kept on disk for diff comparisons
+threatlens.zip
+threatlens.tar.gz
+*.tar.gz
+*.zip
+
+# Misc
+docs/screenshots/*.png
+docs/figures/*.png
+docs/figures/*.svg
+*.log
+.DS_Store
+Thumbs.db
+
