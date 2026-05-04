@@ -1,0 +1,411 @@
+{
+  "n_pcaps": 25,
+  "n_flows_total": 5011,
+  "n_attack_flows": 5011,
+  "headline": {
+    "recall_attack": 0.7224106964677709,
+    "recall_exact_bot": 0.04250648573139094,
+    "n_detected_any_attack": 3620,
+    "n_exact_bot": 213,
+    "abstain_rate": 0.7082418678906406,
+    "mean_confidence": 0.8877642750740051
+  },
+  "per_capture": [
+    {
+      "source_pcap": "2025-06-26_2025-06-26-Lumma-Stealer-infection-with-follow-up-malware.pcap__lumma__Bot.pcap",
+      "n_flows": 1,
+      "n_detected": 0,
+      "recall": 0.0,
+      "family": "lumma",
+      "captured_date": "2025-06-26",
+      "label_distribution": {
+        "BENIGN": 1
+      }
+    },
+    {
+      "source_pcap": "2025-07-02_2025-07-02-Lumma-Stealer-infection-with-Rsockstun-malware.pcap__lumma__Bot.pcap",
+      "n_flows": 3,
+      "n_detected": 0,
+      "recall": 0.0,
+      "family": "lumma",
+      "captured_date": "2025-07-02",
+      "label_distribution": {
+        "BENIGN": 3
+      }
+    },
+    {
+      "source_pcap": "2025-07-15_2025-07-15-traffic-from-Lumma-Stealer-infection-with-SecTop-RAT.pcap__lumma__Bot.pcap",
+      "n_flows": 2,
+      "n_detected": 0,
+      "recall": 0.0,
+      "family": "lumma",
+      "captured_date": "2025-07-15",
+      "label_distribution": {
+        "BENIGN": 2
+      }
+    },
+    {
+      "source_pcap": "2025-08-20_2025-08-20-SmartAgeSG-Netsupport-RAT-with-StealCv2.pcap__stealc__Bot.pcap",
+      "n_flows": 1,
+      "n_detected": 0,
+      "recall": 0.0,
+      "family": "stealc",
+      "captured_date": "2025-08-20",
+      "label_distribution": {
+        "BENIGN": 1
+      }
+    },
+    {
+      "source_pcap": "2025-12-11_2025-12-11-SmartApeSG-ClickFix-activity.pcap__clickfix__Bot.pcap",
+      "n_flows": 1,
+      "n_detected": 0,
+      "recall": 0.0,
+      "family": "clickfix",
+      "captured_date": "2025-12-11",
+      "label_distribution": {
+        "BENIGN": 1
+      }
+    },
+    {
+      "source_pcap": "CTU-Malware-Capture-Botnet-230-1__bot__Bot.pcap",
+      "n_flows": 19,
+      "n_detected": 0,
+      "recall": 0.0,
+      "family": "bot",
+      "captured_date": "2024-12-17",
+      "label_distribution": {
+        "BENIGN": 19
+      }
+    },
+    {
+      "source_pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+      "n_flows": 4,
+      "n_detected": 1,
+      "recall": 0.25,
+      "family": "rhadamanthys",
+      "captured_date": "2025-10-01",
+      "label_distribution": {
+        "Bot": 1,
+        "BENIGN": 3
+      }
+    },
+    {
+      "source_pcap": "2025-09-05_2025-09-05-XLoader-infection-traffic.pcap__formbook__Bot.pcap",
+      "n_flows": 100,
+      "n_detected": 27,
+      "recall": 0.27,
+      "family": "formbook",
+      "captured_date": "2025-09-05",
+      "label_distribution": {
+        "Bot": 24,
+        "BENIGN": 73,
+        "DoS slowloris": 1,
+        "PortScan": 1,
+        "SSH-Patator": 1
+      }
+    },
+    {
+      "source_pcap": "2025-08-13_2025-08-13-Lumma-Stealer-infection.pcap__lumma__Bot.pcap",
+      "n_flows": 13,
+      "n_detected": 4,
+      "recall": 0.3076923076923077,
+      "family": "lumma",
+      "captured_date": "2025-08-13",
+      "label_distribution": {
+        "Bot": 3,
+        "BENIGN": 9,
+        "SSH-Patator": 1
+      }
+    },
+    {
+      "source_pcap": "2025-12-23_2025-12-23-MacSync-Stealer-traffic.pcap__macsync__Bot.pcap",
+      "n_flows": 6,
+      "n_detected": 2,
+      "recall": 0.3333333333333333,
+      "family": "macsync",
+      "captured_date": "2025-12-23",
+      "label_distribution": {
+        "BENIGN": 4,
+        "Bot": 2
+      }
+    },
+    {
+      "source_pcap": "2025-12-30_2025-12-30-Lumma-Stealer-infection-with-other-malware.pcap__lumma__Bot.pcap",
+      "n_flows": 140,
+      "n_detected": 52,
+      "recall": 0.37142857142857144,
+      "family": "lumma",
+      "captured_date": "2025-12-30",
+      "label_distribution": {
+        "SSH-Patator": 19,
+        "Bot": 23,
+        "BENIGN": 88,
+        "FTP-Patator": 5,
+        "PortScan": 4,
+        "DoS Hulk": 1
+      }
+    },
+    {
+      "source_pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+      "n_flows": 78,
+      "n_detected": 39,
+      "recall": 0.5,
+      "family": "lumma",
+      "captured_date": "2025-09-03",
+      "label_distribution": {
+        "DoS slowloris": 3,
+        "BENIGN": 39,
+        "DoS Hulk": 8,
+        "PortScan": 17,
+        "Bot": 5,
+        "SSH-Patator": 6
+      }
+    },
+    {
+      "source_pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+      "n_flows": 2,
+      "n_detected": 1,
+      "recall": 0.5,
+      "family": "lumma",
+      "captured_date": "2025-09-24",
+      "label_distribution": {
+        "BENIGN": 1,
+        "Bot": 1
+      }
+    },
+    {
+      "source_pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+      "n_flows": 198,
+      "n_detected": 119,
+      "recall": 0.601010101010101,
+      "family": "bot",
+      "captured_date": "2024-08-13",
+      "label_distribution": {
+        "BENIGN": 79,
+        "DoS slowloris": 74,
+        "Bot": 39,
+        "SSH-Patator": 4,
+        "PortScan": 2
+      }
+    },
+    {
+      "source_pcap": "CTU-Malware-Capture-Botnet-318-1__bot__Bot.pcap",
+      "n_flows": 13,
+      "n_detected": 8,
+      "recall": 0.6153846153846154,
+      "family": "bot",
+      "captured_date": "2024-01-26",
+      "label_distribution": {
+        "DoS Hulk": 2,
+        "Bot": 6,
+        "BENIGN": 5
+      }
+    },
+    {
+      "source_pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+      "n_flows": 9,
+      "n_detected": 6,
+      "recall": 0.6666666666666666,
+      "family": "clickfix",
+      "captured_date": "2025-10-08",
+      "label_distribution": {
+        "Bot": 4,
+        "SSH-Patator": 1,
+        "BENIGN": 3,
+        "FTP-Patator": 1
+      }
+    },
+    {
+      "source_pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+      "n_flows": 48,
+      "n_detected": 35,
+      "recall": 0.7291666666666666,
+      "family": "bot",
+      "captured_date": "2025-08-05",
+      "label_distribution": {
+        "Bot": 28,
+        "BENIGN": 13,
+        "FTP-Patator": 1,
+        "SSH-Patator": 2,
+        "PortScan": 1,
+        "DoS slowloris": 2,
+        "DoS Hulk": 1
+      }
+    },
+    {
+      "source_pcap": "2025-04-04_-2025-04-04-KongTuke-activity-for-possible-Async-RAT.pcap__kongtuke__Bot.pcap",
+      "n_flows": 4,
+      "n_detected": 3,
+      "recall": 0.75,
+      "family": "kongtuke",
+      "captured_date": "2025-04-04",
+      "label_distribution": {
+        "Bot": 3,
+        "BENIGN": 1
+      }
+    },
+    {
+      "source_pcap": "CTU-Malware-Capture-Botnet-112-2__bot__Bot.pcap",
+      "n_flows": 4270,
+      "n_detected": 3239,
+      "recall": 0.7585480093676815,
+      "family": "bot",
+      "captured_date": "2025-05-27",
+      "label_distribution": {
+        "DoS slowloris": 2574,
+        "Bot": 50,
+        "SSH-Patator": 467,
+        "BENIGN": 1031,
+        "PortScan": 99,
+        "FTP-Patator": 48,
+        "DoS Hulk": 1
+      }
+    },
+    {
+      "source_pcap": "2025-12-11_2025-12-11-Kongtuke-ClickFix-activity-part-1-finding-ClickFix-page-and-running-ClickFix-script-on-a-VM.pcap__clickfix__Bot.pcap",
+      "n_flows": 40,
+      "n_detected": 33,
+      "recall": 0.825,
+      "family": "clickfix",
+      "captured_date": "2025-12-11",
+      "label_distribution": {
+        "Bot": 3,
+        "SSH-Patator": 1,
+        "PortScan": 28,
+        "BENIGN": 7,
+        "DoS Hulk": 1
+      }
+    },
+    {
+      "source_pcap": "2025-06-18_2025-06-18-SmartApeSG-ClickFix-to-NetSupport-RAT-to-StealCv2.pcap__stealc__Bot.pcap",
+      "n_flows": 47,
+      "n_detected": 39,
+      "recall": 0.8297872340425532,
+      "family": "stealc",
+      "captured_date": "2025-06-18",
+      "label_distribution": {
+        "SSH-Patator": 2,
+        "Bot": 11,
+        "PortScan": 23,
+        "DoS Hulk": 3,
+        "BENIGN": 8
+      }
+    },
+    {
+      "source_pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+      "n_flows": 2,
+      "n_detected": 2,
+      "recall": 1.0,
+      "family": "stealc",
+      "captured_date": "2025-05-22",
+      "label_distribution": {
+        "Bot": 1,
+        "PortScan": 1
+      }
+    },
+    {
+      "source_pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+      "n_flows": 1,
+      "n_detected": 1,
+      "recall": 1.0,
+      "family": "lumma",
+      "captured_date": "2025-08-15",
+      "label_distribution": {
+        "Bot": 1
+      }
+    },
+    {
+      "source_pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+      "n_flows": 7,
+      "n_detected": 7,
+      "recall": 1.0,
+      "family": "netsupport",
+      "captured_date": "2025-12-29",
+      "label_distribution": {
+        "Bot": 7
+      }
+    },
+    {
+      "source_pcap": "CTU-Malware-Capture-Botnet-192-4__bot__Bot.pcap",
+      "n_flows": 2,
+      "n_detected": 2,
+      "recall": 1.0,
+      "family": "bot",
+      "captured_date": "2024-08-13",
+      "label_distribution": {
+        "DoS Hulk": 1,
+        "Bot": 1
+      }
+    }
+  ],
+  "per_family": [
+    {
+      "family": "rhadamanthys",
+      "n_flows": 4,
+      "n_detected": 1,
+      "recall": 0.25
+    },
+    {
+      "family": "formbook",
+      "n_flows": 100,
+      "n_detected": 27,
+      "recall": 0.27
+    },
+    {
+      "family": "macsync",
+      "n_flows": 6,
+      "n_detected": 2,
+      "recall": 0.3333333333333333
+    },
+    {
+      "family": "lumma",
+      "n_flows": 240,
+      "n_detected": 97,
+      "recall": 0.4041666666666667
+    },
+    {
+      "family": "bot",
+      "n_flows": 4550,
+      "n_detected": 3403,
+      "recall": 0.747912087912088
+    },
+    {
+      "family": "kongtuke",
+      "n_flows": 4,
+      "n_detected": 3,
+      "recall": 0.75
+    },
+    {
+      "family": "clickfix",
+      "n_flows": 50,
+      "n_detected": 39,
+      "recall": 0.78
+    },
+    {
+      "family": "stealc",
+      "n_flows": 50,
+      "n_detected": 41,
+      "recall": 0.82
+    },
+    {
+      "family": "netsupport",
+      "n_flows": 7,
+      "n_detected": 7,
+      "recall": 1.0
+    }
+  ],
+  "per_source": [
+    {
+      "source": "mta",
+      "n_flows": 461,
+      "n_detected": 217,
+      "recall": 0.47071583514099785
+    },
+    {
+      "source": "stratosphere",
+      "n_flows": 4550,
+      "n_detected": 3403,
+      "recall": 0.747912087912088
+    }
+  ]
+}
