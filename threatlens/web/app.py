@@ -81,19 +81,49 @@ _flow_detector_lock = asyncio.Lock()
 
 
 async def _get_flow_detector():
-    """Return a shared FlowDetector, loading models from disk on first call."""
+    """Return a shared FlowDetector, loading models from disk on first call.
+
+    Default model directory is ``results/python_only`` (Day 9e candidate —
+    F1 0.96 / recall 96 % on real-world). Can be overridden via the
+    ``THREATLENS_ML_DIR`` env var (e.g. point at ``results/cicids2017``
+    to roll back to the legacy CIC-only model).
+
+    ``THREATLENS_STRICT_MODE=1`` enables the Mahalanobis abstainer to
+    rewrite OOD predictions as ``UNCERTAIN`` (yellow / "review" in UI).
+    Default is off — the abstainer is loaded but only sets a flag.
+    """
     global _flow_detector
     if _flow_detector is not None:
         return _flow_detector
     async with _flow_detector_lock:
         if _flow_detector is None:
             from threatlens.network import FlowDetector
-            results_dir = os.environ.get(
-                "THREATLENS_ML_DIR",
-                os.path.join(os.path.dirname(__file__), "..", "..", "results", "cicids2017"),
-            )
-            _flow_detector = await asyncio.to_thread(FlowDetector.from_results_dir, results_dir)
-            logger.info("FlowDetector loaded from %s", results_dir)
+            default_dir = os.path.join(
+                os.path.dirname(__file__), "..", "..",
+                "results", "python_only")
+            results_dir = os.environ.get("THREATLENS_ML_DIR", default_dir)
+            # Fallback for environments where the python_only artefacts
+            # weren't shipped (e.g. legacy Railway image): try cicids2017
+            if not os.path.exists(
+                    os.path.join(results_dir, "xgboost.joblib")):
+                fallback = os.path.join(
+                    os.path.dirname(__file__), "..", "..",
+                    "results", "cicids2017")
+                if os.path.exists(
+                        os.path.join(fallback, "xgboost.joblib")):
+                    logger.warning(
+                        "%s missing — falling back to %s",
+                        results_dir, fallback)
+                    results_dir = fallback
+            strict = os.environ.get(
+                "THREATLENS_STRICT_MODE", "0").lower() in (
+                    "1", "true", "yes", "on")
+            _flow_detector = await asyncio.to_thread(
+                FlowDetector.from_results_dir, results_dir,
+                strict_abstention=strict)
+            logger.info(
+                "FlowDetector loaded from %s (strict_abstention=%s)",
+                results_dir, strict)
     return _flow_detector
 
 # Simple in-memory rate limiter
@@ -311,8 +341,17 @@ async def api_analyze_pcap(
         raise HTTPException(status_code=429, detail="Too many requests. Try again in 60 seconds.")
     _stats_start = time.monotonic()
 
-    if model not in {"random_forest", "xgboost"}:
-        raise HTTPException(status_code=400, detail="Model must be 'random_forest' or 'xgboost'")
+    # Validate against detector.available_models — python_only ships
+    # xgboost only; legacy combined_v2 / cicids2017 also have random_forest.
+    detector_for_check = await _get_flow_detector()
+    if model not in detector_for_check.available_models:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unknown model {model!r}. Available: "
+                f"{detector_for_check.available_models}"
+            ),
+        )
 
     # Hard cap lowered from 1000 to 200 — with 70 feature cols per flow, an
     # unbounded response could exceed several MB.

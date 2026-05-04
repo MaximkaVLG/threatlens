@@ -125,3 +125,119 @@ def test_shap_rejects_unknown_model(detector):
     flow = {c: 0.0 for c in CIC_FEATURE_COLUMNS}
     with pytest.raises(ValueError):
         detector.explain_shap(flow, model="not_a_real_model")
+
+
+# ---------------------------------------------------------------------------
+# Day 10 — python_only model path tests (backwards-compatible loader)
+# ---------------------------------------------------------------------------
+
+PYTHON_ONLY_DIR = os.path.join(
+    os.path.dirname(__file__), "..", "results", "python_only")
+
+
+@pytest.fixture(scope="module")
+def py_detector():
+    """The Day 9e python_only detector — XGBoost + Mahalanobis abstainer
+    only (no RandomForest, no IsolationForest)."""
+    if not os.path.exists(os.path.join(PYTHON_ONLY_DIR, "xgboost.joblib")):
+        pytest.skip(
+            "python_only artefacts not present — run Day 9 pipeline first")
+    return FlowDetector.from_results_dir(PYTHON_ONLY_DIR)
+
+
+@pytest.fixture(scope="module")
+def py_detector_strict():
+    """Same as py_detector but with strict_abstention enabled — the
+    abstainer rewrites OOD predictions to UNCERTAIN."""
+    if not os.path.exists(os.path.join(PYTHON_ONLY_DIR, "xgboost.joblib")):
+        pytest.skip("python_only artefacts not present")
+    return FlowDetector.from_results_dir(
+        PYTHON_ONLY_DIR, strict_abstention=True)
+
+
+def test_python_only_loads_optional_artefacts(py_detector):
+    info = py_detector.model_info()
+    # python_only ships XGBoost + abstainer, but no RF / no IsolationForest
+    assert info["models"] == ["xgboost"]
+    assert info["has_isolation_forest"] is False
+    assert info["has_abstainer"] is True
+    assert info["strict_abstention"] is False
+    assert info["n_classes"] == 7
+    assert "BENIGN" in info["classes"]
+
+
+def test_python_only_predict_includes_uncertainty_columns(py_detector):
+    """predict() must surface is_uncertain + distance_to_centroid
+    regardless of whether they actually fired on a given row."""
+    row = {c: 0.0 for c in py_detector._pipeline.feature_names}
+    df = pd.DataFrame([row])
+    out = py_detector.predict(df)
+    for col in ("label", "is_attack", "confidence", "is_uncertain",
+                "distance_to_centroid", "anomaly_score", "anomaly_flag"):
+        assert col in out.columns, f"missing column: {col}"
+    # No isolation forest -> anomaly columns are zeros
+    assert (out["anomaly_flag"] == 0).all()
+    assert (out["anomaly_score"] == 0.0).all()
+
+
+def test_python_only_strict_mode_rewrites_label(py_detector_strict):
+    """When strict_abstention=True, abstained predictions get the
+    UNCERTAIN label. Use a feature row that's heavily out-of-distribution
+    so the Mahalanobis abstainer fires."""
+    from threatlens.network.detector import UNCERTAIN_LABEL
+    # Wildly unusual values force OOD distance
+    row = {c: 1e6 for c in py_detector_strict._pipeline.feature_names}
+    df = pd.DataFrame([row])
+    out = py_detector_strict.predict(df)
+    # Either the abstainer fired (UNCERTAIN) or the row happened to land
+    # near a class centroid (rare but possible). Either way is_uncertain
+    # MUST agree with the label rewrite.
+    if out["is_uncertain"].iloc[0]:
+        assert out["label"].iloc[0] == UNCERTAIN_LABEL
+        # UNCERTAIN flows are NOT counted as attacks
+        assert out["is_attack"].iloc[0] == 0
+
+
+def test_python_only_summary_counts_uncertain_separately(py_detector):
+    """summary() must report uncertain_flows distinct from attack/benign."""
+    rows = []
+    for proto in (6, 17):
+        r = {c: 0.0 for c in py_detector._pipeline.feature_names}
+        r.update({
+            "src_ip": "10.0.0.1", "dst_ip": "10.0.0.2",
+            "src_port": 1234, "protocol": proto,
+            "timestamp": 1_700_000_000.0 + proto,
+        })
+        rows.append(r)
+    preds = py_detector.predict(pd.DataFrame(rows))
+    summary = py_detector.summary(preds)
+    assert "uncertain_flows" in summary
+    assert "model_info" in summary
+    assert summary["model_info"]["has_abstainer"] is True
+    # Sanity: the three counts respect their definitions
+    n = summary["total_flows"]
+    assert n >= 0
+    # uncertain is independent of attack/benign — can't simply add them
+    assert summary["attack_flows"] + summary["benign_flows"] <= n
+
+
+def test_python_only_available_models_only_xgboost(py_detector):
+    """Server-side validation in app.py uses available_models —
+    must reflect what was actually loaded."""
+    assert py_detector.available_models == ["xgboost"]
+    # Predicting with random_forest should error since it isn't loaded
+    row = {c: 0.0 for c in py_detector._pipeline.feature_names}
+    df = pd.DataFrame([row])
+    with pytest.raises(ValueError):
+        py_detector.predict(df, model="random_forest")
+
+
+def test_python_only_shap_uses_full_feature_set(py_detector):
+    """SHAP must use pipeline.feature_names (which on python_only includes
+    spectral + YARA features), not the legacy 70-column CIC list."""
+    flow = {c: 0.0 for c in py_detector._pipeline.feature_names}
+    out = py_detector.explain_shap(flow, top_k=5)
+    assert out["model"] == "xgboost"
+    assert len(out["contributions"]) == 5
+    for c in out["contributions"]:
+        assert c["feature"] in py_detector._pipeline.feature_names

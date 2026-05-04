@@ -155,8 +155,8 @@
         <div class="options">
             <label>Модель:
                 <select id="pcapModel" style="background:#111;border:1px solid #333;color:#e0e0e0;padding:6px 10px;border-radius:6px;margin-left:6px">
-                    <option value="xgboost">XGBoost (F1=0.998)</option>
-                    <option value="random_forest">Random Forest (F1=0.997)</option>
+                    <option value="xgboost">XGBoost (real-world F1=0.96)</option>
+                    <option value="random_forest">Random Forest (legacy)</option>
                 </select>
             </label>
             <button class="btn" id="pcapBtn" disabled onclick="analyzePcap()">Анализировать</button>
@@ -353,18 +353,37 @@ async function analyzePcap(){
 
 function renderPcapResult(d){
     const s=d.summary;
+    const mi=s.model_info||{};
     const total=s.total_flows||0;
     const attacks=s.attack_flows||0;
     const anomalies=s.anomaly_flows||0;
+    const uncertain=s.uncertain_flows||0;
     const attackRate=total?((attacks/total)*100).toFixed(1):'0';
     let h='<div class="section-title">Сводка</div>';
     h+='<div class="stats-grid">';
     h+='<div class="stat-card"><div class="stat-number">'+total+'</div><div class="stat-label">Всего потоков</div></div>';
     h+='<div class="stat-card"><div class="stat-number" style="color:'+(attacks>0?'#f44336':'#4caf50')+'">'+attacks+'</div><div class="stat-label">Атаки ('+attackRate+'%)</div></div>';
-    h+='<div class="stat-card"><div class="stat-number" style="color:#ff9800">'+anomalies+'</div><div class="stat-label">Аномалии (IsolationForest)</div></div>';
+    // Day 10: show "Неопределённость" (Mahalanobis abstainer) if available,
+    // otherwise fall back to legacy IsolationForest anomaly count
+    if(mi.has_abstainer){
+        const uncRate=total?((uncertain/total)*100).toFixed(1):'0';
+        h+='<div class="stat-card" title="Mahalanobis-абстейнер: модель не уверена в этих потоках; ' +
+            (mi.strict_abstention?'их метка переписана на UNCERTAIN':'метка сохранена, но требует ревью')+
+            '"><div class="stat-number" style="color:#ffc107">'+uncertain+
+            '</div><div class="stat-label">Неопределённость ('+uncRate+'%)</div></div>';
+    } else if(mi.has_isolation_forest){
+        h+='<div class="stat-card"><div class="stat-number" style="color:#ff9800">'+anomalies+'</div><div class="stat-label">Аномалии (IsolationForest)</div></div>';
+    }
     h+='<div class="stat-card"><div class="stat-number" style="color:#4caf50">'+(s.benign_flows||0)+'</div><div class="stat-label">Безопасных</div></div>';
     h+='</div>';
-    h+='<p style="color:#666;font-size:0.85em;margin:10px 0">Модель: <b style="color:#00d4ff">'+esc(d.model)+'</b> &middot; Файл: '+esc(d.file)+' ('+(d.size/1024/1024).toFixed(2)+' МБ)</p>';
+    let modelDesc='<b style="color:#00d4ff">'+esc(d.model)+'</b>';
+    if(mi.source_dir){
+        modelDesc += ' <span style="color:#555">[</span><span style="color:#9c27b0">'+esc(mi.source_dir)+
+            '</span><span style="color:#555">,</span> '+mi.n_classes+' классов, '+mi.n_features+' фич'+
+            (mi.has_abstainer?', <span style="color:#ffc107">abstainer'+(mi.strict_abstention?' (strict)':'')+'</span>':'')+
+            '<span style="color:#555">]</span>';
+    }
+    h+='<p style="color:#666;font-size:0.85em;margin:10px 0">Модель: '+modelDesc+' &middot; Файл: '+esc(d.file)+' ('+(d.size/1024/1024).toFixed(2)+' МБ)</p>';
     if(total>0 && attacks===0 && anomalies===0){
         h+='<div style="background:#2a1f0a;border-left:3px solid #ff9800;padding:10px 14px;margin:12px 0;border-radius:4px;font-size:0.85em;color:#ccc">';
         h+='<strong style="color:#ff9800">&#9888; Все потоки BENIGN.</strong> Это нормально для обычного пользовательского трафика. ';
@@ -379,7 +398,11 @@ function renderPcapResult(d){
         h+='<div class="section-title">Распределение классов</div>';
         labelEntries.forEach(([lbl,n])=>{
             const pct=(n/mx*100).toFixed(0);
-            const color=lbl==='BENIGN'?'#4caf50':'#f44336';
+            // Day 10: UNCERTAIN colour-coded yellow (review needed),
+            // BENIGN green, attack classes red
+            let color='#f44336';
+            if(lbl==='BENIGN')color='#4caf50';
+            else if(lbl==='UNCERTAIN')color='#ffc107';
             h+='<div class="risk-bar-row"><div class="risk-bar-label" style="color:'+color+';width:150px">'+esc(lbl)+'</div>';
             h+='<div class="risk-bar-track"><div class="risk-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>';
             h+='<div class="risk-bar-count">'+n+'</div></div>';
@@ -391,19 +414,40 @@ function renderPcapResult(d){
     if(flows.length){
         h+='<div class="section-title">Подозрительные потоки (топ '+flows.length+')</div>';
         h+='<div style="overflow-x:auto"><table class="info-table" style="font-size:0.85em">';
-        h+='<thead><tr style="color:#888"><td>Источник</td><td>Назначение</td><td>Proto</td><td>Метка</td><td>Confidence</td><td>Аномалия</td><td></td></tr></thead><tbody>';
+        // Day 10: third column is now "Уверен.": shows abstainer flag if present, else IsoForest
+        const showAbstainerCol = mi.has_abstainer;
+        const flagColTitle = showAbstainerCol ? 'Уверенность' : 'Аномалия';
+        h+='<thead><tr style="color:#888"><td>Источник</td><td>Назначение</td><td>Proto</td><td>Метка</td><td>Confidence</td><td>'+flagColTitle+'</td><td></td></tr></thead><tbody>';
         flows.forEach((f,idx)=>{
             const proto=PROTO_NAMES[f.protocol]||('IP '+f.protocol);
             const conf=f.confidence!=null?(f.confidence*100).toFixed(1)+'%':'—';
-            const labelColor=f.label==='BENIGN'?'#4caf50':'#f44336';
-            const anomTag=f.anomaly_flag?'<span style="color:#ff9800">&#9888; '+f.anomaly_score.toFixed(2)+'</span>':'<span style="color:#555">'+f.anomaly_score.toFixed(2)+'</span>';
-            h+='<tr id="flow-row-'+idx+'">';
+            // UNCERTAIN label = yellow (only emitted in strict mode)
+            let labelColor='#f44336';
+            if(f.label==='BENIGN')labelColor='#4caf50';
+            else if(f.label==='UNCERTAIN')labelColor='#ffc107';
+            // Flag column: prefer is_uncertain (Mahalanobis), fall back to anomaly_flag
+            let flagTag;
+            if(showAbstainerCol){
+                if(f.is_uncertain){
+                    const dist=f.distance_to_centroid!=null?f.distance_to_centroid.toFixed(1):'—';
+                    flagTag='<span style="color:#ffc107" title="Mahalanobis-расстояние до центроида класса = '+dist+' (выше порога — модель не уверена)">&#9888; review</span>';
+                } else {
+                    flagTag='<span style="color:#4caf50" title="Поток в области, хорошо знакомой модели">&#10004; OK</span>';
+                }
+            } else {
+                flagTag=f.anomaly_flag?'<span style="color:#ff9800">&#9888; '+f.anomaly_score.toFixed(2)+'</span>':'<span style="color:#555">'+f.anomaly_score.toFixed(2)+'</span>';
+            }
+            // Highlight uncertain rows with a subtle yellow left-border
+            const rowStyle = (showAbstainerCol && f.is_uncertain)
+                ? ' style="border-left:2px solid #ffc107"'
+                : '';
+            h+='<tr id="flow-row-'+idx+'"'+rowStyle+'>';
             h+='<td style="color:#aaa;font-family:monospace">'+esc(f.src_ip)+':'+f.src_port+'</td>';
             h+='<td style="color:#aaa;font-family:monospace">'+esc(f.dst_ip)+':'+f.dst_port+'</td>';
             h+='<td>'+proto+'</td>';
             h+='<td style="color:'+labelColor+';font-weight:bold">'+esc(f.label)+'</td>';
             h+='<td>'+conf+'</td>';
-            h+='<td>'+anomTag+'</td>';
+            h+='<td>'+flagTag+'</td>';
             h+='<td style="white-space:nowrap"><button class="btn" style="padding:3px 8px;font-size:0.8em" onclick="explainFlow('+idx+')">AI</button> <button class="btn" style="padding:3px 8px;font-size:0.8em;background:#9c27b0;color:#fff" onclick="shapFlow('+idx+')">SHAP</button></td>';
             h+='</tr>';
             h+='<tr id="flow-exp-'+idx+'" style="display:none"><td colspan="7"><div class="ai-box" id="flow-exp-body-'+idx+'"></div></td></tr>';
