@@ -1,0 +1,22 @@
+{
+  "n_labeled": 5,
+  "label_weight": 20.0,
+  "target_source": "wireshark_dns-mdns.pcap",
+  "random_state": 42,
+  "baseline": {
+    "fp_mdns_holdout": 9,
+    "tp_attack_captures": 340,
+    "fp_other_benign": 0
+  },
+  "corrected": {
+    "fp_mdns_holdout": 3,
+    "tp_attack_captures": 339,
+    "fp_other_benign": 0
+  },
+  "n_attack_flows": 347,
+  "n_other_benign": 10,
+  "recall_delta_attack_pt": -0.2881844380403458,
+  "fp_delta_mdns_holdout": -6,
+  "verdict": "WIN \u2014 5 labels reduced FPs on similar flows without recall loss",
+  "wall_time_s": 5.79
+}
