@@ -106,6 +106,8 @@ data/sandbox_malware/*
 !results/v2/ab_vs_python_only.md
 !results/v2/bootstrap_ci.json
 !results/v2/bootstrap_ci.md
+!results/v2/adversarial_eval.json
+!results/v2/adversarial_eval.md
 
 # Day 6-8 evaluation JSON artefacts (small, worth committing for reproducibility)
 !results/real_world_eval_ab.json
@@ -128,3 +130,10 @@ results/*_training.log
 # Deleted after each cell completes; pattern keeps any leftover from a
 # crashed run out of git.
 results/*/.adversarial_work/
+
+# Diploma-submission materials user keeps in repo root (not project source)
+*.doc
+*.docx
+*.zip
+.metodichka_text.txt
+.normokontrol_text.txt
