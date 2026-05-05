@@ -27,7 +27,8 @@ results/selective_eval.log
 results/selective_sweep.log
 
 # ML artifacts (datasets are large, models are binaries)
-data/
+# Use data/* not data/ so we can re-include specific files via !data/...
+data/*
 results/
 models/
 *.joblib
@@ -38,7 +39,12 @@ models/
 # Re-downloadable by `python scripts/ingest_sandbox_pcaps.py`.
 # We keep the parquet (small) but never commit raw PCAPs (50-200 MB each,
 # may also be flagged by users' antivirus on `git clone`).
-data/sandbox_malware/
+# Re-allow descent into the sandbox dir so we can whitelist the frozen
+# metadata snapshot (Phase 0 audit trail — defines which 27 PCAPs the v2
+# stratified split was built from). Tiny (~30 KB).
+!data/sandbox_malware/
+data/sandbox_malware/*
+!data/sandbox_malware/metadata.frozen.jsonl
 
 # ...except production model snapshot required for Railway / timeweb deploy
 !results/
@@ -75,6 +81,26 @@ data/sandbox_malware/
 !results/python_only/active_learning_demo.json
 !results/python_only/sandbox_eval.json
 !results/python_only/sandbox_malware_flows.parquet
+# Phase 1 split artefacts (sandbox stratified into 16 train + 9 holdout PCAPs)
+!results/python_only/sandbox_split.json
+!results/python_only/sandbox_train_flows.parquet
+!results/python_only/sandbox_holdout_flows.parquet
+
+# Phase 1 v2 retrain candidate (sandbox-train + sample-weight 0.5)
+# Ships as the production swap on Phase 1.6 if A/B head-to-head says go.
+!results/v2/
+!results/v2/xgboost.joblib
+!results/v2/feature_pipeline.joblib
+!results/v2/mahalanobis_abstainer.joblib
+!results/v2/mahalanobis_abstainer_summary.json
+!results/v2/metrics.json
+!results/v2/real_world_eval.json
+!results/v2/sandbox_eval.json
+!results/v2/sandbox_holdout_eval.json
+!results/v2/sandbox_holdout_eval_with_abstainer.json
+!results/v2/workload_metric.json
+!results/v2/ctu_test_holdout.parquet
+!results/v2/ab_vs_python_only.md
 
 # Day 6-8 evaluation JSON artefacts (small, worth committing for reproducibility)
 !results/real_world_eval_ab.json

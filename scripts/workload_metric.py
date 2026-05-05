@@ -72,14 +72,14 @@ OPERATING_POINTS = [
 ]
 
 
-def fit_abstainer_at_coverage(coverage: float):
+def fit_abstainer_at_coverage(coverage: float, model_dir: Path = MODEL_DIR):
     """Re-fit Mahalanobis abstainer at given coverage. Imports the
     existing fit script's helper to stay DRY."""
     from scripts.fit_selective_python_only import load_train_set
     from threatlens.ml.selective import MahalanobisAbstainer
 
-    clf = joblib.load(MODEL_DIR / "xgboost.joblib")
-    pipeline = joblib.load(MODEL_DIR / "feature_pipeline.joblib")
+    clf = joblib.load(model_dir / "xgboost.joblib")
+    pipeline = joblib.load(model_dir / "feature_pipeline.joblib")
 
     train = load_train_set()
     counts = train["Label"].value_counts()
@@ -184,7 +184,23 @@ def main() -> int:
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    print("[1/4] Loading test set (real_pcap + CTU hold-out)")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model-dir", type=Path, default=MODEL_DIR,
+                        help="Model bundle directory. Default "
+                             "results/python_only/. Use results/v2/ for the "
+                             "Phase 1 v2 retrain candidate.")
+    parser.add_argument("--out-json", type=Path, default=None,
+                        help="Output JSON. Default = "
+                             "<model-dir>/workload_metric.json.")
+    args = parser.parse_args()
+    model_dir = args.model_dir
+    out_json = args.out_json or (model_dir / "workload_metric.json")
+    ctu_holdout = model_dir / "ctu_test_holdout.parquet"
+    abstainer_path = model_dir / "mahalanobis_abstainer.joblib"
+
+    print(f"[1/4] Loading test set (real_pcap + CTU hold-out)  "
+          f"(model dir: {model_dir.name})")
     if not CACHE_PARQUET.exists():
         print(f"ERROR: {CACHE_PARQUET} not found")
         return 1
@@ -193,10 +209,10 @@ def main() -> int:
     real_pcap.reset_index(drop=True, inplace=True)
     real_true = real_pcap["__label_binary"].values
 
-    if not CTU_HOLDOUT.exists():
-        print(f"ERROR: {CTU_HOLDOUT} not found")
+    if not ctu_holdout.exists():
+        print(f"ERROR: {ctu_holdout} not found")
         return 1
-    ctu = pd.read_parquet(CTU_HOLDOUT)
+    ctu = pd.read_parquet(ctu_holdout)
     ctu.reset_index(drop=True, inplace=True)
     ctu_true = np.array(["ATTACK"] * len(ctu))
 
@@ -208,8 +224,8 @@ def main() -> int:
 
     # Pre-scale once — model + pipeline are identical across operating points
     print("\n[2/4] Pre-scaling features")
-    clf = joblib.load(MODEL_DIR / "xgboost.joblib")
-    pipeline = joblib.load(MODEL_DIR / "feature_pipeline.joblib")
+    clf = joblib.load(model_dir / "xgboost.joblib")
+    pipeline = joblib.load(model_dir / "feature_pipeline.joblib")
     expected = pipeline.feature_names
     for c in expected:
         if c not in test_df.columns:
@@ -230,7 +246,8 @@ def main() -> int:
                 point, X_scaled, test_true, clf, pipeline, abstainer=None)
         else:
             print(f"  fitting abstainer @ cov={point['coverage']:.2f}...")
-            _, _, abstainer = fit_abstainer_at_coverage(point["coverage"])
+            _, _, abstainer = fit_abstainer_at_coverage(point["coverage"],
+                                                          model_dir=model_dir)
             r = evaluate_workload_at_point(
                 point, X_scaled, test_true, clf, pipeline, abstainer=abstainer)
         r["wall_time_s"] = round(time.time() - t0, 2)
@@ -281,14 +298,15 @@ def main() -> int:
         f"(operating point: {headline['name']}, "
         f"recall ATK = {headline['auto_recall_attack']*100:.1f} %)"))
 
-    OUT_JSON.write_text(json.dumps({
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps({
         "operating_points": results,
         "headline": headline,
         "n_total": int(len(test_df)),
         "n_attack": int((test_true == "ATTACK").sum()),
         "n_benign": int((test_true == "BENIGN").sum()),
     }, indent=2, default=str), encoding="utf-8")
-    print(f"\nSaved: {OUT_JSON}")
+    print(f"\nSaved: {out_json}")
     return 0
 
 

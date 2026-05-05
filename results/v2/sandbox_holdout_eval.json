@@ -1,0 +1,169 @@
+{
+  "n_pcaps": 9,
+  "n_flows_total": 349,
+  "n_attack_flows": 349,
+  "headline": {
+    "recall_attack": 0.9684813753581661,
+    "recall_exact_bot": 0.9684813753581661,
+    "n_detected_any_attack": 338,
+    "n_exact_bot": 338,
+    "abstain_rate": null,
+    "mean_confidence": 0.9834014177322388
+  },
+  "per_capture": [
+    {
+      "source_pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+      "n_flows": 78,
+      "n_detected": 74,
+      "recall": 0.9487179487179487,
+      "family": "lumma",
+      "captured_date": "2025-09-03",
+      "label_distribution": {
+        "Bot": 74,
+        "BENIGN": 4
+      }
+    },
+    {
+      "source_pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+      "n_flows": 198,
+      "n_detected": 192,
+      "recall": 0.9696969696969697,
+      "family": "bot",
+      "captured_date": "2024-08-13",
+      "label_distribution": {
+        "BENIGN": 6,
+        "Bot": 192
+      }
+    },
+    {
+      "source_pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+      "n_flows": 48,
+      "n_detected": 47,
+      "recall": 0.9791666666666666,
+      "family": "bot",
+      "captured_date": "2025-08-05",
+      "label_distribution": {
+        "Bot": 47,
+        "BENIGN": 1
+      }
+    },
+    {
+      "source_pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+      "n_flows": 2,
+      "n_detected": 2,
+      "recall": 1.0,
+      "family": "stealc",
+      "captured_date": "2025-05-22",
+      "label_distribution": {
+        "Bot": 2
+      }
+    },
+    {
+      "source_pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+      "n_flows": 1,
+      "n_detected": 1,
+      "recall": 1.0,
+      "family": "lumma",
+      "captured_date": "2025-08-15",
+      "label_distribution": {
+        "Bot": 1
+      }
+    },
+    {
+      "source_pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+      "n_flows": 2,
+      "n_detected": 2,
+      "recall": 1.0,
+      "family": "lumma",
+      "captured_date": "2025-09-24",
+      "label_distribution": {
+        "Bot": 2
+      }
+    },
+    {
+      "source_pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+      "n_flows": 4,
+      "n_detected": 4,
+      "recall": 1.0,
+      "family": "rhadamanthys",
+      "captured_date": "2025-10-01",
+      "label_distribution": {
+        "Bot": 4
+      }
+    },
+    {
+      "source_pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+      "n_flows": 9,
+      "n_detected": 9,
+      "recall": 1.0,
+      "family": "clickfix",
+      "captured_date": "2025-10-08",
+      "label_distribution": {
+        "Bot": 9
+      }
+    },
+    {
+      "source_pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+      "n_flows": 7,
+      "n_detected": 7,
+      "recall": 1.0,
+      "family": "netsupport",
+      "captured_date": "2025-12-29",
+      "label_distribution": {
+        "Bot": 7
+      }
+    }
+  ],
+  "per_family": [
+    {
+      "family": "lumma",
+      "n_flows": 81,
+      "n_detected": 77,
+      "recall": 0.9506172839506173
+    },
+    {
+      "family": "bot",
+      "n_flows": 246,
+      "n_detected": 239,
+      "recall": 0.9715447154471545
+    },
+    {
+      "family": "clickfix",
+      "n_flows": 9,
+      "n_detected": 9,
+      "recall": 1.0
+    },
+    {
+      "family": "netsupport",
+      "n_flows": 7,
+      "n_detected": 7,
+      "recall": 1.0
+    },
+    {
+      "family": "rhadamanthys",
+      "n_flows": 4,
+      "n_detected": 4,
+      "recall": 1.0
+    },
+    {
+      "family": "stealc",
+      "n_flows": 2,
+      "n_detected": 2,
+      "recall": 1.0
+    }
+  ],
+  "per_source": [
+    {
+      "source": "mta",
+      "n_flows": 103,
+      "n_detected": 99,
+      "recall": 0.9611650485436893
+    },
+    {
+      "source": "stratosphere",
+      "n_flows": 246,
+      "n_detected": 239,
+      "recall": 0.9715447154471545
+    }
+  ]
+}

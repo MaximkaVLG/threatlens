@@ -59,9 +59,21 @@ def main(argv=None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--in-parquet", type=Path, default=DEFAULT_PARQUET)
-    parser.add_argument("--out-json", type=Path, default=DEFAULT_OUT_JSON)
+    parser.add_argument("--in-parquet", type=Path, default=DEFAULT_PARQUET,
+                         help="Parquet of sandbox flows. Default = full file. "
+                              "Use sandbox_holdout_flows.parquet for the "
+                              "Phase 1 holdout-only eval.")
+    parser.add_argument("--out-json", type=Path, default=None,
+                         help="Output JSON. Default = "
+                              "<model-dir>/sandbox_eval.json.")
+    parser.add_argument("--model-dir", type=Path, default=MODEL_DIR,
+                         help="Model bundle directory. Default "
+                              "results/python_only/. Use results/v2/ for the "
+                              "Phase 1 v2 retrain candidate.")
     args = parser.parse_args(argv)
+
+    model_dir = args.model_dir
+    out_json = args.out_json or (model_dir / "sandbox_eval.json")
 
     if not args.in_parquet.exists():
         print(f"ERROR: {args.in_parquet} not found.")
@@ -69,7 +81,8 @@ def main(argv=None) -> int:
         print("     python scripts/extract_sandbox_pcaps.py")
         return 1
 
-    print(f"[1/4] Loading sandbox flows from {args.in_parquet.name}")
+    print(f"[1/4] Loading sandbox flows from {args.in_parquet.name}  "
+          f"(model dir: {model_dir.name})")
     df = pd.read_parquet(args.in_parquet)
     print(f"  total flows: {len(df)}")
     print(f"  per-label:    {dict(df['Label'].value_counts())}")
@@ -79,9 +92,9 @@ def main(argv=None) -> int:
           f"... {sorted(df['__captured_date'].dropna().unique())[-1:] if df['__captured_date'].notna().any() else '?'}")
 
     print("\n[2/4] Loading model + pipeline + abstainer")
-    clf = joblib.load(MODEL_DIR / "xgboost.joblib")
-    pipeline = joblib.load(MODEL_DIR / "feature_pipeline.joblib")
-    abstainer_path = MODEL_DIR / "mahalanobis_abstainer.joblib"
+    clf = joblib.load(model_dir / "xgboost.joblib")
+    pipeline = joblib.load(model_dir / "feature_pipeline.joblib")
+    abstainer_path = model_dir / "mahalanobis_abstainer.joblib"
     abstainer = joblib.load(abstainer_path) if abstainer_path.exists() else None
 
     expected = pipeline.feature_names
@@ -213,10 +226,10 @@ def main(argv=None) -> int:
         "per_family": per_family,
         "per_source": per_source,
     }
-    args.out_json.parent.mkdir(parents=True, exist_ok=True)
-    args.out_json.write_text(json.dumps(out, indent=2, default=str),
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(out, indent=2, default=str),
                               encoding="utf-8")
-    print(f"\nSaved: {args.out_json}")
+    print(f"\nSaved: {out_json}")
     return 0
 
 

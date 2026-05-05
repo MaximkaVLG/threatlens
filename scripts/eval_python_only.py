@@ -47,11 +47,8 @@ ALL_FEATURES = (list(CIC_FEATURE_COLUMNS) + list(SPECTRAL_FEATURE_COLUMNS)
                 + list(YARA_FEATURE_COLUMNS))
 
 OLD_DIR = ROOT / "results" / "combined_v2"
-NEW_DIR = ROOT / "results" / "python_only"
-ABSTAINER_PATH = NEW_DIR / "mahalanobis_abstainer.joblib"
+NEW_DIR = ROOT / "results" / "python_only"   # default candidate dir; --new-dir overrides
 CACHE_PARQUET = ROOT / "results" / "real_world_flows_cache.parquet"
-CTU_HOLDOUT = NEW_DIR / "ctu_test_holdout.parquet"
-OUT_JSON = NEW_DIR / "real_world_eval.json"
 
 
 def to_binary(label: str) -> str:
@@ -208,18 +205,38 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--new-dir", type=Path, default=NEW_DIR,
+                         help="Directory with the candidate model "
+                              "(xgboost.joblib + feature_pipeline.joblib + "
+                              "ctu_test_holdout.parquet + optional "
+                              "mahalanobis_abstainer.joblib). Default "
+                              "results/python_only/. Use results/v2/ for the "
+                              "Phase 1 v2 retrain.")
+    parser.add_argument("--out-json", type=Path, default=None,
+                         help="Override the output JSON path. Default: "
+                              "<new-dir>/real_world_eval.json.")
+    args = parser.parse_args()
+
+    new_dir = args.new_dir
+    abstainer_path = new_dir / "mahalanobis_abstainer.joblib"
+    ctu_holdout = new_dir / "ctu_test_holdout.parquet"
+    out_json = args.out_json or (new_dir / "real_world_eval.json")
+
     t0 = time.time()
-    print("[1/5] Loading models")
+    print(f"[1/5] Loading models  (candidate dir: {new_dir.name})")
     old_model = joblib.load(OLD_DIR / "xgboost.joblib")
     old_pipe = joblib.load(OLD_DIR / "feature_pipeline.joblib")
-    new_model = joblib.load(NEW_DIR / "xgboost.joblib")
-    new_pipe = joblib.load(NEW_DIR / "feature_pipeline.joblib")
+    new_model = joblib.load(new_dir / "xgboost.joblib")
+    new_pipe = joblib.load(new_dir / "feature_pipeline.joblib")
     abstainer = None
-    if ABSTAINER_PATH.exists():
-        abstainer = joblib.load(ABSTAINER_PATH)
-        print(f"  abstainer:        loaded ({ABSTAINER_PATH.name})")
+    if abstainer_path.exists():
+        abstainer = joblib.load(abstainer_path)
+        print(f"  abstainer:        loaded ({abstainer_path.name})")
     else:
-        print(f"  abstainer:        not found (skip selective eval)")
+        print(f"  abstainer:        not found at {abstainer_path} "
+              "(skip selective eval)")
     print(f"  combined_v2 (old): {len(old_pipe.feature_names)} features, "
           f"{len(old_pipe.label_encoder.classes_)} classes, "
           f"{list(old_pipe.label_encoder.classes_)}")
@@ -243,11 +260,11 @@ def main() -> int:
 
     # ---- 3. CTU 30% hold-out ----
     print("\n[3/5] Loading CTU 30% hold-out")
-    if not CTU_HOLDOUT.exists():
-        print(f"ERROR: CTU hold-out not found at {CTU_HOLDOUT}")
+    if not ctu_holdout.exists():
+        print(f"ERROR: CTU hold-out not found at {ctu_holdout}")
         print("Run scripts/train_python_only.py first.")
         return 1
-    ctu_df = pd.read_parquet(CTU_HOLDOUT)
+    ctu_df = pd.read_parquet(ctu_holdout)
     ctu_df.reset_index(drop=True, inplace=True)
     # All CTU flows are ATTACK by construction (botnet captures only)
     ctu_true = np.array(["ATTACK"] * len(ctu_df))
@@ -354,10 +371,11 @@ def main() -> int:
                                                 - res_old_real["f1_attack"]),
         },
     }
-    OUT_JSON.write_text(json.dumps(payload, indent=2, default=str),
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(payload, indent=2, default=str),
                          encoding="utf-8")
     print(f"\nWall time: {(time.time()-t0):.1f}s")
-    print(f"Saved: {OUT_JSON}")
+    print(f"Saved: {out_json}")
     return 0
 
 

@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-05",
+  "frozen_metadata_path": "data\\sandbox_malware\\metadata.frozen.jsonl",
+  "frozen_metadata_md5": "49dfefcb83ba63f15fea36e419488f97",
+  "in_parquet_path": "results\\python_only\\sandbox_malware_flows.parquet",
+  "rationale": "Stratified by source AND family. Holdout selected to be medium-recall (not cherry-picked best or worst) where family has >=2 PCAPs. Single-PCAP families with no train representation (netsupport, rhadamanthys) go to holdout \u2014 model has zero sandbox signal for them, holdout measures cold-start generalisation. Single-PCAP families that ARE represented elsewhere (formbook, kongtuke, macsync) go to train \u2014 model learns the new family without a holdout signal for it specifically (acceptable cost: we know per-family cold-start = ~0%, no need to re-measure).",
+  "train": {
+    "n_pcaps": 16,
+    "n_flows": 4662,
+    "by_source": {
+      "mta": 12,
+      "stratosphere": 4
+    },
+    "by_family": {
+      "clickfix": 2,
+      "formbook": 1,
+      "kongtuke": 1,
+      "lumma": 5,
+      "macsync": 1,
+      "stealc": 2,
+      "bot": 4
+    },
+    "by_source_flow_count": {
+      "stratosphere": 4304,
+      "mta": 358
+    },
+    "by_family_flow_count": {
+      "bot": 4304,
+      "kongtuke": 4,
+      "stealc": 48,
+      "lumma": 159,
+      "formbook": 100,
+      "clickfix": 41,
+      "macsync": 6
+    },
+    "pcaps": [
+      {
+        "pcap": "2025-12-11_2025-12-11-Kongtuke-ClickFix-activity-part-1-finding-ClickFix-page-and-running-ClickFix-script-on-a-VM.pcap__clickfix__Bot.pcap",
+        "source": "mta",
+        "family": "clickfix",
+        "captured_date": "2025-12-11",
+        "n_flows": 40
+      },
+      {
+        "pcap": "2025-12-11_2025-12-11-SmartApeSG-ClickFix-activity.pcap__clickfix__Bot.pcap",
+        "source": "mta",
+        "family": "clickfix",
+        "captured_date": "2025-12-11",
+        "n_flows": 1
+      },
+      {
+        "pcap": "2025-09-05_2025-09-05-XLoader-infection-traffic.pcap__formbook__Bot.pcap",
+        "source": "mta",
+        "family": "formbook",
+        "captured_date": "2025-09-05",
+        "n_flows": 100
+      },
+      {
+        "pcap": "2025-04-04_-2025-04-04-KongTuke-activity-for-possible-Async-RAT.pcap__kongtuke__Bot.pcap",
+        "source": "mta",
+        "family": "kongtuke",
+        "captured_date": "2025-04-04",
+        "n_flows": 4
+      },
+      {
+        "pcap": "2025-06-26_2025-06-26-Lumma-Stealer-infection-with-follow-up-malware.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-06-26",
+        "n_flows": 1
+      },
+      {
+        "pcap": "2025-07-02_2025-07-02-Lumma-Stealer-infection-with-Rsockstun-malware.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-07-02",
+        "n_flows": 3
+      },
+      {
+        "pcap": "2025-07-15_2025-07-15-traffic-from-Lumma-Stealer-infection-with-SecTop-RAT.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-07-15",
+        "n_flows": 2
+      },
+      {
+        "pcap": "2025-08-13_2025-08-13-Lumma-Stealer-infection.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-08-13",
+        "n_flows": 13
+      },
+      {
+        "pcap": "2025-12-30_2025-12-30-Lumma-Stealer-infection-with-other-malware.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-12-30",
+        "n_flows": 140
+      },
+      {
+        "pcap": "2025-12-23_2025-12-23-MacSync-Stealer-traffic.pcap__macsync__Bot.pcap",
+        "source": "mta",
+        "family": "macsync",
+        "captured_date": "2025-12-23",
+        "n_flows": 6
+      },
+      {
+        "pcap": "2025-06-18_2025-06-18-SmartApeSG-ClickFix-to-NetSupport-RAT-to-StealCv2.pcap__stealc__Bot.pcap",
+        "source": "mta",
+        "family": "stealc",
+        "captured_date": "2025-06-18",
+        "n_flows": 47
+      },
+      {
+        "pcap": "2025-08-20_2025-08-20-SmartAgeSG-Netsupport-RAT-with-StealCv2.pcap__stealc__Bot.pcap",
+        "source": "mta",
+        "family": "stealc",
+        "captured_date": "2025-08-20",
+        "n_flows": 1
+      },
+      {
+        "pcap": "CTU-Malware-Capture-Botnet-112-2__bot__Bot.pcap",
+        "source": "stratosphere",
+        "family": "bot",
+        "captured_date": "2025-05-27",
+        "n_flows": 4270
+      },
+      {
+        "pcap": "CTU-Malware-Capture-Botnet-192-4__bot__Bot.pcap",
+        "source": "stratosphere",
+        "family": "bot",
+        "captured_date": "2024-08-13",
+        "n_flows": 2
+      },
+      {
+        "pcap": "CTU-Malware-Capture-Botnet-230-1__bot__Bot.pcap",
+        "source": "stratosphere",
+        "family": "bot",
+        "captured_date": "2024-12-17",
+        "n_flows": 19
+      },
+      {
+        "pcap": "CTU-Malware-Capture-Botnet-318-1__bot__Bot.pcap",
+        "source": "stratosphere",
+        "family": "bot",
+        "captured_date": "2024-01-26",
+        "n_flows": 13
+      }
+    ]
+  },
+  "holdout": {
+    "n_pcaps": 9,
+    "n_flows": 349,
+    "by_source": {
+      "mta": 7,
+      "stratosphere": 2
+    },
+    "by_family": {
+      "clickfix": 1,
+      "lumma": 3,
+      "netsupport": 1,
+      "rhadamanthys": 1,
+      "stealc": 1,
+      "bot": 2
+    },
+    "by_source_flow_count": {
+      "stratosphere": 246,
+      "mta": 103
+    },
+    "by_family_flow_count": {
+      "bot": 246,
+      "stealc": 2,
+      "lumma": 81,
+      "rhadamanthys": 4,
+      "clickfix": 9,
+      "netsupport": 7
+    },
+    "pcaps": [
+      {
+        "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+        "source": "mta",
+        "family": "clickfix",
+        "captured_date": "2025-10-08",
+        "n_flows": 9
+      },
+      {
+        "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-08-15",
+        "n_flows": 1
+      },
+      {
+        "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-09-03",
+        "n_flows": 78
+      },
+      {
+        "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+        "source": "mta",
+        "family": "lumma",
+        "captured_date": "2025-09-24",
+        "n_flows": 2
+      },
+      {
+        "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+        "source": "mta",
+        "family": "netsupport",
+        "captured_date": "2025-12-29",
+        "n_flows": 7
+      },
+      {
+        "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+        "source": "mta",
+        "family": "rhadamanthys",
+        "captured_date": "2025-10-01",
+        "n_flows": 4
+      },
+      {
+        "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+        "source": "mta",
+        "family": "stealc",
+        "captured_date": "2025-05-22",
+        "n_flows": 2
+      },
+      {
+        "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+        "source": "stratosphere",
+        "family": "bot",
+        "captured_date": "2024-08-13",
+        "n_flows": 198
+      },
+      {
+        "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+        "source": "stratosphere",
+        "family": "bot",
+        "captured_date": "2025-08-05",
+        "n_flows": 48
+      }
+    ]
+  }
+}

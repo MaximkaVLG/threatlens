@@ -100,12 +100,19 @@ def main() -> int:
                         help="Fraction of correctly-classified training "
                              "flows to retain (default 0.95)")
     parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--model-dir", type=Path, default=MODEL_DIR,
+                        help="Model bundle directory. Default "
+                             "results/python_only/. Use results/v2/ for the "
+                             "Phase 1 v2 retrain candidate (the abstainer is "
+                             "fit against the model in this directory and "
+                             "saved alongside it).")
     args = parser.parse_args()
+    model_dir = args.model_dir
 
     t0 = time.time()
-    print(f"[1/4] Loading python_only model")
-    clf = joblib.load(MODEL_DIR / "xgboost.joblib")
-    pipeline = joblib.load(MODEL_DIR / "feature_pipeline.joblib")
+    print(f"[1/4] Loading model from {model_dir.name}")
+    clf = joblib.load(model_dir / "xgboost.joblib")
+    pipeline = joblib.load(model_dir / "feature_pipeline.joblib")
     print(f"  features: {len(pipeline.feature_names)}")
     print(f"  classes:  {list(pipeline.label_encoder.classes_)}")
 
@@ -151,7 +158,7 @@ def main() -> int:
     print(f"  achieved coverage:    {tune.get('achieved_coverage', 'n/a')}")
 
     print(f"\n[4/4] Saving abstainer + summary")
-    out_path = MODEL_DIR / "mahalanobis_abstainer.joblib"
+    out_path = model_dir / "mahalanobis_abstainer.joblib"
     joblib.dump(abstainer, out_path)
     summary = {
         "target_coverage": args.target_coverage,
@@ -162,7 +169,7 @@ def main() -> int:
         "global_fallback": float(abstainer._global_fallback),
         "wall_time_s": round(time.time() - t0, 2),
     }
-    (MODEL_DIR / "mahalanobis_abstainer_summary.json").write_text(
+    (model_dir / "mahalanobis_abstainer_summary.json").write_text(
         json.dumps(summary, indent=2, default=str), encoding="utf-8")
     print(f"  saved: {out_path}")
     print(f"  wall time: {time.time()-t0:.1f}s")

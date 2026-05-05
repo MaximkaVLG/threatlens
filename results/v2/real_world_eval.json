@@ -1,0 +1,417 @@
+{
+  "real_pcap": {
+    "combined_v2": {
+      "name": "real_pcap_combined_v2",
+      "n_flows": 440,
+      "n_attack_true": 347,
+      "n_benign_true": 93,
+      "tp": 3,
+      "fp": 2,
+      "tn": 91,
+      "fn": 344,
+      "accuracy": 0.21363636363636362,
+      "f1_attack": 0.017045454545454544,
+      "precision_attack": 0.6,
+      "recall_attack": 0.008645533141210375,
+      "confusion_matrix": [
+        [
+          91,
+          2
+        ],
+        [
+          344,
+          3
+        ]
+      ],
+      "mean_confidence_overall": 0.9687784314155579,
+      "mean_confidence_correct": 0.9905651211738586,
+      "mean_confidence_wrong": 0.9628593921661377,
+      "per_capture": [
+        {
+          "source": "slips_ssh-bruteforce.pcap",
+          "n_flows": 67,
+          "n_attack_true": 67,
+          "n_attack_pred": 1,
+          "n_attack_detected": 1,
+          "attack_recall": 0.014925373134328358,
+          "label_distribution": {
+            "BENIGN": 66,
+            "PortScan": 1
+          }
+        },
+        {
+          "source": "slips_test7_malicious.pcap",
+          "n_flows": 279,
+          "n_attack_true": 279,
+          "n_attack_pred": 2,
+          "n_attack_detected": 2,
+          "attack_recall": 0.007168458781362007,
+          "label_distribution": {
+            "BENIGN": 277,
+            "DoS Hulk": 1,
+            "PortScan": 1
+          }
+        },
+        {
+          "source": "slips_test8_malicious.pcap",
+          "n_flows": 1,
+          "n_attack_true": 1,
+          "n_attack_pred": 0,
+          "n_attack_detected": 0,
+          "attack_recall": 0.0,
+          "label_distribution": {
+            "BENIGN": 1
+          }
+        },
+        {
+          "source": "wireshark_dns-mdns.pcap",
+          "n_flows": 83,
+          "n_attack_true": 0,
+          "n_attack_pred": 1,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 82,
+            "DoS Hulk": 1
+          }
+        },
+        {
+          "source": "wireshark_http2-data-reassembly.pcap",
+          "n_flows": 1,
+          "n_attack_true": 0,
+          "n_attack_pred": 0,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 1
+          }
+        },
+        {
+          "source": "wireshark_http2_follow_multistream.pcapng",
+          "n_flows": 1,
+          "n_attack_true": 0,
+          "n_attack_pred": 1,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "DoS slowloris": 1
+          }
+        },
+        {
+          "source": "wireshark_tls-renegotiation.pcap",
+          "n_flows": 1,
+          "n_attack_true": 0,
+          "n_attack_pred": 0,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 1
+          }
+        },
+        {
+          "source": "wireshark_tls12-chacha20.pcap",
+          "n_flows": 7,
+          "n_attack_true": 0,
+          "n_attack_pred": 0,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 7
+          }
+        }
+      ]
+    },
+    "python_only": {
+      "name": "real_pcap_python_only",
+      "n_flows": 440,
+      "n_attack_true": 347,
+      "n_benign_true": 93,
+      "tp": 345,
+      "fp": 18,
+      "tn": 75,
+      "fn": 2,
+      "accuracy": 0.9545454545454546,
+      "f1_attack": 0.971830985915493,
+      "precision_attack": 0.9504132231404959,
+      "recall_attack": 0.9942363112391931,
+      "confusion_matrix": [
+        [
+          75,
+          18
+        ],
+        [
+          2,
+          345
+        ]
+      ],
+      "mean_confidence_overall": 0.9080902338027954,
+      "mean_confidence_correct": 0.9066096544265747,
+      "mean_confidence_wrong": 0.939181923866272,
+      "per_capture": [
+        {
+          "source": "slips_ssh-bruteforce.pcap",
+          "n_flows": 67,
+          "n_attack_true": 67,
+          "n_attack_pred": 66,
+          "n_attack_detected": 66,
+          "attack_recall": 0.9850746268656716,
+          "label_distribution": {
+            "SSH-Patator": 58,
+            "Bot": 7,
+            "PortScan": 1,
+            "BENIGN": 1
+          }
+        },
+        {
+          "source": "slips_test7_malicious.pcap",
+          "n_flows": 279,
+          "n_attack_true": 279,
+          "n_attack_pred": 278,
+          "n_attack_detected": 278,
+          "attack_recall": 0.996415770609319,
+          "label_distribution": {
+            "Bot": 278,
+            "BENIGN": 1
+          }
+        },
+        {
+          "source": "slips_test8_malicious.pcap",
+          "n_flows": 1,
+          "n_attack_true": 1,
+          "n_attack_pred": 1,
+          "n_attack_detected": 1,
+          "attack_recall": 1.0,
+          "label_distribution": {
+            "Bot": 1
+          }
+        },
+        {
+          "source": "wireshark_dns-mdns.pcap",
+          "n_flows": 83,
+          "n_attack_true": 0,
+          "n_attack_pred": 14,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 69,
+            "Bot": 14
+          }
+        },
+        {
+          "source": "wireshark_http2-data-reassembly.pcap",
+          "n_flows": 1,
+          "n_attack_true": 0,
+          "n_attack_pred": 0,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 1
+          }
+        },
+        {
+          "source": "wireshark_http2_follow_multistream.pcapng",
+          "n_flows": 1,
+          "n_attack_true": 0,
+          "n_attack_pred": 1,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "Bot": 1
+          }
+        },
+        {
+          "source": "wireshark_tls-renegotiation.pcap",
+          "n_flows": 1,
+          "n_attack_true": 0,
+          "n_attack_pred": 1,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "Bot": 1
+          }
+        },
+        {
+          "source": "wireshark_tls12-chacha20.pcap",
+          "n_flows": 7,
+          "n_attack_true": 0,
+          "n_attack_pred": 2,
+          "n_attack_detected": 0,
+          "attack_recall": NaN,
+          "label_distribution": {
+            "BENIGN": 5,
+            "Bot": 2
+          }
+        }
+      ],
+      "selective": {
+        "n_abstain": 42,
+        "abstain_rate": 0.09545454545454546,
+        "abstain_rate_attack": 0.11815561959654179,
+        "abstain_rate_benign": 0.010752688172043012,
+        "accepted_tp": 304,
+        "accepted_fp": 18,
+        "accepted_tn": 74,
+        "accepted_fn": 2,
+        "accepted_recall_attack": 0.9934640522875817,
+        "accepted_precision_attack": 0.9440993788819876,
+        "accepted_specificity": 0.8043478260869565,
+        "all_flows_recall_attack": 0.8760806916426513
+      }
+    }
+  },
+  "ctu_holdout": {
+    "combined_v2": {
+      "name": "ctu_holdout_combined_v2",
+      "n_flows": 253,
+      "n_attack_true": 253,
+      "n_benign_true": 0,
+      "tp": 15,
+      "fp": 0,
+      "tn": 0,
+      "fn": 238,
+      "accuracy": 0.05928853754940711,
+      "f1_attack": 0.11194029850746269,
+      "precision_attack": 1.0,
+      "recall_attack": 0.05928853754940711,
+      "confusion_matrix": [
+        [
+          0,
+          0
+        ],
+        [
+          238,
+          15
+        ]
+      ],
+      "mean_confidence_overall": 0.9374666810035706,
+      "mean_confidence_correct": 0.7031514048576355,
+      "mean_confidence_wrong": 0.9522344470024109,
+      "per_capture": [
+        {
+          "source": "botnet-42/botnet-capture-20110810-neris.pcap",
+          "n_flows": 174,
+          "n_attack_true": 174,
+          "n_attack_pred": 4,
+          "n_attack_detected": 4,
+          "attack_recall": 0.022988505747126436,
+          "label_distribution": {
+            "BENIGN": 170,
+            "DoS slowloris": 4
+          }
+        },
+        {
+          "source": "botnet-43/botnet-capture-20110811-neris.pcap",
+          "n_flows": 78,
+          "n_attack_true": 78,
+          "n_attack_pred": 11,
+          "n_attack_detected": 11,
+          "attack_recall": 0.14102564102564102,
+          "label_distribution": {
+            "BENIGN": 67,
+            "DoS Hulk": 6,
+            "DoS slowloris": 4,
+            "PortScan": 1
+          }
+        },
+        {
+          "source": "botnet-48/botnet-capture-20110816-sogou.pcap",
+          "n_flows": 1,
+          "n_attack_true": 1,
+          "n_attack_pred": 0,
+          "n_attack_detected": 0,
+          "attack_recall": 0.0,
+          "label_distribution": {
+            "BENIGN": 1
+          }
+        }
+      ]
+    },
+    "python_only": {
+      "name": "ctu_holdout_python_only",
+      "n_flows": 253,
+      "n_attack_true": 253,
+      "n_benign_true": 0,
+      "tp": 253,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "accuracy": 1.0,
+      "f1_attack": 1.0,
+      "precision_attack": 1.0,
+      "recall_attack": 1.0,
+      "confusion_matrix": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          253
+        ]
+      ],
+      "mean_confidence_overall": 0.9966462254524231,
+      "mean_confidence_correct": 0.9966462254524231,
+      "mean_confidence_wrong": 0.0,
+      "per_capture": [
+        {
+          "source": "botnet-42/botnet-capture-20110810-neris.pcap",
+          "n_flows": 174,
+          "n_attack_true": 174,
+          "n_attack_pred": 174,
+          "n_attack_detected": 174,
+          "attack_recall": 1.0,
+          "label_distribution": {
+            "Bot": 174
+          }
+        },
+        {
+          "source": "botnet-43/botnet-capture-20110811-neris.pcap",
+          "n_flows": 78,
+          "n_attack_true": 78,
+          "n_attack_pred": 78,
+          "n_attack_detected": 78,
+          "attack_recall": 1.0,
+          "label_distribution": {
+            "Bot": 78
+          }
+        },
+        {
+          "source": "botnet-48/botnet-capture-20110816-sogou.pcap",
+          "n_flows": 1,
+          "n_attack_true": 1,
+          "n_attack_pred": 1,
+          "n_attack_detected": 1,
+          "attack_recall": 1.0,
+          "label_distribution": {
+            "Bot": 1
+          }
+        }
+      ],
+      "selective": {
+        "n_abstain": 2,
+        "abstain_rate": 0.007905138339920948,
+        "abstain_rate_attack": 0.007905138339920948,
+        "abstain_rate_benign": 0.0,
+        "accepted_tp": 251,
+        "accepted_fp": 0,
+        "accepted_tn": 0,
+        "accepted_fn": 0,
+        "accepted_recall_attack": 1.0,
+        "accepted_precision_attack": 1.0,
+        "accepted_specificity": 0.0,
+        "all_flows_recall_attack": 0.9920948616600791
+      }
+    }
+  },
+  "headline": {
+    "real_pcap_total_attack_flows": 347,
+    "real_pcap_combined_v2_detected": 3,
+    "real_pcap_python_only_detected": 345,
+    "real_pcap_recall_old": 0.008645533141210375,
+    "real_pcap_recall_new": 0.9942363112391931,
+    "real_pcap_recall_delta": 0.9855907780979827,
+    "real_pcap_f1_attack_old": 0.017045454545454544,
+    "real_pcap_f1_attack_new": 0.971830985915493,
+    "real_pcap_f1_attack_delta": 0.9547855313700384
+  }
+}

@@ -78,6 +78,12 @@ ATTACK_VOLUME_PARQUET = OUT_DIR / "attack_volume_flows.parquet"
 # Populated by scripts/ingest_sandbox_pcaps.py + extract_sandbox_pcaps.py.
 # Same label schema — most modern C2 families map to "Bot".
 SANDBOX_MALWARE_PARQUET = OUT_DIR / "sandbox_malware_flows.parquet"
+# Phase 1 (v2 retrain): split-aware sandbox parquet. When sandbox_split.py
+# has run there will be train and holdout subsets — train_python_only.py
+# loads ONLY the train subset so the holdout stays unseen. Falls back to
+# SANDBOX_MALWARE_PARQUET (full file) if the split parquet is absent so
+# pre-Phase-1 reproductions still work.
+SANDBOX_TRAIN_PARQUET = OUT_DIR / "sandbox_train_flows.parquet"
 
 
 def load_synthetic_with_cap(hulk_cap: int, random_state: int) -> pd.DataFrame:
@@ -123,19 +129,26 @@ def load_attack_volume() -> pd.DataFrame:
     return df
 
 
-def load_sandbox_malware() -> pd.DataFrame:
+def load_sandbox_malware(parquet_path: Path = None) -> pd.DataFrame:
     """Day 13 — modern-era (2024-2026) malware PCAPs from public sandboxes.
 
     Produced by scripts/ingest_sandbox_pcaps.py + extract_sandbox_pcaps.py.
-    Skipped silently if the parquet hasn't been generated yet — the rest of
-    the pipeline falls back to the existing synthetic + CTU-13 corpus.
+    If `parquet_path` is given (Phase 1 v2 retrain passes
+    sandbox_train_flows.parquet here), use it directly. Otherwise default
+    to SANDBOX_MALWARE_PARQUET (full file) to preserve the original Day 13
+    training behaviour — a reviewer reproducing the shipped python_only
+    model gets exactly what was trained, regardless of any later split.
+    Skipped silently if no candidate file exists.
     """
-    if not SANDBOX_MALWARE_PARQUET.exists():
-        print(f"[warn] {SANDBOX_MALWARE_PARQUET} not found — skipping sandbox-malware")
+    if parquet_path is None:
+        parquet_path = SANDBOX_MALWARE_PARQUET
+    if not parquet_path.exists():
+        print(f"[warn] {parquet_path} not found — skipping sandbox-malware")
         return pd.DataFrame()
-    df = pd.read_parquet(SANDBOX_MALWARE_PARQUET)
+    df = pd.read_parquet(parquet_path)
     df = df.convert_dtypes(dtype_backend="numpy_nullable")
     df["__split_source"] = "sandbox_malware"
+    print(f"  source file: {parquet_path.name}")
     return df
 
 
@@ -168,9 +181,25 @@ def main() -> int:
     parser.add_argument("--hulk-cap", type=int, default=10_000)
     parser.add_argument("--ctu-train-frac", type=float, default=0.70)
     parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--output-dir", type=Path, default=OUT_DIR,
+                         help="Where to write xgboost.joblib + feature_pipeline + "
+                              "metrics.json + ctu_test_holdout.parquet. "
+                              "Default results/python_only/. Phase 1 v2 retrain "
+                              "uses results/v2/ to keep production untouched.")
+    parser.add_argument("--sandbox-train-parquet", type=Path, default=None,
+                         help="Override sandbox-malware training parquet path. "
+                              "Default: prefer sandbox_train_flows.parquet (split-aware) "
+                              "over sandbox_malware_flows.parquet (full file).")
+    parser.add_argument("--sandbox-sample-weight", type=float, default=0.5,
+                         help="Multiplier applied to inverse-frequency sample "
+                              "weights for sandbox-malware rows in train. <1.0 "
+                              "down-weights sandbox so the existing CTU-13 + "
+                              "synthetic Bot signal isn't drowned out (default 0.5). "
+                              "Use 1.0 for no scaling, 0.0 to effectively drop.")
     args = parser.parse_args()
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir = args.output_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
 
     # --- Build training set ---
@@ -187,10 +216,11 @@ def main() -> int:
     print(f"Attack-volume loaded: {len(attack_volume):,} rows (Day 9d)")
     if not attack_volume.empty:
         print(f"  per-label: {attack_volume['Label'].value_counts().to_dict()}")
-    sandbox_malware = load_sandbox_malware()
+    sandbox_malware = load_sandbox_malware(args.sandbox_train_parquet)
     print(f"Sandbox malware loaded: {len(sandbox_malware):,} rows (Day 13)")
     if not sandbox_malware.empty:
         print(f"  per-label: {sandbox_malware['Label'].value_counts().to_dict()}")
+        print(f"  sandbox sample-weight scale factor: {args.sandbox_sample_weight}")
 
     # Stratified split CTU per source PCAP so each scenario contributes
     # to both train and test
@@ -250,13 +280,21 @@ def main() -> int:
 
     X = np.ascontiguousarray(train[ALL_FEATURES].to_numpy(dtype=np.float64))
     y = np.asarray(train["Label"].astype(str).values, dtype=object)
+    split_sources = np.asarray(train["__split_source"].astype(str).values,
+                                dtype=object)
     print(f"\nFeature matrix: {X.shape}, dtype={X.dtype}")
 
     # --- 80/20 train/internal-val split (stratified) ---
+    # Carry indices alongside features so we can recover __split_source
+    # for sample-weight scaling further down.
     from sklearn.model_selection import train_test_split
-    X_tr, X_val, y_tr, y_val = train_test_split(
-        X, y, test_size=0.20, random_state=args.random_state, stratify=y,
+    all_idx = np.arange(len(X))
+    idx_tr, idx_val = train_test_split(
+        all_idx, test_size=0.20, random_state=args.random_state, stratify=y,
     )
+    X_tr, X_val = X[idx_tr], X[idx_val]
+    y_tr, y_val = y[idx_tr], y[idx_val]
+    split_sources_tr = split_sources[idx_tr]
 
     # --- Pipeline + XGBoost ---
     pipeline = FeaturePipeline()
@@ -277,6 +315,20 @@ def main() -> int:
                               dtype=np.float64)
     print(f"  class_weight: {class_weight}")
 
+    # Phase 1 — down-weight sandbox-malware rows so they don't drown out
+    # the existing CTU-13 + synthetic Bot signal (sandbox is 100 % Bot,
+    # adding 4k Bot rows otherwise tips the inverse-frequency weighting
+    # heavily toward Bot at PortScan / SSH-Patator's expense).
+    if not sandbox_malware.empty and args.sandbox_sample_weight != 1.0:
+        sandbox_mask_tr = (split_sources_tr == "sandbox_malware")
+        n_sandbox_in_tr = int(sandbox_mask_tr.sum())
+        if n_sandbox_in_tr > 0:
+            sample_weight[sandbox_mask_tr] *= args.sandbox_sample_weight
+            print(f"  sandbox sample-weight x{args.sandbox_sample_weight} "
+                  f"applied to {n_sandbox_in_tr:,} train rows "
+                  f"(mean weight on sandbox: "
+                  f"{sample_weight[sandbox_mask_tr].mean():.4f})")
+
     clf = build_xgboost(random_state=args.random_state)
     clf.fit(X_tr_p, y_tr_e, sample_weight=sample_weight)
     print(f"  Train rows: {len(X_tr_p):,}, Val rows: {len(X_val_p):,}")
@@ -288,11 +340,11 @@ def main() -> int:
     print(f"  Val F1 macro: {f1_score(y_val_e, y_val_pred, average='macro', zero_division=0):.4f}")
 
     # --- Save artefacts ---
-    joblib.dump(clf, OUT_DIR / "xgboost.joblib")
-    joblib.dump(pipeline, OUT_DIR / "feature_pipeline.joblib")
+    joblib.dump(clf, out_dir / "xgboost.joblib")
+    joblib.dump(pipeline, out_dir / "feature_pipeline.joblib")
 
     # Save the CTU test split — we need it for eval phase
-    ctu_test.to_parquet(OUT_DIR / "ctu_test_holdout.parquet", index=False)
+    ctu_test.to_parquet(out_dir / "ctu_test_holdout.parquet", index=False)
 
     # Metrics summary
     summary = {
@@ -311,15 +363,17 @@ def main() -> int:
         "diverse_benign_size": int(len(diverse_benign)),
         "attack_volume_size": int(len(attack_volume)),
         "sandbox_malware_size": int(len(sandbox_malware)),
+        "sandbox_sample_weight": float(args.sandbox_sample_weight),
         "class_weight": class_weight,
-        "args": vars(args),
+        "args": {k: str(v) if isinstance(v, Path) else v
+                  for k, v in vars(args).items()},
         "feature_order": ALL_FEATURES,
     }
-    (OUT_DIR / "metrics.json").write_text(
+    (out_dir / "metrics.json").write_text(
         json.dumps(summary, indent=2, default=str), encoding="utf-8")
 
     print(f"\nWall time: {(time.time()-t0)/60:.1f} min")
-    print(f"Saved: {OUT_DIR}")
+    print(f"Saved: {out_dir}")
     return 0
 
 
