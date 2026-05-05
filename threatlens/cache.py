@@ -148,6 +148,27 @@ class AnalysisCache:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_scan_events_ts ON scan_events(timestamp)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_scan_events_user ON scan_events(client_ip_hash)")
 
+            # Phase 6 — per-PCAP-scan prediction summary for the drift monitor.
+            # One row per /api/network/analyze-pcap call. Aggregate stats only,
+            # no per-flow data: we publish the manifold the model is operating
+            # on (class histogram + abstainer rate + mean confidence) without
+            # storing any payload-derived information.
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS prediction_summary (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp INTEGER NOT NULL,
+                    model_dir TEXT NOT NULL,
+                    n_flows INTEGER NOT NULL,
+                    n_attack INTEGER NOT NULL,
+                    n_benign INTEGER NOT NULL,
+                    n_abstain INTEGER NOT NULL,
+                    mean_confidence REAL NOT NULL,
+                    class_distribution_json TEXT NOT NULL
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_pred_summary_ts ON prediction_summary(timestamp)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_pred_summary_model ON prediction_summary(model_dir)")
+
     def get(self, sha256: str) -> Optional[dict]:
         """Get cached result by SHA256 hash. Returns None if not found."""
         with sqlite3.connect(self.db_path) as conn:
@@ -314,6 +335,42 @@ class AnalysisCache:
                     int(duration_ms),
                     int(file_size_bytes) if file_size_bytes is not None else None,
                     client_ip_hash or "",
+                ),
+            )
+
+    def record_prediction_summary(
+        self,
+        model_dir: str,
+        n_flows: int,
+        n_attack: int,
+        n_benign: int,
+        n_abstain: int,
+        mean_confidence: float,
+        class_distribution: dict,
+    ) -> None:
+        """Phase 6 — append one summary row per /api/network/analyze-pcap call.
+
+        Safe to call in a try/except wrapper; failures must not break the
+        scan (telemetry only).
+
+        `class_distribution` is a dict like {"BENIGN": 12, "Bot": 3, ...}
+        — stored as JSON for compactness. The drift monitor reads this back.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """INSERT INTO prediction_summary
+                   (timestamp, model_dir, n_flows, n_attack, n_benign,
+                    n_abstain, mean_confidence, class_distribution_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    int(time.time()),
+                    str(model_dir or ""),
+                    int(n_flows),
+                    int(n_attack),
+                    int(n_benign),
+                    int(n_abstain),
+                    float(mean_confidence) if mean_confidence is not None else 0.0,
+                    json.dumps(class_distribution or {}, separators=(",", ":")),
                 ),
             )
 
