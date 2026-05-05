@@ -50,6 +50,7 @@ ROOT_RESULTS = ROOT / "results"
 DEFAULT_MODEL_DIR = ROOT_RESULTS / "v2"
 CACHE_PARQUET = ROOT_RESULTS / "real_world_flows_cache.parquet"
 SANDBOX_HOLDOUT = ROOT_RESULTS / "python_only" / "sandbox_holdout_flows.parquet"
+SANDBOX_FULL = ROOT_RESULTS / "python_only" / "sandbox_malware_flows.parquet"
 
 SMALL_N_THRESHOLD = 10        # flag families / slices with N below this
 N_BOOTSTRAP = 1000
@@ -195,6 +196,36 @@ def main(argv=None) -> int:
     else:
         print(f"  SKIP: {ctu_path.name} not found")
 
+    # ---------- 4a. Sandbox FULL set (25 PCAPs, only if no leakage) ----------
+    # Only fair for python_only — v2 trained on 16 of these 25 PCAPs, so
+    # evaluating it on the full set inflates recall via train leakage.
+    # Detect leakage by `sandbox_malware_size` key in metrics.json
+    # (set by train_python_only.py when --sandbox-train-parquet is used).
+    metrics_path = model_dir / "metrics.json"
+    has_sandbox_in_train = False
+    if metrics_path.exists():
+        try:
+            mtr = json.loads(metrics_path.read_text(encoding="utf-8"))
+            has_sandbox_in_train = bool(mtr.get("sandbox_malware_size", 0))
+        except Exception:
+            pass
+
+    print("\n[4a/4] Sandbox FULL set (25 PCAPs, all 5011 flows)")
+    if has_sandbox_in_train:
+        print("  SKIP: model trained on a subset of these PCAPs "
+              "(would leak into recall). Use sandbox_holdout below.")
+    elif SANDBOX_FULL.exists():
+        full_df = pd.read_parquet(SANDBOX_FULL)
+        full_df.reset_index(drop=True, inplace=True)
+        full_y_true_attack = np.ones(len(full_df), dtype=bool)  # all "Bot"
+        _, full_pred_attack = predict_attack(clf, pipeline, full_df)
+        full_recall = bootstrap_recall(full_y_true_attack, full_pred_attack,
+                                         args.n_resamples, args.seed)
+        print(f"  recall ATK: {fmt_recall(full_recall)}")
+        out["datasets"]["sandbox_full"] = {"recall_attack": full_recall}
+    else:
+        print(f"  SKIP: {SANDBOX_FULL.name} not found")
+
     # ---------- 4. Sandbox holdout (per-family) ----------
     print("\n[4/4] Sandbox holdout (per-family + per-source)")
     if SANDBOX_HOLDOUT.exists():
@@ -274,7 +305,8 @@ def main(argv=None) -> int:
     for slice_name, label in [
         ("real_pcap_historical", "Historical real-world recall"),
         ("ctu_holdout", "CTU-13 holdout recall"),
-        ("sandbox_holdout", "Sandbox holdout recall"),
+        ("sandbox_full", "Sandbox FULL recall (25 PCAPs)"),
+        ("sandbox_holdout", "Sandbox holdout recall (9 PCAPs)"),
     ]:
         if slice_name not in out["datasets"]:
             continue

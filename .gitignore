@@ -123,3 +123,8 @@ results/real_world_flows_cache.parquet
 results/synthetic/
 results/experiments/
 results/*_training.log
+
+# Phase 3 adversarial work — per-cell perturbed PCAPs (50-100MB each).
+# Deleted after each cell completes; pattern keeps any leftover from a
+# crashed run out of git.
+results/*/.adversarial_work/

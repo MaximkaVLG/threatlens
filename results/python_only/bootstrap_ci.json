@@ -32,6 +32,16 @@
         "small_n": false
       }
     },
+    "sandbox_full": {
+      "recall_attack": {
+        "n": 5011,
+        "point": 0.7224106964677709,
+        "ci_low": 0.7092296946717223,
+        "ci_high": 0.7349930153661943,
+        "ci_width_pp": 2.576332069447207,
+        "small_n": false
+      }
+    },
     "sandbox_holdout": {
       "recall_attack": {
         "n": 349,
