@@ -127,6 +127,31 @@ retraining. Same 693-flow test set as above:
 
 Reproduce: `python scripts/workload_metric.py`.
 
+## Adversarial baseline (naive evasion)
+
+How does v2's recall hold up when traffic is perturbed at wire-level?
+We run a 4 × 4 grid (4 perturbations × 4 strengths) against the same
+9-PCAP sandbox holdout that scored 96.85 % above. Baseline 96.85 %.
+
+| Perturbation | mild | moderate | aggressive | Reads as |
+|---|---:|---:|---:|---|
+| `iat_jitter` (sigma 1 ms / 10 ms / 100 ms) | 96.86 % | 96.85 % | 97.13 % | timing-noise → no effect (CLT averages it out across hundreds of packets) |
+| `packet_padding` (10-50 / 50-200 / 200-500 bytes) | **86.53 %** | 99.43 % | 100.00 % | non-monotonic — small padding is the most adversarial |
+| `ttl_random` (±5 / ±20 / ±50) | 96.85 % | 96.85 % | 96.85 % | model doesn't use TTL (variance filter dropped it) |
+| `rst_inject` (1 % / 5 % / 20 % of ACKs) | 96.85 % | 96.85 % | 96.85 % | RST count alone can't flip the verdict |
+
+**Floor on naive evasion: 86.53 % recall** (packet_padding mild). An
+attacker who reverse-engineers the boundary could pad uniformly to
+10-50 bytes to get there; without that knowledge, random padding *helps*
+the defender (moderate / aggressive push flows further into Bot
+territory). Three of four perturbations have **zero** effect.
+
+This is a *floor* measurement against random-noise evasion, not a
+robustness certificate against motivated adversaries doing pattern-
+aware mimicry. Full per-row commentary + reproduction in
+[`docs/adversarial_baseline.md`](docs/adversarial_baseline.md). Reproduce:
+`python scripts/adversarial_eval.py --model-dir results/v2`.
+
 ## Active-learning demo (5 labels, measurable improvement)
 
 One 30-second analyst task — labeling 5 mDNS false positives as BENIGN
@@ -207,6 +232,9 @@ reviewer has to hunt for them.
 - [`docs/day10_web_app_integration.md`](docs/day10_web_app_integration.md) — production model swap
 - [`docs/day11_metrics_and_docs.md`](docs/day11_metrics_and_docs.md) — honest-metric reframe
 - [`docs/day12_buffer_and_submission.md`](docs/day12_buffer_and_submission.md) — success-criteria audit + active-learning demo
+- [`docs/adversarial_baseline.md`](docs/adversarial_baseline.md) — Phase 3 evasion floor (4×4 grid against the v2 candidate)
+- [`docs/drift_monitor_design.md`](docs/drift_monitor_design.md) — Phase 6 production logging + PSI drift monitor (infra shipped, awaits production data)
+- [`results/python_only/bootstrap_ci.md`](results/python_only/bootstrap_ci.md) + [`results/v2/bootstrap_ci.md`](results/v2/bootstrap_ci.md) — Phase 5 95 % CIs on every headline number
 
 ## Authors / contact
 

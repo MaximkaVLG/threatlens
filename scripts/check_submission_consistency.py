@@ -189,6 +189,28 @@ CLAIMS: List[Tuple[str, str, float, str, str, float]] = [
      "results/v2/workload_metric.json",
      "operating_points.0.auto_recall_attack",
      100.0),
+
+    # Phase 3 adversarial — v2 floor + ttl_random sanity row
+    ("SUBMISSION.md",
+     "v2 adversarial baseline recall = 96.85 %",
+     96.85,
+     "results/v2/adversarial_eval.json",
+     "baseline.recall",
+     100.0),
+    # cells[5] is iat_jitter / mild — array order is per perturbation x strength
+    # nested loops in adversarial_eval.py. Use the per-pert,strength match.
+    ("SUBMISSION.md",
+     "v2 packet_padding mild floor = 86.53 %",
+     86.53,
+     "results/v2/adversarial_eval.json",
+     "cells.5.recall",
+     100.0),
+    ("SUBMISSION.md",
+     "v2 ttl_random aggressive = 96.85 % (sanity = no effect)",
+     96.85,
+     "results/v2/adversarial_eval.json",
+     "cells.11.recall",
+     100.0),
 ]
 
 
