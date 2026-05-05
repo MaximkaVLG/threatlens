@@ -85,6 +85,9 @@ data/sandbox_malware/*
 !results/python_only/sandbox_split.json
 !results/python_only/sandbox_train_flows.parquet
 !results/python_only/sandbox_holdout_flows.parquet
+# Phase 5 bootstrap CI (head-to-head, both bundles)
+!results/python_only/bootstrap_ci.json
+!results/python_only/bootstrap_ci.md
 
 # Phase 1 v2 retrain candidate (sandbox-train + sample-weight 0.5)
 # Ships as the production swap on Phase 1.6 if A/B head-to-head says go.
@@ -101,6 +104,8 @@ data/sandbox_malware/*
 !results/v2/workload_metric.json
 !results/v2/ctu_test_holdout.parquet
 !results/v2/ab_vs_python_only.md
+!results/v2/bootstrap_ci.json
+!results/v2/bootstrap_ci.md
 
 # Day 6-8 evaluation JSON artefacts (small, worth committing for reproducibility)
 !results/real_world_eval_ab.json

@@ -1,0 +1,122 @@
+{
+  "model_dir": "results\\v2",
+  "n_resamples": 1000,
+  "alpha": 0.05,
+  "small_n_threshold": 10,
+  "datasets": {
+    "real_pcap_historical": {
+      "recall_attack": {
+        "n": 347,
+        "point": 0.9942363112391931,
+        "ci_low": 0.9855907780979827,
+        "ci_high": 1.0,
+        "ci_width_pp": 1.4409221902017322,
+        "small_n": false
+      },
+      "fp_rate": {
+        "n": 93,
+        "point": 0.1935483870967742,
+        "ci_low": 0.10752688172043011,
+        "ci_high": 0.27956989247311825,
+        "ci_width_pp": 17.204301075268813,
+        "small_n": false
+      }
+    },
+    "ctu_holdout": {
+      "recall_attack": {
+        "n": 253,
+        "point": 1.0,
+        "ci_low": 1.0,
+        "ci_high": 1.0,
+        "ci_width_pp": 0.0,
+        "small_n": false
+      }
+    },
+    "sandbox_holdout": {
+      "recall_attack": {
+        "n": 349,
+        "point": 0.9684813753581661,
+        "ci_low": 0.9455587392550143,
+        "ci_high": 0.9856733524355301,
+        "ci_width_pp": 4.011461318051579,
+        "small_n": false
+      },
+      "per_source": {
+        "mta": {
+          "n": 103,
+          "point": 0.9611650485436893,
+          "ci_low": 0.9223300970873787,
+          "ci_high": 0.9902912621359223,
+          "ci_width_pp": 6.796116504854366,
+          "small_n": false
+        },
+        "stratosphere": {
+          "n": 246,
+          "point": 0.9715447154471545,
+          "ci_low": 0.9471544715447154,
+          "ci_high": 0.991869918699187,
+          "ci_width_pp": 4.471544715447151,
+          "small_n": false
+        }
+      },
+      "per_family": {
+        "bot": {
+          "n": 246,
+          "point": 0.9715447154471545,
+          "ci_low": 0.9471544715447154,
+          "ci_high": 0.991869918699187,
+          "ci_width_pp": 4.471544715447151,
+          "small_n": false
+        },
+        "clickfix": {
+          "n": 9,
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0,
+          "ci_width_pp": 0.0,
+          "small_n": true
+        },
+        "lumma": {
+          "n": 81,
+          "point": 0.9506172839506173,
+          "ci_low": 0.9012345679012346,
+          "ci_high": 0.9876543209876543,
+          "ci_width_pp": 8.64197530864197,
+          "small_n": false
+        },
+        "netsupport": {
+          "n": 7,
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0,
+          "ci_width_pp": 0.0,
+          "small_n": true
+        },
+        "rhadamanthys": {
+          "n": 4,
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0,
+          "ci_width_pp": 0.0,
+          "small_n": true
+        },
+        "stealc": {
+          "n": 2,
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0,
+          "ci_width_pp": 0.0,
+          "small_n": true
+        }
+      },
+      "confusion_against_Bot": {
+        "n_total": 349,
+        "ground_truth": "Bot (all flows)",
+        "predicted_label_distribution": {
+          "BENIGN": 11,
+          "Bot": 338
+        }
+      }
+    }
+  }
+}

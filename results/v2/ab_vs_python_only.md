@@ -4,20 +4,53 @@
 **Model A (prod):** `results/python_only/` — Day 9e bundle, no sandbox train data
 **Model B (candidate):** `results/v2/` — same pipeline + 16-PCAP sandbox train split (4662 flows, sample-weight ×0.5)
 
-## Headline numbers
+## Headline numbers — apples-to-apples bootstrap comparison
 
-| Metric | python_only (A) | v2 (B) | Δ |
-|---|---:|---:|---:|
-| Real-world recall ATK | 96.25 % | **99.42 %** | **+3.17 pp** |
-| Real-world precision ATK | 95.98 % | 95.04 % | -0.94 pp |
-| Real-world F1 ATK | 0.961 | **0.972** | **+0.011** |
-| Real-world TP / FN | 334 / 13 | 345 / 2 | +11 TP / -11 FN |
-| Real-world FP (out of 93 BENIGN) | 14 | 18 | +4 |
-| CTU-13 hold-out recall | 100.0 % | 100.0 % | unchanged |
-| Sandbox holdout recall (any-attack) | n/a | **96.85 %** | (full python_only on 25-PCAP set: 72.24 %) |
-| Sandbox holdout recall (exact "Bot") | n/a | **96.85 %** | (full python_only: 4.25 % — see note below) |
-| Sandbox holdout mean confidence | n/a | 0.983 | (full python_only: 0.888) |
-| Sandbox holdout abstainer flag rate | n/a | 7.2 % | (full python_only on 25-PCAP set: 70.8 %) |
+All recall numbers are point estimate + 95 % bootstrap CI on the **same**
+test set for both models (1000 resamples, seed 42). This corrects an
+earlier draft of this document that compared python_only on the full
+25-PCAP sandbox set against v2 on the 9-PCAP holdout — those are
+different denominators.
+
+| Metric | python_only (A) | v2 (B) | Δ | CIs overlap? |
+|---|---:|---:|---:|---|
+| Real-world recall ATK | 96.25 % [93.95, 97.99] | **99.42 % [98.56, 100.0]** | **+3.17 pp** | **No** (significant) |
+| Real-world FP rate (BENIGN) | 15.05 % [7.53, 22.58] | 19.35 % [10.75, 27.96] | +4.30 pp | Yes (within noise) |
+| CTU-13 holdout recall | 100.00 % [100, 100] | 100.00 % [100, 100] | 0 | unchanged |
+| Sandbox holdout recall (overall, 9 PCAPs / 349 flows) | 60.46 % [55.29, 65.90] | **96.85 % [94.56, 98.57]** | **+36.4 pp** | **No** (significant) |
+| Sandbox holdout — Stratosphere (246 flows) | 62.60 % [56.91, 68.70] | 97.15 % [94.72, 99.19] | +34.5 pp | No |
+| Sandbox holdout — MTA (103 flows) | 55.34 % [45.63, 64.10] | 96.12 % [92.23, 99.03] | +40.8 pp | No |
+| Sandbox holdout — lumma (81 flows) | 50.62 % [40.74, 61.73] | 95.06 % [90.12, 98.77] | +44.4 pp | No |
+| Sandbox holdout — bot Stratosphere (246 flows) | 62.60 % [56.91, 68.70] | 97.15 % [94.72, 99.19] | +34.5 pp | No |
+| Sandbox holdout — abstainer flag rate | 70.8 % (on full set) | 7.2 % | -63.6 pp | (different test sets) |
+| Sandbox holdout — mean confidence | 0.888 (on full set) | 0.983 | +0.095 | (different test sets) |
+
+Small-N families on the holdout (clickfix N=9, netsupport N=7,
+rhadamanthys N=4, stealc N=2) are not in this table — both models hit
+0–100 % recall with CIs wider than 30 pp, so the comparison is
+directional only. See `bootstrap_ci.md` in each model dir for the full
+list.
+
+## Confusion of holdout flows (true label = Bot for all 349)
+
+`bootstrap_ci.json` records the predicted-label distribution. Both
+models miss the same way (into BENIGN, not into a wrong attack class)
+when they fail:
+
+| Predicted label | python_only (A) | v2 (B) |
+|---|---:|---:|
+| Bot (correct) | 87 (24.93 %) | **338 (96.85 %)** |
+| BENIGN (silent miss) | 138 (39.54 %) | **11 (3.15 %)** |
+| DoS slowloris (wrong attack class) | 79 (22.64 %) | 0 |
+| PortScan | 21 (6.02 %) | 0 |
+| SSH-Patator | 13 (3.72 %) | 0 |
+| DoS Hulk | 9 (2.58 %) | 0 |
+| FTP-Patator | 2 (0.57 %) | 0 |
+
+python_only hides 138 modern stealer flows in BENIGN and mis-attributes
+122 more to non-Bot attack classes (mostly DoS slowloris because of
+the slow C2 timing patterns). v2 correctly lands 96.85 % on Bot and
+silently misses only 11 — no class confusion.
 
 ## Workload-metric (lenient/safe/strict/paranoid sweep)
 

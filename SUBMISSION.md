@@ -52,10 +52,16 @@ python scripts/extract_sandbox_pcaps.py --skip-pcaps "CTU-Malware-Capture-Botnet
 python scripts/eval_sandbox.py
 ```
 
-| Test set | Year | N PCAPs | N attack flows | Recall (any-attack) |
+| Test set | Year | N PCAPs | N attack flows | Recall (any-attack) [95 % CI] |
 |---|---:|---:|---:|---:|
-| Historical real-world (above) | ≤2018 | 7 | 600 | **96.25 %** |
-| Fresh sandbox ingest | 2024-2025 | 25 | 5011 | **72.24 %** |
+| Historical real-world (above) | ≤2018 | 7 | 347 | **96.25 % [93.95, 97.99]** |
+| Fresh sandbox ingest (full set) | 2024-2025 | 25 | 5011 | **72.24 % [70.92, 73.50]** |
+| Fresh sandbox ingest (9-PCAP holdout, apples-to-apples) | 2024-2025 | 9 | 349 | **60.46 % [55.29, 65.90]** |
+
+(95 % CIs are percentile bootstrap, 1000 resamples, seed 42 —
+`scripts/bootstrap_ci.py`. Holdout column is the same 9 PCAPs
+results/v2/ uses for evaluation; the python_only model never saw any
+of these in train, so it's a fair generalisation measure.)
 
 The drop is **honest, not hidden**. Three things to read from the breakdown
 in [`results/python_only/sandbox_eval.json`](results/python_only/sandbox_eval.json):

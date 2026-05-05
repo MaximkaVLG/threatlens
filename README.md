@@ -160,10 +160,13 @@ quietly stale, we live-ingest modern malware on the day evaluation runs
 **5011 attack flows**, families covered: Lumma, StealC, Formbook/XLoader,
 Rhadamanthys, NetSupport RAT, MacSync, ClickFix, Kongtuke.
 
-| Test set | Year | N PCAPs | N attack flows | Recall (any-attack) | Abstain rate |
+| Test set | Year | N PCAPs | N attack flows | Recall (any-attack) [95 % CI] | Abstain rate |
 |---|---:|---:|---:|---:|---:|
-| Historical real-world (above) | &le;2018 | 7 | 600 | **96.25 %** | n/a |
-| Fresh sandbox ingest | 2024-2025 | 25 | 5011 | **72.24 %** | 70.8 % |
+| Historical real-world (above) | &le;2018 | 7 | 347 | **96.25 % [93.95, 97.99]** | n/a |
+| Fresh sandbox ingest (full set) | 2024-2025 | 25 | 5011 | **72.24 % [70.92, 73.50]** | 70.8 % |
+| Fresh sandbox ingest (9-PCAP holdout) | 2024-2025 | 9 | 349 | **60.46 % [55.29, 65.90]** | (subset only) |
+
+(95 % CIs are percentile bootstrap, 1000 resamples, seed 42 — `scripts/bootstrap_ci.py`. The 9-PCAP holdout is the same set the v2 retrain candidate is evaluated on; on that holdout v2 hits **96.85 % [94.56, 98.57]** — see `results/v2/ab_vs_python_only.md` for the head-to-head with non-overlapping CIs.)
 
 Honest read of the drop:
 

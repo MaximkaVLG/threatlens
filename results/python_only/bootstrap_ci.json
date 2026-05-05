@@ -1,0 +1,127 @@
+{
+  "model_dir": "results\\python_only",
+  "n_resamples": 1000,
+  "alpha": 0.05,
+  "small_n_threshold": 10,
+  "datasets": {
+    "real_pcap_historical": {
+      "recall_attack": {
+        "n": 347,
+        "point": 0.962536023054755,
+        "ci_low": 0.9394812680115274,
+        "ci_high": 0.9798991354466858,
+        "ci_width_pp": 4.041786743515841,
+        "small_n": false
+      },
+      "fp_rate": {
+        "n": 93,
+        "point": 0.15053763440860216,
+        "ci_low": 0.07526881720430108,
+        "ci_high": 0.22580645161290322,
+        "ci_width_pp": 15.053763440860212,
+        "small_n": false
+      }
+    },
+    "ctu_holdout": {
+      "recall_attack": {
+        "n": 253,
+        "point": 1.0,
+        "ci_low": 1.0,
+        "ci_high": 1.0,
+        "ci_width_pp": 0.0,
+        "small_n": false
+      }
+    },
+    "sandbox_holdout": {
+      "recall_attack": {
+        "n": 349,
+        "point": 0.6045845272206304,
+        "ci_low": 0.5529369627507164,
+        "ci_high": 0.6590257879656161,
+        "ci_width_pp": 10.60888252148997,
+        "small_n": false
+      },
+      "per_source": {
+        "mta": {
+          "n": 103,
+          "point": 0.5533980582524272,
+          "ci_low": 0.4563106796116505,
+          "ci_high": 0.641019417475728,
+          "ci_width_pp": 18.47087378640775,
+          "small_n": false
+        },
+        "stratosphere": {
+          "n": 246,
+          "point": 0.6260162601626016,
+          "ci_low": 0.5691056910569106,
+          "ci_high": 0.6869918699186992,
+          "ci_width_pp": 11.788617886178866,
+          "small_n": false
+        }
+      },
+      "per_family": {
+        "bot": {
+          "n": 246,
+          "point": 0.6260162601626016,
+          "ci_low": 0.5691056910569106,
+          "ci_high": 0.6869918699186992,
+          "ci_width_pp": 11.788617886178866,
+          "small_n": false
+        },
+        "clickfix": {
+          "n": 9,
+          "point": 0.6666666666666666,
+          "ci_low": 0.3333333333333333,
+          "ci_high": 1.0,
+          "ci_width_pp": 66.66666666666667,
+          "small_n": true
+        },
+        "lumma": {
+          "n": 81,
+          "point": 0.5061728395061729,
+          "ci_low": 0.4074074074074074,
+          "ci_high": 0.6172839506172839,
+          "ci_width_pp": 20.98765432098765,
+          "small_n": false
+        },
+        "netsupport": {
+          "n": 7,
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0,
+          "ci_width_pp": 0.0,
+          "small_n": true
+        },
+        "rhadamanthys": {
+          "n": 4,
+          "point": 0.25,
+          "ci_low": 0.0,
+          "ci_high": 0.75,
+          "ci_width_pp": 75.0,
+          "small_n": true
+        },
+        "stealc": {
+          "n": 2,
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0,
+          "ci_width_pp": 0.0,
+          "small_n": true
+        }
+      },
+      "confusion_against_Bot": {
+        "n_total": 349,
+        "ground_truth": "Bot (all flows)",
+        "predicted_label_distribution": {
+          "BENIGN": 138,
+          "DoS slowloris": 79,
+          "Bot": 87,
+          "SSH-Patator": 13,
+          "PortScan": 21,
+          "FTP-Patator": 2,
+          "DoS Hulk": 9
+        }
+      }
+    }
+  }
+}
