@@ -211,6 +211,26 @@ CLAIMS: List[Tuple[str, str, float, str, str, float]] = [
      "results/v2/adversarial_eval.json",
      "cells.11.recall",
      100.0),
+
+    # python_only adversarial — head-to-head numbers cited in SUBMISSION
+    ("SUBMISSION.md",
+     "python_only adversarial baseline = 60.46 %",
+     60.46,
+     "results/python_only/adversarial_eval.json",
+     "baseline.recall",
+     100.0),
+    ("SUBMISSION.md",
+     "python_only worst-case (iat_jitter aggressive) = 57.31 %",
+     57.31,
+     "results/python_only/adversarial_eval.json",
+     "cells.3.recall",
+     100.0),
+    ("SUBMISSION.md",
+     "python_only packet_padding aggressive = 92.55 %",
+     92.55,
+     "results/python_only/adversarial_eval.json",
+     "cells.7.recall",
+     100.0),
 ]
 
 

@@ -146,11 +146,21 @@ attacker who reverse-engineers the boundary could pad uniformly to
 the defender (moderate / aggressive push flows further into Bot
 territory). Three of four perturbations have **zero** effect.
 
+The same grid was run against the previous-prod `python_only` model.
+v2 is uniformly more robust: across all 12 perturbed cells, mean recall
+is **96.49 % (v2) vs 65.32 % (python_only)** — Δ = +31.18 pp, no cell
+where python_only wins. python_only's worst case is **57.31 %**
+(iat_jitter aggressive); v2's worst case is **86.53 %** (packet_padding
+mild). Side-by-side matrix in
+[`docs/adversarial_compare.md`](docs/adversarial_compare.md).
+
 This is a *floor* measurement against random-noise evasion, not a
 robustness certificate against motivated adversaries doing pattern-
 aware mimicry. Full per-row commentary + reproduction in
 [`docs/adversarial_baseline.md`](docs/adversarial_baseline.md). Reproduce:
-`python scripts/adversarial_eval.py --model-dir results/v2`.
+`python scripts/adversarial_eval.py --model-dir results/v2` (and
+`--model-dir results/python_only` for the head-to-head, then
+`scripts/adversarial_compare.py`).
 
 ## Active-learning demo (5 labels, measurable improvement)
 

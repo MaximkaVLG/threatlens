@@ -88,6 +88,8 @@ data/sandbox_malware/*
 # Phase 5 bootstrap CI (head-to-head, both bundles)
 !results/python_only/bootstrap_ci.json
 !results/python_only/bootstrap_ci.md
+!results/python_only/adversarial_eval.json
+!results/python_only/adversarial_eval.md
 
 # Phase 1 v2 retrain candidate (sandbox-train + sample-weight 0.5)
 # Ships as the production swap on Phase 1.6 if A/B head-to-head says go.
