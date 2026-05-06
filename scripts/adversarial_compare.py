@@ -153,7 +153,11 @@ def main(argv=None) -> int:
 
     args.out_md.parent.mkdir(parents=True, exist_ok=True)
     args.out_md.write_text("\n".join(md), encoding="utf-8")
-    print(f"Wrote {args.out_md.relative_to(ROOT)}")
+    try:
+        rel = args.out_md.relative_to(ROOT)
+    except ValueError:
+        rel = args.out_md
+    print(f"Wrote {rel}")
 
     # Also print to stdout so the operator can paste into PR descriptions
     print()
