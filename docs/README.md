@@ -1,6 +1,6 @@
 # Documentation map
 
-This directory has 17 markdown files. They are organised by **time
+This directory has 20 markdown files. They are organised by **time
 budget** rather than chronology — pick a row that matches how long you
 have, and the rest is optional depth.
 
@@ -24,6 +24,22 @@ look sane, everything else is supporting material.
 | [`test_report_2026-04-23.md`](test_report_2026-04-23.md) | 188 / 2 / 0 test results, per-module breakdown, cross-check between published metrics and live re-runs |
 
 After these 4 files you can defend any number on the title page.
+
+## Defending the headline (statistical + adversarial + drift)
+
+These don't change the model — they make every cited number reproducible
+and put a floor under the "what if a reviewer pokes at it" question.
+
+| File | Why |
+|---|---|
+| [`/results/python_only/bootstrap_ci.md`](../results/python_only/bootstrap_ci.md) + [`/results/v2/bootstrap_ci.md`](../results/v2/bootstrap_ci.md) | 95 % bootstrap CIs on every headline number, 1000 resamples, seed 42, small-N flagging |
+| [`/results/v2/ab_vs_python_only.md`](../results/v2/ab_vs_python_only.md) | Apples-to-apples A/B between previous prod and v2 candidate on the **same** holdout — corrects the apples-to-oranges draft and shows a +36.4 pp lift with non-overlapping CIs |
+| [`adversarial_baseline.md`](adversarial_baseline.md) | 4 perturbations × 4 strengths grid against the v2 candidate. Floor on naive evasion: 86.53 % recall. Three of four perturbations have **zero** effect (commentary explains why each) |
+| [`drift_monitor_design.md`](drift_monitor_design.md) | Phase 6 production logging schema + nightly PSI script. Code shipped (`scripts/drift_monitor.py`), real signal lands ~14 days after deployment |
+
+Cross-check that all the percentages in `SUBMISSION.md` / `README.md`
+actually match the artefact JSONs: `python scripts/check_submission_consistency.py`
+(26 claims, 0 fail at the time of writing).
 
 ## Deep dive (full process — academic / Practicum reviewer)
 
