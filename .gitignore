@@ -133,6 +133,14 @@ results/*_training.log
 # crashed run out of git.
 results/*/.adversarial_work/
 
+# Phase 2 external benchmark — Suricata + Zeek output.
+# Per-PCAP eve.json / conn.log are 20-40 MB each (100+ MB total) and
+# fully regenerable by `scripts/external_benchmark.py`. Keep only the
+# tiny summary JSON, which the cross-check + SUBMISSION.md cite.
+!results/external_benchmark/
+results/external_benchmark/*
+!results/external_benchmark/external_benchmark.json
+
 # Diploma-submission materials user keeps in repo root (not project source)
 *.doc
 *.docx

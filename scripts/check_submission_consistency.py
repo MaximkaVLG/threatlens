@@ -231,6 +231,32 @@ CLAIMS: List[Tuple[str, str, float, str, str, float]] = [
      "results/python_only/adversarial_eval.json",
      "cells.7.recall",
      100.0),
+
+    # Phase 2 external benchmark — Suricata + Zeek on same 9 PCAPs as v2 holdout
+    ("SUBMISSION.md",
+     "Suricata per-PCAP detection = 8/9 (88.89 %)",
+     88.89,
+     "results/external_benchmark/external_benchmark.json",
+     "summary.per_tool.suricata.per_pcap_recall",
+     100.0),
+    ("SUBMISSION.md",
+     "Suricata per-flow recall ~ 3.09 %",
+     3.09,
+     "results/external_benchmark/external_benchmark.json",
+     "summary.per_tool.suricata.per_flow_recall_approx",
+     100.0),
+    ("SUBMISSION.md",
+     "Suricata total flows seen = 28 974",
+     28974.0,
+     "results/external_benchmark/external_benchmark.json",
+     "summary.per_tool.suricata.total_flows_seen",
+     1.0),
+    ("SUBMISSION.md",
+     "Zeek default-policy notice events = 0",
+     0.0,
+     "results/external_benchmark/external_benchmark.json",
+     "summary.per_tool.zeek.total_notice_log_lines",
+     1.0),
 ]
 
 

@@ -1,0 +1,294 @@
+{
+  "per_pcap": {
+    "suricata": {
+      "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap": {
+        "event_counts": {
+          "dns": 264,
+          "alert": 53,
+          "tls": 47,
+          "anomaly": 2,
+          "http": 16,
+          "fileinfo": 15,
+          "flow": 194,
+          "stats": 1
+        },
+        "n_alerts": 53,
+        "n_flows_seen": 194,
+        "n_flows_with_alert": 28,
+        "top_signatures": {
+          "ET INFO Windows Powershell User-Agent Usage": 6,
+          "ET INFO TLS possible TOR SSL traffic": 4,
+          "ET INFO HTTP Request to a *.top domain": 3,
+          "ET INFO External IP Address Lookup Domain (ipify .org) in TLS SNI": 3,
+          "ET HUNTING Request to .TOP Domain with Minimal Headers": 3
+        },
+        "wall_time_s": 22.3
+      },
+      "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap": {
+        "event_counts": {
+          "dns": 8,
+          "alert": 78,
+          "tls": 10,
+          "http": 35,
+          "fileinfo": 1,
+          "flow": 149,
+          "stats": 1
+        },
+        "n_alerts": 78,
+        "n_flows_seen": 149,
+        "n_flows_with_alert": 44,
+        "top_signatures": {
+          "ET MALWARE Arechclient2 Backdoor/SecTopRAT Related Activity M2 (GET)": 34,
+          "ET MALWARE Arechclient2 Backdoor/SecTopRAT Related Activity M3 (GET)": 34,
+          "ET MALWARE Observed Win32/Lumma Stealer Related Domain (vishneviyjazz .ru) in TLS SNI": 9,
+          "ET MALWARE Win32/Lumma Stealer Related CnC Domain in DNS Lookup (vishneviyjazz .ru)": 1
+        },
+        "wall_time_s": 21.4
+      },
+      "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap": {
+        "event_counts": {
+          "dns": 102,
+          "tls": 63,
+          "anomaly": 4,
+          "alert": 4,
+          "fileinfo": 8,
+          "http": 7,
+          "flow": 97,
+          "mdns": 2,
+          "stats": 1
+        },
+        "n_alerts": 4,
+        "n_flows_seen": 97,
+        "n_flows_with_alert": 4,
+        "top_signatures": {
+          "SURICATA HTTP Response excessive header repetition": 3,
+          "SURICATA HTTP status 100-Continue already seen": 1
+        },
+        "wall_time_s": 21.2
+      },
+      "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap": {
+        "event_counts": {
+          "dns": 4,
+          "tls": 8,
+          "alert": 5,
+          "fileinfo": 1,
+          "http": 1,
+          "flow": 11,
+          "stats": 1
+        },
+        "n_alerts": 5,
+        "n_flows_seen": 11,
+        "n_flows_with_alert": 1,
+        "top_signatures": {
+          "ET INFO Executable Download from dotted-quad Host": 1,
+          "ET INFO PE EXE or DLL Windows file download HTTP": 1,
+          "ET INFO Executable Retrieved With Minimal HTTP Headers - Potential Second Stage Download": 1,
+          "ET HUNTING SUSPICIOUS Dotted Quad Host MZ Response": 1,
+          "ET INFO Packed Executable Download": 1
+        },
+        "wall_time_s": 19.9
+      },
+      "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap": {
+        "event_counts": {
+          "dns": 339,
+          "tls": 86,
+          "mdns": 1,
+          "alert": 520,
+          "quic": 30,
+          "http": 315,
+          "fileinfo": 146,
+          "flow": 432,
+          "ldap": 39,
+          "dcerpc": 147,
+          "smb": 107,
+          "krb5": 2,
+          "anomaly": 524,
+          "stats": 1
+        },
+        "n_alerts": 520,
+        "n_flows_seen": 432,
+        "n_flows_with_alert": 9,
+        "top_signatures": {
+          "ET INFO HTTP traffic on port 443 (POST)": 86,
+          "ET REMOTE_ACCESS NetSupport Remote Admin Checkin": 86,
+          "SURICATA HTTP request field missing colon": 69,
+          "SURICATA HTTP Request excessive header repetition": 68,
+          "SURICATA HTTP Unexpected Request body": 67
+        },
+        "wall_time_s": 20.8
+      },
+      "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap": {
+        "event_counts": {
+          "dns": 2,
+          "tls": 3,
+          "flow": 4,
+          "stats": 1
+        },
+        "n_alerts": 0,
+        "n_flows_seen": 4,
+        "n_flows_with_alert": 0,
+        "top_signatures": {},
+        "wall_time_s": 19.8
+      },
+      "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap": {
+        "event_counts": {
+          "dns": 14,
+          "tls": 9,
+          "alert": 17,
+          "fileinfo": 29,
+          "http": 22,
+          "anomaly": 15,
+          "flow": 15,
+          "stats": 1
+        },
+        "n_alerts": 17,
+        "n_flows_seen": 15,
+        "n_flows_with_alert": 3,
+        "top_signatures": {
+          "SURICATA HTTP unable to match response to request": 15,
+          "ET INFO Observed URL Shortening Service Domain (fancli .com in TLS SNI)": 1,
+          "ET INFO URL Shortening Service Domain in DNS Lookup (fancli .com)": 1
+        },
+        "wall_time_s": 20.2
+      },
+      "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap": {
+        "event_counts": {
+          "dns": 6332,
+          "flow": 10731,
+          "alert": 334,
+          "http": 3406,
+          "fileinfo": 1977,
+          "tls": 1018,
+          "anomaly": 265,
+          "dcerpc": 1,
+          "stats": 1
+        },
+        "n_alerts": 334,
+        "n_flows_seen": 10724,
+        "n_flows_with_alert": 155,
+        "top_signatures": {
+          "SURICATA ICMPv4 invalid checksum": 155,
+          "SURICATA HTTP Response excessive header repetition": 88,
+          "ET INFO Possible External IP Lookup whoer.net": 77,
+          "ET INFO TLS Handshake Failure": 4,
+          "SURICATA HTTP unable to match response to request": 4
+        },
+        "wall_time_s": 23.0
+      },
+      "CTU-Mixed-Capture-6__bot__Bot.pcap": {
+        "event_counts": {
+          "dhcp": 79,
+          "dns": 7816,
+          "flow": 17349,
+          "alert": 665,
+          "tls": 4243,
+          "quic": 6885,
+          "mdns": 570,
+          "http": 663,
+          "anomaly": 662,
+          "fileinfo": 617,
+          "dcerpc": 2,
+          "smb": 126,
+          "stats": 1
+        },
+        "n_alerts": 665,
+        "n_flows_seen": 17348,
+        "n_flows_with_alert": 651,
+        "top_signatures": {
+          "SURICATA QUIC error on data": 622,
+          "SURICATA HTTP Response excessive header repetition": 13,
+          "ET INFO WinHttp AutoProxy Request wpad.dat Possible BadTunnel": 10,
+          "SURICATA Applayer Detect protocol only one direction": 8,
+          "SURICATA STREAM suspected RST injection": 3
+        },
+        "wall_time_s": 26.2
+      }
+    },
+    "zeek": {
+      "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap": {
+        "n_conn_log_lines": 213,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 1,
+        "wall_time_s": 2.3
+      },
+      "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap": {
+        "n_conn_log_lines": 150,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 0,
+        "wall_time_s": 1.2
+      },
+      "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap": {
+        "n_conn_log_lines": 119,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 0,
+        "wall_time_s": 1.3
+      },
+      "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap": {
+        "n_conn_log_lines": 11,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 0,
+        "wall_time_s": 1.1
+      },
+      "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap": {
+        "n_conn_log_lines": 388,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 14,
+        "wall_time_s": 1.4
+      },
+      "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap": {
+        "n_conn_log_lines": 4,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 0,
+        "wall_time_s": 1.0
+      },
+      "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap": {
+        "n_conn_log_lines": 15,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 0,
+        "wall_time_s": 1.2
+      },
+      "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap": {
+        "error": "docker exit 1",
+        "stderr": "566685.959847 fatal error in <params>, line 1: failed to read a packet from /pcap.pcap: truncated dump file; tried to read 146 captured bytes, only got 135\n",
+        "wall_time_s": 5.2
+      },
+      "CTU-Mixed-Capture-6__bot__Bot.pcap": {
+        "n_conn_log_lines": 17673,
+        "n_notice_log_lines": 0,
+        "n_weird_log_lines": 1,
+        "wall_time_s": 10.6
+      }
+    }
+  },
+  "summary": {
+    "per_tool": {
+      "suricata": {
+        "n_pcaps": 9,
+        "n_pcaps_with_at_least_one_alert": 8,
+        "per_pcap_recall": 0.8888888888888888,
+        "total_alerts": 1676,
+        "total_flows_seen": 28974,
+        "total_flows_with_alert": 895,
+        "per_flow_recall_approx": 0.030889763236004696
+      },
+      "zeek": {
+        "n_pcaps": 9,
+        "total_conn_log_lines": 18573,
+        "total_notice_log_lines": 0,
+        "total_weird_log_lines": 16,
+        "note": "Zeek has no signature engine by default; notice / weird counts are anomaly heuristics, not malware verdicts."
+      }
+    }
+  },
+  "holdout_pcaps": [
+    "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+    "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+    "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+    "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+    "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+    "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+    "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+    "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+    "CTU-Mixed-Capture-6__bot__Bot.pcap"
+  ]
+}
