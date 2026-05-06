@@ -238,3 +238,32 @@ python -m threatlens.web
 For a single-paragraph submission summary, see `README.md`. For the
 full Day 9 retrain narrative (why we threw out Java-extracted CSVs
 and what each iteration fixed), see `docs/day9_python_only_retrain.md`.
+
+## Beyond the headline — supporting analyses
+
+The 5-layer pipeline is the core of the system; these documents cover
+the work that turns "the model has high recall on a test set" into
+"the system can be operated honestly":
+
+- [`results/v2/bootstrap_ci.md`](../results/v2/bootstrap_ci.md) +
+  [`results/python_only/bootstrap_ci.md`](../results/python_only/bootstrap_ci.md)
+  — 95 % bootstrap CIs on every headline number, 1000 resamples per
+  slice, seed 42. Small-N families (<10 flows) flagged as directional.
+- [`results/v2/ab_vs_python_only.md`](../results/v2/ab_vs_python_only.md)
+  — apples-to-apples A/B between the previous prod model and the v2
+  candidate. Same 9-PCAP holdout, both models, non-overlapping CIs
+  on the +36.4 pp lift.
+- [`adversarial_baseline.md`](adversarial_baseline.md) — Phase 3
+  recall-under-perturbation grid (4 perturbations × 4 strengths). v2
+  is robust to 3 of 4 naive evasion techniques; the floor is 86.53 %
+  recall under the one perturbation that actually moves the boundary
+  (mild packet padding).
+- [`drift_monitor_design.md`](drift_monitor_design.md) — Phase 6
+  production logging schema + nightly PSI script. Infrastructure is
+  shipped (`scripts/drift_monitor.py`); meaningful PSI signal lands
+  ~14 days after the model sees production traffic.
+- `scripts/check_submission_consistency.py` — regression test across
+  26 headline numbers cited in `SUBMISSION.md`, `README.md`, and
+  `results/v2/ab_vs_python_only.md`. Each is paired with a JSON
+  pointer into an artefact; tolerance 0.05 pp catches real drift while
+  ignoring rounding-level differences. Run as a pre-submit check.
