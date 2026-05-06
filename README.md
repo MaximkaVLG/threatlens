@@ -28,6 +28,7 @@ ThreatLens combines classical static analysis (YARA, heuristics, PE/Office/scrip
 |---|---|
 | **5 minutes** | [`SUBMISSION.md`](SUBMISSION.md) — one-page summary with headline metric (97.83 % recall @ 2.02 % FP), 5 reproduction commands, honest limits |
 | **30 minutes** | + [`docs/architecture.md`](docs/architecture.md) (5-layer pipeline) + [`docs/day9_python_only_retrain.md`](docs/day9_python_only_retrain.md) (the 0.86 % → 96 % story) |
+| **Defending the headline** | [`results/python_only/bootstrap_ci.md`](results/python_only/bootstrap_ci.md) (95 % CIs) + [`docs/adversarial_baseline.md`](docs/adversarial_baseline.md) (recall under naive evasion) + [`docs/drift_monitor_design.md`](docs/drift_monitor_design.md) (production drift PSI) |
 | **Full process** | [`docs/README.md`](docs/README.md) — 12-day improvement plan, day-by-day with go/no-go criteria |
 | **The code** | [`scripts/README.md`](scripts/README.md) — 27 scripts categorised by purpose (5 headline / 6 training-data / 11 historical / etc.) |
 

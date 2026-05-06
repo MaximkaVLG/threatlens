@@ -1,8 +1,9 @@
 # Scripts directory map
 
-27 Python scripts. Most are referenced from `docs/day*.md` reproduction
-sections. Categorised here by purpose so a reviewer can find what's
-critical vs what's historical without grep-ing.
+35 Python scripts. Most are referenced from `docs/day*.md` reproduction
+sections (and `docs/adversarial_baseline.md` / `docs/drift_monitor_design.md`
+for the Phase 3/6 work). Categorised here by purpose so a reviewer can
+find what's critical vs what's historical without grep-ing.
 
 ## Headline / submission-critical (5 scripts)
 
@@ -79,3 +80,23 @@ production pipeline**. Kept so the day-by-day docs reproduce.
 If you are evaluating the **current** model only, you can ignore all
 11 — `train_python_only.py` + `eval_python_only.py` cover the full
 production path.
+
+## Sandbox holdout split + per-PCAP eval (Day 13 + Phase 1, 2 scripts)
+
+| Script | What it does |
+|---|---|
+| [`split_sandbox.py`](split_sandbox.py) | Stratified split of 25 sandbox PCAPs into 16 train / 9 holdout. Hand-designed to keep family + source diversity in both halves. Emits `results/python_only/sandbox_{split.json,train_flows.parquet,holdout_flows.parquet}` |
+| [`eval_sandbox.py`](eval_sandbox.py) | Per-PCAP eval against any model dir. Adds `--full` for the 25-PCAP set or default 9-PCAP holdout |
+
+## Statistical + adversarial + drift (Phase 3 / 5 / 6 / 7, 6 scripts)
+
+These don't change the model — they make the headline number defensible.
+
+| Script | Phase | Output |
+|---|---:|---|
+| [`bootstrap_ci.py`](bootstrap_ci.py) | 5 | `results/<model>/bootstrap_ci.{json,md}` — 95 % percentile bootstrap CI on every test set, with small-N flagging and per-source / per-family breakdown |
+| [`perturb_pcap.py`](perturb_pcap.py) | 3 | one perturbed PCAP — primitives for the adversarial grid (4 perturbations × 4 strengths) |
+| [`adversarial_eval.py`](adversarial_eval.py) | 3 | `results/<model>/adversarial_eval.{json,md}` — full 4 × 4 grid of recall under perturbation per holdout PCAP |
+| [`adversarial_compare.py`](adversarial_compare.py) | 3 | `docs/adversarial_compare.md` — head-to-head recall matrix between two models on the same grid |
+| [`drift_monitor.py`](drift_monitor.py) | 6 | `results/drift_monitor/<date>.json` + `log.md` + `ALERT.txt` — nightly PSI on production class distribution vs training baseline |
+| [`check_submission_consistency.py`](check_submission_consistency.py) | 7 | exit 0/1 — regression test across 26 headline numbers cited in `SUBMISSION.md` / `README.md` / `ab_vs_python_only.md`. Run before tagging a release |

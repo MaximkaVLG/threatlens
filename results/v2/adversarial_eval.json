@@ -1,0 +1,1119 @@
+{
+  "model_dir": "results\\v2",
+  "baseline": {
+    "n_total_flows": 349,
+    "n_total_detected": 338,
+    "recall": 0.9684813753581661,
+    "per_pcap": [
+      {
+        "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+        "n_flows": 9,
+        "n_detected": 9,
+        "recall": 1.0
+      },
+      {
+        "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+        "n_flows": 1,
+        "n_detected": 1,
+        "recall": 1.0
+      },
+      {
+        "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+        "n_flows": 78,
+        "n_detected": 74,
+        "recall": 0.9487179487179487
+      },
+      {
+        "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+        "n_flows": 2,
+        "n_detected": 2,
+        "recall": 1.0
+      },
+      {
+        "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+        "n_flows": 7,
+        "n_detected": 7,
+        "recall": 1.0
+      },
+      {
+        "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+        "n_flows": 4,
+        "n_detected": 4,
+        "recall": 1.0
+      },
+      {
+        "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+        "n_flows": 2,
+        "n_detected": 2,
+        "recall": 1.0
+      },
+      {
+        "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+        "n_flows": 198,
+        "n_detected": 192,
+        "recall": 0.9696969696969697
+      },
+      {
+        "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+        "n_flows": 48,
+        "n_detected": 47,
+        "recall": 0.9791666666666666
+      }
+    ]
+  },
+  "perturbations_tested": [
+    "iat_jitter",
+    "packet_padding",
+    "ttl_random",
+    "rst_inject"
+  ],
+  "strengths_tested": [
+    "none",
+    "mild",
+    "moderate",
+    "aggressive"
+  ],
+  "cells": [
+    {
+      "perturbation": "iat_jitter",
+      "strength": "none",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 0.0,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "iat_jitter",
+      "strength": "mild",
+      "n_total_flows": 350,
+      "n_total_detected": 339,
+      "recall": 0.9685714285714285,
+      "delta_pp_vs_baseline": 0.009005321326238658,
+      "wall_time_s": 1265.8,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 8,
+          "n_detected": 8,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "iat_jitter",
+      "strength": "moderate",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1251.6,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "iat_jitter",
+      "strength": "aggressive",
+      "n_total_flows": 349,
+      "n_total_detected": 339,
+      "recall": 0.9713467048710601,
+      "delta_pp_vs_baseline": 0.2865329512893977,
+      "wall_time_s": 1240.1,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 193,
+          "recall": 0.9747474747474747
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "packet_padding",
+      "strength": "none",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 0.0,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "packet_padding",
+      "strength": "mild",
+      "n_total_flows": 349,
+      "n_total_detected": 302,
+      "recall": 0.8653295128939829,
+      "delta_pp_vs_baseline": -10.315186246418328,
+      "wall_time_s": 1628.7,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 6,
+          "recall": 0.6666666666666666
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 62,
+          "recall": 0.7948717948717948
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 5,
+          "recall": 0.7142857142857143
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 176,
+          "recall": 0.8888888888888888
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 44,
+          "recall": 0.9166666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "packet_padding",
+      "strength": "moderate",
+      "n_total_flows": 349,
+      "n_total_detected": 347,
+      "recall": 0.994269340974212,
+      "delta_pp_vs_baseline": 2.5787965616045905,
+      "wall_time_s": 1621.3,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 77,
+          "recall": 0.9871794871794872
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 1,
+          "recall": 0.5
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 198,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 48,
+          "recall": 1.0
+        }
+      ]
+    },
+    {
+      "perturbation": "packet_padding",
+      "strength": "aggressive",
+      "n_total_flows": 349,
+      "n_total_detected": 349,
+      "recall": 1.0,
+      "delta_pp_vs_baseline": 3.151862464183386,
+      "wall_time_s": 1641.8,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 78,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 198,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 48,
+          "recall": 1.0
+        }
+      ]
+    },
+    {
+      "perturbation": "ttl_random",
+      "strength": "none",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 0.0,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "ttl_random",
+      "strength": "mild",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1351.9,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "ttl_random",
+      "strength": "moderate",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1301.2,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "ttl_random",
+      "strength": "aggressive",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1324.5,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "rst_inject",
+      "strength": "none",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 0.0,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "rst_inject",
+      "strength": "mild",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1208.8,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "rst_inject",
+      "strength": "moderate",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1249.2,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    },
+    {
+      "perturbation": "rst_inject",
+      "strength": "aggressive",
+      "n_total_flows": 349,
+      "n_total_detected": 338,
+      "recall": 0.9684813753581661,
+      "delta_pp_vs_baseline": 0.0,
+      "wall_time_s": 1382.8,
+      "per_pcap": [
+        {
+          "pcap": "2025-10-08_2025-10-08-initial-infection-traffic-from-Kongtuke-ClickFix-page.pcap__clickfix__Bot.pcap",
+          "n_flows": 9,
+          "n_detected": 9,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-08-15_2025-08-15-Lumma-Stealer-infection-with-Sectop-RAT.pcap__lumma__Bot.pcap",
+          "n_flows": 1,
+          "n_detected": 1,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-09-03_2025-09-03-Kongtuke-ClickFix-leading-to-Lumma-Stealer.pcap__lumma__Bot.pcap",
+          "n_flows": 78,
+          "n_detected": 74,
+          "recall": 0.9487179487179487
+        },
+        {
+          "pcap": "2025-09-24_2025-09-24-traffic-from-running-Setup.exe.pcap__lumma__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-12-29_2025-12-29-ClickFix-page-sends-NetSupportRAT.pcap__netsupport__Bot.pcap",
+          "n_flows": 7,
+          "n_detected": 7,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-10-01_2025-10-01-possible-Rhadamanthys-post-infection-traffic.pcap__rhadamanthys__Bot.pcap",
+          "n_flows": 4,
+          "n_detected": 4,
+          "recall": 1.0
+        },
+        {
+          "pcap": "2025-05-22_2025-05-22-StealCv2-infection.pcap__stealc__Bot.pcap",
+          "n_flows": 2,
+          "n_detected": 2,
+          "recall": 1.0
+        },
+        {
+          "pcap": "CTU-Malware-Capture-Botnet-83-1__bot__Bot.pcap",
+          "n_flows": 198,
+          "n_detected": 192,
+          "recall": 0.9696969696969697
+        },
+        {
+          "pcap": "CTU-Mixed-Capture-6__bot__Bot.pcap",
+          "n_flows": 48,
+          "n_detected": 47,
+          "recall": 0.9791666666666666
+        }
+      ]
+    }
+  ],
+  "seed": 42
+}

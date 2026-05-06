@@ -127,6 +127,75 @@ retraining. Same 693-flow test set as above:
 
 Reproduce: `python scripts/workload_metric.py`.
 
+## Adversarial baseline (naive evasion)
+
+How does v2's recall hold up when traffic is perturbed at wire-level?
+We run a 4 × 4 grid (4 perturbations × 4 strengths) against the same
+9-PCAP sandbox holdout that scored 96.85 % above. Baseline 96.85 %.
+
+| Perturbation | mild | moderate | aggressive | Reads as |
+|---|---:|---:|---:|---|
+| `iat_jitter` (sigma 1 ms / 10 ms / 100 ms) | 96.86 % | 96.85 % | 97.13 % | timing-noise → no effect (CLT averages it out across hundreds of packets) |
+| `packet_padding` (10-50 / 50-200 / 200-500 bytes) | **86.53 %** | 99.43 % | 100.00 % | non-monotonic — small padding is the most adversarial |
+| `ttl_random` (±5 / ±20 / ±50) | 96.85 % | 96.85 % | 96.85 % | model doesn't use TTL (variance filter dropped it) |
+| `rst_inject` (1 % / 5 % / 20 % of ACKs) | 96.85 % | 96.85 % | 96.85 % | RST count alone can't flip the verdict |
+
+**Floor on naive evasion: 86.53 % recall** (packet_padding mild). An
+attacker who reverse-engineers the boundary could pad uniformly to
+10-50 bytes to get there; without that knowledge, random padding *helps*
+the defender (moderate / aggressive push flows further into Bot
+territory). Three of four perturbations have **zero** effect.
+
+The same grid was run against the previous-prod `python_only` model.
+v2 is uniformly more robust: across all 12 perturbed cells, mean recall
+is **96.49 % (v2) vs 65.32 % (python_only)** — Δ = +31.18 pp, no cell
+where python_only wins. python_only's worst case is **57.31 %**
+(iat_jitter aggressive); v2's worst case is **86.53 %** (packet_padding
+mild). Side-by-side matrix in
+[`docs/adversarial_compare.md`](docs/adversarial_compare.md).
+
+This is a *floor* measurement against random-noise evasion, not a
+robustness certificate against motivated adversaries doing pattern-
+aware mimicry. Full per-row commentary + reproduction in
+[`docs/adversarial_baseline.md`](docs/adversarial_baseline.md). Reproduce:
+`python scripts/adversarial_eval.py --model-dir results/v2` (and
+`--model-dir results/python_only` for the head-to-head, then
+`scripts/adversarial_compare.py`).
+
+## External baseline (Suricata + Zeek on the same 9 PCAPs)
+
+How does v2 compare against industry-standard signature IDS on the
+same fresh-malware holdout? We ran **Suricata 8.0.4 + Emerging Threats
+Open ruleset** (50 027 enabled rules — the realistic free-tier
+baseline a defender deploys without paying for ET Pro) and **Zeek**
+default policy over the same 9 PCAPs.
+
+| Tool | Per-PCAP detection | Per-flow recall | Notes |
+|---|---:|---:|---|
+| **v2 ML (this project)** | **9 / 9 (100 %)** | **96.85 %** | flow-level verdict, includes Rhadamanthys |
+| Suricata + ET Open | 8 / 9 (88.89 %) | ≈ 3.09 % | misses Rhadamanthys; many "alerts" are `ET INFO` not malware verdicts |
+| Zeek (default policy) | 0 / 9 detections | 0 / 28 974 | no signature engine in default policy — flow logger only |
+
+The structural gap is per-flow: signature IDS only fires where a rule
+matches, leaving most flows silent (≈ 3 %). The behavioural ML model
+produces a verdict per flow, catching the 96.85 %. Suricata caught
+2 of 9 PCAPs with a *malware-category* signature (Lumma + NetSupport
+RAT — fresh ET telemetry); the remaining 6 had only `ET INFO` /
+`SURICATA HTTP` protocol anomalies firing.
+
+**Rhadamanthys (2025-10-01) is the instructive miss:** 4 flows of
+encrypted TLS to a fresh C2 IP, no SNI hits any ET Open indicator,
+zero alerts. v2 catches it because its features see the behavioural
+shape, not the SNI string.
+
+This isn't ML-replaces-IDS framing — Suricata gives family
+attribution that ML's class probabilities can't. The right
+deployment is Suricata + ML in parallel. Full per-PCAP + caveats
+(paid rulesets not tested, EDR not tested) in
+[`docs/external_benchmark.md`](docs/external_benchmark.md).
+Reproduce: `python scripts/external_benchmark.py --tools suricata,zeek`
+(needs Docker; ~3 min).
+
 ## Active-learning demo (5 labels, measurable improvement)
 
 One 30-second analyst task — labeling 5 mDNS false positives as BENIGN
@@ -207,6 +276,10 @@ reviewer has to hunt for them.
 - [`docs/day10_web_app_integration.md`](docs/day10_web_app_integration.md) — production model swap
 - [`docs/day11_metrics_and_docs.md`](docs/day11_metrics_and_docs.md) — honest-metric reframe
 - [`docs/day12_buffer_and_submission.md`](docs/day12_buffer_and_submission.md) — success-criteria audit + active-learning demo
+- [`docs/adversarial_baseline.md`](docs/adversarial_baseline.md) — Phase 3 evasion floor (4×4 grid against the v2 candidate)
+- [`docs/external_benchmark.md`](docs/external_benchmark.md) — Phase 2 external IDS comparison (Suricata + ET Open vs v2 on same 9 PCAPs)
+- [`docs/drift_monitor_design.md`](docs/drift_monitor_design.md) — Phase 6 production logging + PSI drift monitor (infra shipped, awaits production data)
+- [`results/python_only/bootstrap_ci.md`](results/python_only/bootstrap_ci.md) + [`results/v2/bootstrap_ci.md`](results/v2/bootstrap_ci.md) — Phase 5 95 % CIs on every headline number
 
 ## Authors / contact
 

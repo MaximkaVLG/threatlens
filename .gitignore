@@ -88,6 +88,8 @@ data/sandbox_malware/*
 # Phase 5 bootstrap CI (head-to-head, both bundles)
 !results/python_only/bootstrap_ci.json
 !results/python_only/bootstrap_ci.md
+!results/python_only/adversarial_eval.json
+!results/python_only/adversarial_eval.md
 
 # Phase 1 v2 retrain candidate (sandbox-train + sample-weight 0.5)
 # Ships as the production swap on Phase 1.6 if A/B head-to-head says go.
@@ -106,6 +108,8 @@ data/sandbox_malware/*
 !results/v2/ab_vs_python_only.md
 !results/v2/bootstrap_ci.json
 !results/v2/bootstrap_ci.md
+!results/v2/adversarial_eval.json
+!results/v2/adversarial_eval.md
 
 # Day 6-8 evaluation JSON artefacts (small, worth committing for reproducibility)
 !results/real_world_eval_ab.json
@@ -123,3 +127,23 @@ results/real_world_flows_cache.parquet
 results/synthetic/
 results/experiments/
 results/*_training.log
+
+# Phase 3 adversarial work — per-cell perturbed PCAPs (50-100MB each).
+# Deleted after each cell completes; pattern keeps any leftover from a
+# crashed run out of git.
+results/*/.adversarial_work/
+
+# Phase 2 external benchmark — Suricata + Zeek output.
+# Per-PCAP eve.json / conn.log are 20-40 MB each (100+ MB total) and
+# fully regenerable by `scripts/external_benchmark.py`. Keep only the
+# tiny summary JSON, which the cross-check + SUBMISSION.md cite.
+!results/external_benchmark/
+results/external_benchmark/*
+!results/external_benchmark/external_benchmark.json
+
+# Diploma-submission materials user keeps in repo root (not project source)
+*.doc
+*.docx
+*.zip
+.metodichka_text.txt
+.normokontrol_text.txt

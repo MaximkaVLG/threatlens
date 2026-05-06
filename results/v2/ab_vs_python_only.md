@@ -132,7 +132,7 @@ Net evidence supports promoting v2 to production:
 
 - All 3 hard gates passed
 - Soft FP gate fails by less than 1 BENIGN flow (statistical noise)
-- Sandbox holdout recall up 24.6 pp (72 % → 97 %) — the original Day 13 weak spot is closed
+- Sandbox holdout recall up 36.4 pp (60.46 % → 96.85 % on the same 9 PCAPs) — the original Day 13 weak spot is closed
 - abstainer flag rate on sandbox down 63.6 pp (71 % → 7 %) — the model is correctly more confident on modern malware
 - Production rollback in 30 seconds via `THREATLENS_ML_DIR=results/python_only`
 

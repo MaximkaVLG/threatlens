@@ -8,7 +8,8 @@ Method: percentile bootstrap on the ATTACK subset for recall, on the BENIGN subs
 |---|---:|---:|---|---:|
 | Historical real-world recall | 347 | 96.25 % | [93.95, 97.99] | ±2.0 |
 | CTU-13 holdout recall | 253 | 100.00 % | [100.00, 100.00] | ±0.0 |
-| Sandbox holdout recall | 349 | 60.46 % | [55.29, 65.90] | ±5.3 |
+| Sandbox FULL recall (25 PCAPs) | 5011 | 72.24 % | [70.92, 73.50] | ±1.3 |
+| Sandbox holdout recall (9 PCAPs) | 349 | 60.46 % | [55.29, 65.90] | ±5.3 |
 
 | FP rate (model alone, BENIGN only) | 93 | 15.05 % | [7.53, 22.58] | ±7.5 |
 

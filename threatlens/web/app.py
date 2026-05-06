@@ -156,6 +156,46 @@ def _record_scan_event_safe(
     except Exception:
         logger.exception("Failed to record scan event (telemetry only; scan unaffected)")
 
+
+def _record_prediction_summary_safe(predictions, summary, model_dir: str) -> None:
+    """Phase 6 — capture per-scan ML aggregates for the drift monitor.
+
+    Sample-rate: env var ``THREATLENS_DRIFT_LOG_RATE`` (default 1.0 = log all).
+    Set to e.g. 0.1 to log 10 % of scans once production traffic outgrows
+    the storage budget.
+
+    Always swallows exceptions — telemetry must never break scans.
+    """
+    try:
+        import os, random
+        rate = float(os.environ.get("THREATLENS_DRIFT_LOG_RATE", "1.0"))
+        if rate < 1.0 and random.random() > rate:
+            return
+        if predictions is None or len(predictions) == 0:
+            return
+        from threatlens.cache import get_cache
+        labels_dict = summary.get("labels", {}) if isinstance(summary, dict) else {}
+        n_attack = int(summary.get("attack_flows", 0)) if isinstance(summary, dict) else 0
+        n_benign = int(summary.get("benign_flows", 0)) if isinstance(summary, dict) else 0
+        n_abstain = int(summary.get("uncertain_flows", 0)) if isinstance(summary, dict) else 0
+        mean_conf = (float(predictions["confidence"].dropna().mean())
+                      if "confidence" in predictions.columns
+                      and predictions["confidence"].notna().any()
+                      else 0.0)
+        get_cache().record_prediction_summary(
+            model_dir=model_dir,
+            n_flows=int(len(predictions)),
+            n_attack=n_attack,
+            n_benign=n_benign,
+            n_abstain=n_abstain,
+            mean_confidence=mean_conf,
+            class_distribution=labels_dict,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to record prediction summary "
+            "(drift telemetry only; scan unaffected)")
+
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -437,6 +477,13 @@ async def api_analyze_pcap(
             scan_type="pcap", verdict=verdict,
             start_monotonic=_stats_start,
             file_size_bytes=total_size, client_ip=client_ip,
+        )
+        # Phase 6 — drift telemetry. Independent of scan_event recording so a
+        # failure in one path doesn't kill the other.
+        _record_prediction_summary_safe(
+            predictions=predictions,
+            summary=summary,
+            model_dir=os.environ.get("THREATLENS_ML_DIR", "results/python_only"),
         )
 
         return JSONResponse(_json_safe({
